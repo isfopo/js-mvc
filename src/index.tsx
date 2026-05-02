@@ -9,7 +9,7 @@ const app = new Hono<{ Bindings: Cloudflare.Env }>();
 app.get("/", (c) => {
   return c.html(
     <Layout>
-      <Home />
+      <Home today={new Date()} />
     </Layout>,
   );
 });

@@ -1,5 +1,9 @@
 import type { FC } from "hono/jsx";
 
-export const Home: FC = () => {
-  return <p>home</p>;
+export interface HomeViewModel {
+  today: Date;
+}
+
+export const Home: FC<HomeViewModel> = ({ today }) => {
+  return <p>Hi! It's {today.toDateString()}</p>;
 };
