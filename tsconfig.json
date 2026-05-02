@@ -10,6 +10,8 @@
     "lib": ["ESNext"],
     "types": ["./worker-configuration"],
     "noImplicitOverride": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
   },
   "include": ["node_modules", "src/**/*", "worker-configuration.d.ts"],
 }
