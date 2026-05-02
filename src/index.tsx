@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import { Layout } from "./views/shared/Layout";
 import { Home } from "./views/pages/Home";
 
-const app = new Hono<{ Bindings: CloudflareBindings }>();
+const app = new Hono<{ Bindings: Cloudflare.Env }>();
 
 app.get("/", (c) => {
   return c.html(

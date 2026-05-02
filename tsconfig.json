@@ -8,5 +8,7 @@
     "strict": true,
     "skipLibCheck": true,
     "lib": ["ESNext"],
+    "types": ["./worker-configuration"],
   },
+  "include": ["node_modules", "src/**/*", "worker-configuration.d.ts"],
 }
