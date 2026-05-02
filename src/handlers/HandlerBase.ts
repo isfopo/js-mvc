@@ -11,18 +11,19 @@ interface RouteDescriptor {
 
 function httpRoute(method: string, path: string) {
   return (
-    target: unknown,
+    target: object,
     propertyKey: string,
     descriptor: PropertyDescriptor,
   ) => {
+    const ctor = target.constructor as Function;
     const routes: RouteDescriptor[] =
-      Reflect.getMetadata(ROUTE_META_KEY, target.constructor) ?? [];
+      Reflect.getMetadata(ROUTE_META_KEY, ctor) ?? [];
     routes.push({
       method: method as RouteDescriptor["method"],
       path,
       handlerName: propertyKey,
     });
-    Reflect.defineMetadata(ROUTE_META_KEY, routes, target.constructor);
+    Reflect.defineMetadata(ROUTE_META_KEY, routes, ctor);
     return descriptor;
   };
 }
