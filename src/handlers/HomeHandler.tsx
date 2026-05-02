@@ -7,8 +7,8 @@ class HomeHandler<T extends Env> extends HandlerBase<T> {
   override base = "home";
 
   @Get("/")
-  index(_c: Context) {
-    return _c.html(
+  index({ html }: Context) {
+    return html(
       <Layout>
         <Home today={new Date()} />
       </Layout>,
@@ -16,8 +16,8 @@ class HomeHandler<T extends Env> extends HandlerBase<T> {
   }
 
   @Get("/about")
-  about(_c: Context) {
-    return _c.html(
+  about({ html }: Context) {
+    return html(
       <Layout>
         <p>About page</p>
       </Layout>,
@@ -25,9 +25,9 @@ class HomeHandler<T extends Env> extends HandlerBase<T> {
   }
 
   @Get("/items/:id")
-  item(c: Context) {
-    const id = c.req.param("id");
-    return c.html(
+  item({ req, html }: Context) {
+    const id = req.param("id");
+    return html(
       <Layout>
         <p>Viewing item {id}</p>
       </Layout>,
