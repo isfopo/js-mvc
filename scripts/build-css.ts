@@ -22,29 +22,40 @@ function getFiles(dir: string, ext: string, files: string[] = []): string[] {
   return files;
 }
 
-// Get all CSS files from src/styles
+// Get all CSS files from src/styles and src/views/components
 function getCSSFiles(): string[] {
   const stylesDir = resolve(rootDir, "src", "styles");
-  return getFiles(stylesDir, ".css")
-    .filter((f) => !f.includes("/public/")) // Exclude generated files
-    .sort((a, b) => {
-      const aName = basename(a);
-      const bName = basename(b);
+  const componentsDir = resolve(rootDir, "src", "views", "components");
 
-      // Priority order: variables -> base -> layout -> everything else
-      const priority = ["variables.css", "base.css", "layout.css"];
-      const aPriority = priority.indexOf(aName);
-      const bPriority = priority.indexOf(bName);
+  let cssFiles = getFiles(stylesDir, ".css")
+    .filter((f) => !f.includes("/public/")); // Exclude generated files
 
-      if (aPriority !== -1 && bPriority !== -1) {
-        return aPriority - bPriority;
-      }
-      if (aPriority !== -1) return -1;
-      if (bPriority !== -1) return 1;
+  // Add component CSS modules
+  try {
+    const componentCSS = getFiles(componentsDir, ".css");
+    cssFiles = cssFiles.concat(componentCSS);
+  } catch {
+    // No components directory yet
+  }
 
-      // Sort remaining files alphabetically by full path
-      return a.localeCompare(b);
-    });
+  return cssFiles.sort((a, b) => {
+    const aName = basename(a);
+    const bName = basename(b);
+
+    // Priority order: variables -> base -> layout -> everything else
+    const priority = ["variables.css", "base.css", "layout.css"];
+    const aPriority = priority.indexOf(aName);
+    const bPriority = priority.indexOf(bName);
+
+    if (aPriority !== -1 && bPriority !== -1) {
+      return aPriority - bPriority;
+    }
+    if (aPriority !== -1) return -1;
+    if (bPriority !== -1) return 1;
+
+    // Sort remaining files alphabetically by full path
+    return a.localeCompare(b);
+  });
 }
 
 // Combine all source CSS files
