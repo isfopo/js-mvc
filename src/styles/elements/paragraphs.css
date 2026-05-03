@@ -1,0 +1,6 @@
+/* Paragraphs */
+p {
+  max-width: var(--measure);
+  text-wrap: pretty;
+  margin-block-end: var(--space-flow);
+}

@@ -1,9 +1,26 @@
 import type { FC, JSXNode, PropsWithChildren } from "hono/jsx";
+// Import CSS as raw string - Vite will handle this
+import homeStyles from "../../../public/styles/home.css?raw";
 
-export const Layout: FC<PropsWithChildren<{ head?: JSXNode }>> = ({
-  children,
-  head,
-}) => {
+interface LayoutProps extends PropsWithChildren {
+  route?: string;
+  head?: JSXNode;
+}
+
+// CSS cache for different routes
+const cssCache: Record<string, string> = {
+  home: homeStyles,
+};
+
+// Debug: log what's loaded
+console.log("CSS loaded:", {
+  home: homeStyles?.length || 0,
+  cacheKeys: Object.keys(cssCache),
+});
+
+export const Layout: FC<LayoutProps> = ({ children, route = "home", head }) => {
+  const css = cssCache[route] || cssCache["home"] || "/* CSS not loaded */";
+
   return (
     <html lang="en">
       <head>
@@ -11,7 +28,7 @@ export const Layout: FC<PropsWithChildren<{ head?: JSXNode }>> = ({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="description" content="JS-MVC" />
         <title>JS-MVC</title>
-        <link rel="stylesheet" href="/styles.css" />
+        <style>{css}</style>
         {head}
       </head>
       <body>

@@ -1,0 +1,14 @@
+/* Lists */
+ul, ol {
+  padding-inline-start: var(--space-gutter);
+  margin-block-end: var(--space-flow);
+}
+
+li {
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+li + li {
+  margin-block-start: var(--space-prose);
+}

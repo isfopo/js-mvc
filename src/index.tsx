@@ -9,25 +9,16 @@ const app = new Hono<{ Bindings: Cloudflare.Env }>();
 
 registerHandlers(app);
 
-// Serve static CSS
-app.get("/styles.css", async (c) => {
-  const asset = await c.env.ASSETS.fetch(c.req.raw);
-  return new Response(asset.body, {
-    headers: {
-      "Content-Type": "text/css",
-      "Cache-Control": "public, max-age=3600",
-    },
-  });
-});
-
+// Home route
 app.get("/", (c) => {
   return c.html(
-    <Layout>
+    <Layout route="home">
       <Home today={new Date()} />
     </Layout>,
   );
 });
 
+// Chrome devtools endpoint
 app.get("/.well-known/appspecific/com.chrome.devtools.json", (c) => {
   return c.json({
     workspace: {

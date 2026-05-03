@@ -2,16 +2,23 @@
   "name": "js-mvc",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy --minify",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+    "dev": "vite",
+    "deploy": "npm run build && wrangler deploy",
+    "build": "tsx scripts/build-css.ts && vite build",
+    "preview": "vite preview",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "build:css": "tsx scripts/build-css.ts"
   },
   "dependencies": {
     "hono": "^4.12.16",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.35.0",
     "@types/node": "^25.6.0",
+    "purgecss": "^8.0.0",
+    "tsx": "^4.21.0",
+    "vite": "^6.4.2",
     "wrangler": "^4.87.0"
   }
 }
