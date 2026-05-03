@@ -1,6 +1,9 @@
-import type { FC } from "hono/jsx";
+import type { FC, JSXNode, PropsWithChildren } from "hono/jsx";
 
-export const Layout: FC = ({ children }) => {
+export const Layout: FC<PropsWithChildren<{ head?: JSXNode }>> = ({
+  children,
+  head,
+}) => {
   return (
     <html lang="en">
       <head>
@@ -8,12 +11,21 @@ export const Layout: FC = ({ children }) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="description" content="JS-MVC" />
         <title>JS-MVC</title>
-        {/*<link rel="stylesheet" href="/styles.css" />*/}
+        <link rel="stylesheet" href="/styles.css" />
+        {head}
       </head>
-      <header>
-        <h1>js-mvc</h1>
-      </header>
-      <body>{children}</body>
+      <body>
+        <header>
+          <nav>
+            <ul>
+              <li>
+                <strong>js-mvc</strong>
+              </li>
+            </ul>
+          </nav>
+        </header>
+        <main>{children}</main>
+      </body>
     </html>
   );
 };
