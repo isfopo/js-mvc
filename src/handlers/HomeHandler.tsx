@@ -1,37 +1,28 @@
 import { Context, Env } from "hono";
 import { Get, HandlerBase } from "./HandlerBase";
 import { Home } from "../views/pages/Home";
-import { Layout } from "../views/shared/Layout";
 
 class HomeHandler<T extends Env> extends HandlerBase<T> {
   override base = "home";
 
+  constructor() {
+    super();
+  }
+
   @Get("/")
-  index({ html }: Context) {
-    return html(
-      <Layout>
-        <Home today={new Date()} />
-      </Layout>,
-    );
+  index({ render }: Context) {
+    return render(<Home today={new Date()} />);
   }
 
   @Get("/about")
-  about({ html }: Context) {
-    return html(
-      <Layout>
-        <p>About page</p>
-      </Layout>,
-    );
+  about({ render }: Context) {
+    return render(<p>About page</p>);
   }
 
   @Get("/items/:id")
-  item({ req, html }: Context) {
+  item({ req, render }: Context) {
     const id = req.param("id");
-    return html(
-      <Layout>
-        <p>Viewing item {id}</p>
-      </Layout>,
-    );
+    return render(<p>Viewing item {id}</p>);
   }
 }
 

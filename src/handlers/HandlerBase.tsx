@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { Context, Env, Hono } from "hono";
+import { Layout } from "../views/shared/Layout";
 
 const ROUTE_META_KEY = Symbol("routes");
 
@@ -45,6 +46,13 @@ export abstract class HandlerBase<T extends Env> {
   register<T extends Env>(app: Hono<T>) {
     const routes: RouteDescriptor[] =
       Reflect.getMetadata(ROUTE_META_KEY, (this as any).constructor) ?? [];
+
+    this._app.use("*", async ({ setRenderer, html }, next) => {
+      setRenderer((content: any) => {
+        return html(<Layout>{content}</Layout>);
+      });
+      await next();
+    });
 
     for (const route of routes) {
       this._app[route.method](route.path, (c: Context) =>

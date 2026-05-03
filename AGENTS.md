@@ -47,6 +47,30 @@ class MyHandler extends HandlerBase {
 - The full route is `base` + decorator `path`.
 - The `reflect-metadata` package is required and enabled via `experimentalDecorators` in `tsconfig.json`.
 
+## Layout / Rendering
+
+Handlers can wrap every route response in a layout automatically. Set it in the constructor:
+
+```ts
+class MyHandler extends HandlerBase {
+  override base = "my";
+
+  constructor() {
+    super();
+  }
+
+  @Get("/")
+  index(c: Context) {
+    return c.render(<p>Content only — Layout is applied automatically</p>);
+  }
+}
+```
+
+- Call `this.setLayout(Layout)` once per handler to enable auto-wrapping.
+- Use `c.render(<View />)` instead of `c.html(<Layout><View /></Layout>)`.
+- Handlers without a layout set fall back to returning raw `Response` objects.
+- Layout components receive `{ children }` and optionally `head` props.
+
 ## Conventions
 
 - `"type": "module"` in package.json — always use ESM imports.

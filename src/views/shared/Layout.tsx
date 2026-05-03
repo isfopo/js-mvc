@@ -10,6 +10,9 @@ export const Layout: FC = ({ children }) => {
         <title>JS-MVC</title>
         {/*<link rel="stylesheet" href="/styles.css" />*/}
       </head>
+      <header>
+        <h1>js-mvc</h1>
+      </header>
       <body>{children}</body>
     </html>
   );
