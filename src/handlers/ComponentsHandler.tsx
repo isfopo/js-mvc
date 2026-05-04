@@ -3,9 +3,9 @@ import { Get, HandlerBase } from "./HandlerBase";
 import { Components } from "../views/pages/Components";
 
 class ComponentsHandler<T extends Env> extends HandlerBase<T> {
-  override base = "";
+  override base = "components";
 
-  @Get("/components")
+  @Get("/")
   index({ render }: Context) {
     return render(<Components />);
   }
