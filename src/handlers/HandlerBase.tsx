@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { Context, Env, Hono } from "hono";
+import { renderToString } from "hono/jsx/dom/server";
 import { Layout } from "../views/shared/Layout";
 
 const ROUTE_META_KEY = Symbol("routes");
@@ -49,7 +50,9 @@ export abstract class HandlerBase<T extends Env> {
 
     this._app.use("*", async ({ setRenderer, html }, next) => {
       setRenderer((content: any) => {
-        return html(<Layout>{content}</Layout>);
+        const doctype = "<!DOCTYPE html>";
+        const body = renderToString(<Layout>{content}</Layout>);
+        return html(doctype + body);
       });
       await next();
     });
