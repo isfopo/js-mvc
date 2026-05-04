@@ -5,30 +5,48 @@ import { Card } from "../components/Card";
 import { Alert } from "../components/Alert";
 import { Table } from "../components/Table";
 
-export const ComponentsShowcase: FC = () => (
+export const Components: FC = () => (
   <div class="showcase">
     <section>
       <h2>Buttons</h2>
 
       <h3>Variants</h3>
       <div class="button-row">
-        <Button variant="primary" size="md">Save Changes</Button>
-        <Button variant="secondary" size="md">Cancel</Button>
-        <Button variant="danger" size="md">Delete Account</Button>
-        <Button variant="ghost" size="md">Learn More</Button>
+        <Button variant="primary" size="md">
+          Save Changes
+        </Button>
+        <Button variant="secondary" size="md">
+          Cancel
+        </Button>
+        <Button variant="danger" size="md">
+          Delete Account
+        </Button>
+        <Button variant="ghost" size="md">
+          Learn More
+        </Button>
       </div>
 
       <h3>Sizes</h3>
       <div class="button-row">
-        <Button variant="primary" size="sm">Small</Button>
-        <Button variant="primary" size="md">Medium</Button>
-        <Button variant="primary" size="lg">Large</Button>
+        <Button variant="primary" size="sm">
+          Small
+        </Button>
+        <Button variant="primary" size="md">
+          Medium
+        </Button>
+        <Button variant="primary" size="lg">
+          Large
+        </Button>
       </div>
 
       <h3>Disabled State</h3>
       <div class="button-row">
-        <Button variant="primary" size="md" disabled>Submit</Button>
-        <Button variant="secondary" size="md" disabled>Cancel</Button>
+        <Button variant="primary" size="md" disabled>
+          Submit
+        </Button>
+        <Button variant="secondary" size="md" disabled>
+          Cancel
+        </Button>
       </div>
     </section>
 
@@ -37,9 +55,26 @@ export const ComponentsShowcase: FC = () => (
 
       <Card title="Create Account">
         <form>
-          <FormField name="username" label="Username" placeholder="johndoe" required />
-          <FormField name="email" label="Email" type="email" placeholder="john@example.com" required />
-          <FormField name="password" label="Password" type="password" placeholder="••••••••" required />
+          <FormField
+            name="username"
+            label="Username"
+            placeholder="johndoe"
+            required
+          />
+          <FormField
+            name="email"
+            label="Email"
+            type="email"
+            placeholder="john@example.com"
+            required
+          />
+          <FormField
+            name="password"
+            label="Password"
+            type="password"
+            placeholder="••••••••"
+            required
+          />
           <FormField
             name="confirm-password"
             label="Confirm Password"
@@ -49,8 +84,12 @@ export const ComponentsShowcase: FC = () => (
             required
           />
           <div class="button-row">
-            <Button variant="primary" type="submit">Create Account</Button>
-            <Button variant="secondary" type="reset">Clear</Button>
+            <Button variant="primary" type="submit">
+              Create Account
+            </Button>
+            <Button variant="secondary" type="reset">
+              Clear
+            </Button>
           </div>
         </form>
       </Card>
@@ -60,7 +99,8 @@ export const ComponentsShowcase: FC = () => (
       <h2>Alerts</h2>
 
       <Alert variant="info" title="New Feature Available">
-        We've added dark mode support! Check your system preferences to enable it.
+        We've added dark mode support! Check your system preferences to enable
+        it.
       </Alert>
 
       <Alert variant="success" title="Profile Updated">
@@ -118,8 +158,12 @@ export const ComponentsShowcase: FC = () => (
           ]}
         />
         <div class="table-actions">
-          <Button variant="primary" size="sm">Add Member</Button>
-          <Button variant="secondary" size="sm">Export CSV</Button>
+          <Button variant="primary" size="sm">
+            Add Member
+          </Button>
+          <Button variant="secondary" size="sm">
+            Export CSV
+          </Button>
         </div>
       </Card>
     </section>
@@ -134,22 +178,51 @@ export const ComponentsShowcase: FC = () => (
       <div class="settings-grid">
         <Card title="Profile Settings">
           <form>
-            <FormField name="display-name" label="Display Name" value="Isaac Poole" />
-            <FormField name="bio" label="Bio" placeholder="Tell us about yourself" />
-            <FormField name="website" label="Website" type="url" placeholder="https://example.com" />
+            <FormField
+              name="display-name"
+              label="Display Name"
+              value="Isaac Poole"
+            />
+            <FormField
+              name="bio"
+              label="Bio"
+              placeholder="Tell us about yourself"
+            />
+            <FormField
+              name="website"
+              label="Website"
+              type="url"
+              placeholder="https://example.com"
+            />
             <div class="button-row">
-              <Button variant="primary" type="submit">Save Profile</Button>
+              <Button variant="primary" type="submit">
+                Save Profile
+              </Button>
             </div>
           </form>
         </Card>
 
         <Card title="Security">
           <form>
-            <FormField name="current-password" label="Current Password" type="password" />
-            <FormField name="new-password" label="New Password" type="password" />
-            <FormField name="confirm-new-password" label="Confirm New Password" type="password" />
+            <FormField
+              name="current-password"
+              label="Current Password"
+              type="password"
+            />
+            <FormField
+              name="new-password"
+              label="New Password"
+              type="password"
+            />
+            <FormField
+              name="confirm-new-password"
+              label="Confirm New Password"
+              type="password"
+            />
             <div class="button-row">
-              <Button variant="primary" type="submit">Update Password</Button>
+              <Button variant="primary" type="submit">
+                Update Password
+              </Button>
             </div>
           </form>
         </Card>

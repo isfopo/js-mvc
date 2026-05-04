@@ -1,4 +1,5 @@
 import { PurgeCSS } from "purgecss";
+import CleanCSS from "clean-css";
 import { readFileSync, writeFileSync, readdirSync, mkdirSync } from "fs";
 import { resolve, dirname, extname, basename } from "path";
 import { fileURLToPath } from "url";
@@ -27,8 +28,9 @@ function getCSSFiles(): string[] {
   const stylesDir = resolve(rootDir, "src", "styles");
   const componentsDir = resolve(rootDir, "src", "views", "components");
 
-  let cssFiles = getFiles(stylesDir, ".css")
-    .filter((f) => !f.includes("/public/")); // Exclude generated files
+  let cssFiles = getFiles(stylesDir, ".css").filter(
+    (f) => !f.includes("/public/"),
+  ); // Exclude generated files
 
   // Add component CSS modules
   try {
@@ -132,11 +134,12 @@ async function generateRouteCSS(
     ],
   });
 
+  const minified = new CleanCSS().minify(result[0].css).styles;
   const outputPath = resolve(outputDir, `${routeName}.css`);
-  writeFileSync(outputPath, result[0].css);
+  writeFileSync(outputPath, minified);
 
   const fullSize = fullCSS.length;
-  const optimizedSize = result[0].css.length;
+  const optimizedSize = minified.length;
   const savings = (((fullSize - optimizedSize) / fullSize) * 100).toFixed(1);
 
   console.log(
@@ -154,8 +157,9 @@ async function main() {
   // Step 2: Write full bundle to public/styles/
   const publicDir = resolve(rootDir, "public", "styles");
   mkdirSync(publicDir, { recursive: true });
-  writeFileSync(resolve(publicDir, "styles.css"), fullCSS);
-  console.log(`\n✓ Full bundle: ${fullCSS.length} bytes\n`);
+  const minifiedFull = new CleanCSS().minify(fullCSS).styles;
+  writeFileSync(resolve(publicDir, "styles.css"), minifiedFull);
+  console.log(`\n✓ Full bundle: ${minifiedFull.length} bytes (minified)\n`);
 
   // Step 3: Generate route-specific CSS
   const pages = getPageFiles();
