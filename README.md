@@ -14,4 +14,4 @@ npm run cf-typegen
 ```
 
 
-This is roughly following a MVC pattern, although some key terminology has been changed to fit in with the Javascript ecosystem. "Controllers", as they are typically called, are called "Handlers". "ViewModel" maps to "Props",  which are defined in the same files as their views for easy access.
+This is roughly following a MVC pattern, although some key terminology has been changed to fit in with the Javascript/JXS ecosystem. "Controllers", as they are typically called, are called "Handlers". "ViewModel" maps to "Props", which are defined in the same files as their views for easy access.
