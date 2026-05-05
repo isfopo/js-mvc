@@ -2,6 +2,8 @@ import { FC } from "hono/jsx";
 import { Layout } from "./Layout";
 import { Alert } from "../components/Alert";
 
+const DEFAULT_ERROR_MESSAGE = "Something's wrong";
+
 export interface ResultsViewProps {
   variant: "success" | "error" | "info";
   message?: string;
@@ -10,7 +12,10 @@ export interface ResultsViewProps {
 export const ResultsView: FC<ResultsViewProps> = ({ variant, message }) => {
   return (
     <Layout>
-      <Alert variant={variant}>{message && <p>{message}</p>}</Alert>
+      <Alert
+        variant={variant}
+        header={message ?? DEFAULT_ERROR_MESSAGE}
+      ></Alert>
     </Layout>
   );
 };

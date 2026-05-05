@@ -171,7 +171,7 @@ export const Components: FC = () => (
     <section>
       <h2>Real-World: Settings Page</h2>
 
-      <Alert variant="warning" title="Unsaved Changes">
+      <Alert variant="warning" header="Unsaved Changes">
         You have pending changes. Make sure to save before leaving.
       </Alert>
 
