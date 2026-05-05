@@ -79,74 +79,6 @@ function combineCSS(): string {
     .join("\n\n");
 }
 
-// Get all page components (files in src/views/pages/)
-function getPageFiles(): Array<{ name: string; path: string }> {
-  const pagesDir = resolve(rootDir, "src", "views", "pages");
-  const pages: Array<{ name: string; path: string }> = [];
-
-  try {
-    const entries = readdirSync(pagesDir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (
-        entry.isFile() &&
-        (entry.name.endsWith(".tsx") || entry.name.endsWith(".jsx"))
-      ) {
-        const name = basename(entry.name, extname(entry.name))
-          .replace(/Page$/, "") // Strip Page suffix
-          .replace(/([A-Z])/g, "-$1") // Convert camelCase to kebab-case
-          .toLowerCase()
-          .replace(/^-/, ""); // Remove leading dash
-
-        pages.push({
-          name,
-          path: resolve(pagesDir, entry.name),
-        });
-      }
-    }
-  } catch (e) {
-    console.warn("No pages directory found");
-  }
-
-  return pages;
-}
-
-// Get all JSX/TSX files for PurgeCSS content
-function getAllJSXFiles(): string[] {
-  const srcDir = resolve(rootDir, "src");
-  return getFiles(srcDir, ".tsx").concat(getFiles(srcDir, ".jsx"));
-}
-
-// Generate route-specific CSS
-async function generateRouteCSS(
-  routeName: string,
-  contentFiles: string[],
-  fullCSS: string,
-  outputDir: string,
-) {
-  const purgeCSS = new PurgeCSS();
-  const result = await purgeCSS.purge({
-    content: contentFiles,
-    css: [{ raw: fullCSS }],
-    safelist: [
-      /data-.*/,
-      /sr-only/,
-      /^:/, // Keep pseudo-elements
-    ],
-  });
-
-  const minified = new CleanCSS().minify(result[0].css).styles;
-  const outputPath = resolve(outputDir, `${routeName}.css`);
-  writeFileSync(outputPath, minified);
-
-  const fullSize = fullCSS.length;
-  const optimizedSize = minified.length;
-  const savings = (((fullSize - optimizedSize) / fullSize) * 100).toFixed(1);
-
-  console.log(
-    `✓ Generated ${routeName}.css (${optimizedSize} bytes, ${savings}% reduction)`,
-  );
-}
-
 // Main build process
 async function main() {
   console.log("Building CSS...\n");
@@ -158,26 +90,8 @@ async function main() {
   const publicDir = resolve(rootDir, "public", "styles");
   mkdirSync(publicDir, { recursive: true });
   const minifiedFull = new CleanCSS().minify(fullCSS).styles;
-  writeFileSync(resolve(publicDir, "styles.css"), minifiedFull);
+  writeFileSync(resolve(publicDir, "index.css"), minifiedFull);
   console.log(`\n✓ Full bundle: ${minifiedFull.length} bytes (minified)\n`);
-
-  // Step 3: Generate route-specific CSS
-  const pages = getPageFiles();
-  const allJSXFiles = getAllJSXFiles();
-  const layoutFile = resolve(rootDir, "src", "views", "shared", "Layout.tsx");
-
-  console.log(`Found ${pages.length} page(s):`);
-  pages.forEach((p) => console.log(`  - ${p.name}`));
-  console.log();
-
-  for (const page of pages) {
-    // Include page file, layout, and all shared components
-    const contentFiles = [page.path, layoutFile, ...allJSXFiles];
-
-    await generateRouteCSS(page.name, contentFiles, fullCSS, publicDir);
-  }
-
-  console.log("\n✓ CSS build complete!");
 }
 
 main().catch((err) => {

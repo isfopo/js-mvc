@@ -1,0 +1,222 @@
+:root {
+  /* Colors */
+  --color-surface: #fafafa;
+  --color-surface-elevated: #ffffff;
+  --color-text: #1a1a1a;
+  --color-text-muted: #666666;
+  --color-accent: #0066cc;
+  --color-accent-hover: #0052a3;
+  --color-border: #e0e0e0;
+
+  /* Typography - families */
+  --font-display: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Typography - sizes */
+  --font-size-display: clamp(2.5rem, 8vw + 1rem, 4rem);
+  --font-size-title: clamp(1.75rem, 5vw + 0.5rem, 2.5rem);
+  --font-size-heading: clamp(1.25rem, 3vw + 0.5rem, 1.75rem);
+  --font-size-subheading: clamp(1.1rem, 2vw + 0.25rem, 1.25rem);
+  --font-size-body: clamp(1rem, 1vw + 0.875rem, 1.125rem);
+  --font-size-small: clamp(0.875rem, 0.5vw + 0.75rem, 0.9375rem);
+  --font-size-smaller: clamp(0.75rem, 0.5vw + 0.625rem, 0.8125rem);
+
+  /* Typography - weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Typography - line heights */
+  --leading-tight: 1.1;
+  --leading-snug: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  /* Typography - letter spacing */
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.05em;
+
+  /* Spacing */
+  --space-gutter: clamp(1rem, 5vw, 3rem);
+  --space-flow: clamp(1.5rem, 4vw, 2.5rem);
+  --space-prose: clamp(0.75rem, 2vw, 1.25rem);
+  --space-xs: clamp(0.25rem, 1vw, 0.5rem);
+  --space-sm: clamp(0.5rem, 1.5vw, 0.75rem);
+  --space-md: clamp(0.75rem, 2vw, 1rem);
+  --space-lg: clamp(1rem, 3vw, 1.5rem);
+  --space-xl: clamp(1.5rem, 4vw, 2rem);
+
+  /* Measure */
+  --measure: 65ch;
+  --measure-narrow: 45ch;
+  --measure-wide: 75ch;
+
+  /* Radii */
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Borders */
+  --border-none: 0;
+  --border-width-thin: 1px;
+  --border-width-thick: 2px;
+  --border-width-accent: 3px;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-surface: #0a0a0a;
+    --color-surface-elevated: #141414;
+    --color-text: #f5f5f5;
+    --color-text-muted: #a0a0a0;
+    --color-accent: #4da6ff;
+    --color-accent-hover: #80c5ff;
+    --color-border: #2a2a2a;
+  }
+}
+
+/* Wide screens */
+@media (min-aspect-ratio: 16/9) {
+  :root {
+    --space-gutter: clamp(2rem, 8vw, 5rem);
+    --measure: 70ch;
+  }
+}
+
+/* Narrow/mobile screens */
+@media (max-width: 480px) {
+  :root {
+    --font-size-display: clamp(2rem, 10vw, 2.5rem);
+    --space-gutter: 1rem;
+    --leading-normal: 1.7;
+  }
+}
+
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+/* Base */
+html {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-normal);
+  color: var(--color-text);
+  background: var(--color-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+}
+
+/* Selection */
+::selection {
+  background: var(--color-accent);
+  color: white;
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: var(--border-width-thick) solid var(--color-accent);
+  outline-offset: var(--space-xs);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* Typography scale */
+
+/* Prose elements */
+p, li {
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+/* Vertical rhythm - flow */
+:is(p, ul) {
+  margin-block-end: var(--space-flow);
+}
+
+/* Lists */
+ul {
+  padding-inline-start: var(--space-gutter);
+}
+
+li + li {
+  margin-block-start: var(--space-prose);
+}
+
+/* Links */
+
+/* Code */
+
+/* Blockquote */
+
+/* Horizontal rule */
+
+
+/* Layout */
+main {
+  width: min(100% - var(--space-gutter) * 2, var(--measure));
+  margin-inline: auto;
+  padding-block: var(--space-flow);
+}
+
+ main[data-layout="wide"] {
+  --measure: var(--measure-wide);
+  max-width: min(100% - var(--space-gutter) * 2, var(--measure-wide));
+}
+
+/* Header */
+header {
+  background: var(--color-surface-elevated);
+  border-block-end: var(--border-width-thin) solid var(--color-border);
+  padding: var(--space-gutter);
+}
+
+/* Navigation */
+nav ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-gutter);
+}
+
+nav li {
+  margin: 0;
+}
+
+/* Footer */
+
+
+/* Forms */
+
+/* Secondary button */
+
+
+/* Tables */
+
+/* Images */
+
+/* Details/Summary */

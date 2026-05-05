@@ -2,6 +2,8 @@ import "reflect-metadata";
 import { Context, Env, Hono } from "hono";
 import { renderToString } from "hono/jsx/dom/server";
 import { Layout } from "../views/shared/Layout";
+import { NotFoundError } from "../errors/NotFoundError";
+import { ResultsView } from "../views/shared/Results";
 
 const ROUTE_META_KEY = Symbol("routes");
 
@@ -48,19 +50,33 @@ export abstract class HandlerBase<T extends Env> {
     const routes: RouteDescriptor[] =
       Reflect.getMetadata(ROUTE_META_KEY, (this as any).constructor) ?? [];
 
-    this._app.use("*", async ({ setRenderer, html }, next) => {
-      setRenderer((content: any) => {
+    this._app.use("*", async (c, next) => {
+      c.setRenderer((content) => {
         const doctype = "<!DOCTYPE html>";
         const body = renderToString(<Layout>{content}</Layout>);
-        return html(doctype + body);
+        return c.html(doctype + body);
       });
       await next();
     });
 
     for (const route of routes) {
-      this._app[route.method](route.path, (c: Context) =>
-        (this as any)[route.handlerName](c),
-      );
+      this._app[route.method](route.path, async (c: Context) => {
+        try {
+          return (this as any)[route.handlerName](c);
+        } catch (error: unknown) {
+          if (error instanceof NotFoundError) {
+            return c.html(
+              <ResultsView variant="error" message={error.message} />,
+            );
+          }
+          return c.html(
+            <ResultsView
+              variant="error"
+              message={error instanceof Error ? error.message : "Unknown error"}
+            />,
+          );
+        }
+      });
     }
 
     app.route(this.base, this._app);

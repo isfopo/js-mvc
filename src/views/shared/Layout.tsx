@@ -1,11 +1,10 @@
 import type { FC, JSXNode, PropsWithChildren } from "hono/jsx";
 
 interface LayoutProps extends PropsWithChildren {
-  route: string;
   head?: JSXNode;
 }
 
-export const Layout: FC<LayoutProps> = ({ children, route, head = "" }) => {
+export const Layout: FC<LayoutProps> = ({ children, head = "" }) => {
   return (
     <html lang="en">
       <head>
@@ -13,7 +12,7 @@ export const Layout: FC<LayoutProps> = ({ children, route, head = "" }) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="description" content="JS-MVC" />
         <title>JS-MVC</title>
-        <link rel="stylesheet" href={`/styles/${route}.css`} />
+        <link rel="stylesheet" href="/styles/index.css" />
         {head}
       </head>
       <body>

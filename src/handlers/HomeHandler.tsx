@@ -1,9 +1,11 @@
 import { Context, Env } from "hono";
 import { Get, HandlerBase } from "./HandlerBase";
 import { Home } from "../views/pages/Home";
+import { HomeService } from "../services/HomeService";
 
 class HomeHandler<T extends Env> extends HandlerBase<T> {
   override base = "home";
+  service = new HomeService();
 
   constructor() {
     super();
@@ -11,7 +13,7 @@ class HomeHandler<T extends Env> extends HandlerBase<T> {
 
   @Get("/")
   index({ render }: Context) {
-    return render(<Home today={new Date()} />);
+    return render(<Home {...this.service.index()} />);
   }
 
   @Get("/about")
