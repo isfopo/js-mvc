@@ -2,8 +2,7 @@ import "reflect-metadata";
 import { Context, Env, Hono } from "hono";
 import { renderToString } from "hono/jsx/dom/server";
 import { Layout } from "../views/shared/Layout";
-import { NotFoundError } from "../errors/NotFoundError";
-import { ResultsView } from "../views/shared/Results";
+import { handleError } from "../errors";
 
 const ROUTE_META_KEY = Symbol("routes");
 
@@ -64,17 +63,7 @@ export abstract class HandlerBase<T extends Env> {
         try {
           return (this as any)[route.handlerName](c);
         } catch (error: unknown) {
-          if (error instanceof NotFoundError) {
-            return c.html(
-              <ResultsView variant="error" message={error.message} />,
-            );
-          }
-          return c.html(
-            <ResultsView
-              variant="error"
-              message={error instanceof Error ? error.message : "Unknown error"}
-            />,
-          );
+          return handleError(c, error);
         }
       });
     }

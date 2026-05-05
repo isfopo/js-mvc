@@ -1,4 +1,4 @@
-import { NotFoundError } from "../errors/NotFoundError";
+import { NotFoundError } from "../errors";
 
 export class HomeService {
   index() {
