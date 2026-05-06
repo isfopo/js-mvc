@@ -1,6 +1,0 @@
-/* Textarea */
-textarea {
-  min-height: 6rem;
-  resize: vertical;
-  max-width: var(--measure);
-}
