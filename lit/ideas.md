@@ -6,4 +6,3 @@
 - Put local state in cookies?
 - use arktype for type validation (post, put)
 - Could there be a way setup storybook for component development?
-- Global css should only define variables and base rules. CSS for elements should be scoped to components

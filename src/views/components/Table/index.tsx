@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import styles from "./index.module.css";
 
 export interface TableProps {
   headers: string[];
@@ -7,7 +8,7 @@ export interface TableProps {
 }
 
 export const Table: FC<TableProps> = ({ headers, rows, compact = false }) => (
-  <div data-table={compact ? "compact" : ""}>
+  <div class={styles.wrapper} data-table={compact ? "compact" : ""}>
     <table>
       <thead>
         <tr>

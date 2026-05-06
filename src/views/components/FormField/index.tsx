@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import styles from "./index.module.css";
 
 export interface FormFieldProps {
   name: string;
@@ -19,10 +20,10 @@ export const FormField: FC<FormFieldProps> = ({
   error,
   required = false,
 }) => (
-  <div data-field={error ? "error" : ""}>
+  <div class={styles.field} data-field={error ? "error" : ""}>
     <label for={name}>
       {label}
-      {required && <span aria-hidden="true">*</span>}
+      {required && <span class={styles.required} aria-hidden="true">*</span>}
     </label>
     <input
       type={type}
@@ -35,7 +36,7 @@ export const FormField: FC<FormFieldProps> = ({
       aria-describedby={error ? `${name}-error` : undefined}
     />
     {error && (
-      <p id={`${name}-error`} role="alert">
+      <p class={styles.error} id={`${name}-error`} role="alert">
         {error}
       </p>
     )}

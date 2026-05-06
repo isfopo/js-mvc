@@ -1,4 +1,5 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
+import styles from "./index.module.css";
 
 export interface AlertProps extends PropsWithChildren {
   variant: "info" | "success" | "warning" | "error";
@@ -19,11 +20,11 @@ export const Alert: FC<AlertProps> = ({
   subheader,
   children,
 }) => (
-  <section data-alert={variant}>
-    <span aria-hidden="true">{icons[variant]}</span>
-    <div>
-      <h5>{header}</h5>
-      {subheader && <h6>{subheader}</h6>}
+  <section class={styles.alert} data-alert={variant}>
+    <span class={styles.icon} aria-hidden="true">{icons[variant]}</span>
+    <div class={styles.content}>
+      <h5 class={styles.header}>{header}</h5>
+      {subheader && <h6 class={styles.subheader}>{subheader}</h6>}
     </div>
     {children}
   </section>

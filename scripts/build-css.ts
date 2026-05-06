@@ -23,6 +23,26 @@ function getFiles(dir: string, ext: string, files: string[] = []): string[] {
   return files;
 }
 
+// Apply CSS Modules scoping to a file's content
+function scopeCSSModules(css: string, filePath: string): string {
+  const componentName = basename(dirname(filePath));
+
+  // Split by url(...) to avoid replacing inside URLs, then scope class selectors
+  const parts = css.split(/(url\([\s\S]*?\))/g);
+
+  return parts
+    .map((part, i) => {
+      if (i % 2 === 1) return part; // url(...) parts, keep as-is
+
+      // Replace class selectors: .className → .ComponentName_className
+      return part.replace(
+        /\.([a-zA-Z_-][a-zA-Z0-9_-]*)/g,
+        `.${componentName}_$1`,
+      );
+    })
+    .join("");
+}
+
 // Get all CSS files from src/styles and src/views/components
 function getCSSFiles(): string[] {
   const stylesDir = resolve(rootDir, "src", "styles");
@@ -70,7 +90,14 @@ function combineCSS(): string {
   return cssFiles
     .map((f) => {
       try {
-        return readFileSync(f, "utf-8");
+        let content = readFileSync(f, "utf-8");
+
+        // Scope CSS Modules files to match Vite's generateScopedName
+        if (f.endsWith(".module.css")) {
+          content = scopeCSSModules(content, f);
+        }
+
+        return content;
       } catch (e) {
         console.warn(`Warning: Could not read ${f}`);
         return "";

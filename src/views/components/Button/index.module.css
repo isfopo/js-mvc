@@ -1,0 +1,41 @@
+/* Only variant/size overrides that can't be global */
+
+.button[data-variant="secondary"] {
+    background: var(--color-surface-elevated);
+    color: var(--color-text);
+    border-color: var(--color-border);
+}
+
+.button[data-variant="secondary"]:hover:not(:disabled) {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.button[data-variant="danger"] {
+    background: #dc2626;
+}
+
+.button[data-variant="danger"]:hover:not(:disabled) {
+    background: #b91c1c;
+}
+
+.button[data-variant="ghost"] {
+    background: transparent;
+    color: var(--color-accent);
+    border-color: transparent;
+}
+
+.button[data-variant="ghost"]:hover:not(:disabled) {
+    background: var(--color-accent);
+    color: var(--color-surface-elevated);
+}
+
+.button[data-size="sm"] {
+    font-size: var(--font-size-smaller);
+    padding: var(--space-xs) var(--space-sm);
+}
+
+.button[data-size="lg"] {
+    font-size: var(--font-size-subheading);
+    padding: var(--space-md) var(--space-xl);
+}

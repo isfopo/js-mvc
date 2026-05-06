@@ -1,6 +1,6 @@
 /* Only the layout structure — colors per-variant */
 
-section[data-alert] {
+.alert {
     padding: var(--space-md) var(--space-lg);
     border-radius: var(--radius-md);
     border-left: var(--border-width-accent) solid;
@@ -10,75 +10,75 @@ section[data-alert] {
     gap: var(--space-sm);
 }
 
-section[data-alert] > span {
+.alert > .icon {
     flex-shrink: 0;
     font-size: var(--font-size-heading);
     line-height: var(--leading-tight);
 }
 
-section[data-alert] > div {
+.alert > .content {
     flex: 1;
 }
 
-section[data-alert] > div > p:first-child {
+.alert > .content > .header {
     font-weight: var(--font-weight-semibold);
     font-size: var(--font-size-body);
     margin: 0 0 var(--space-xs);
 }
 
-section[data-alert] > div > p:last-child {
+.alert > .content > .subheader {
     font-size: var(--font-size-small);
     margin: 0;
     line-height: var(--leading-normal);
 }
 
-section[data-alert="info"] {
+.alert[data-alert="info"] {
     background: #eff6ff;
     border-color: var(--color-accent);
 }
 
-section[data-alert="info"] > div > p:first-child {
+.alert[data-alert="info"] > .content > .header {
     color: var(--color-accent);
 }
 
-section[data-alert="success"] {
+.alert[data-alert="success"] {
     background: #f0fdf4;
     border-color: #16a34a;
 }
 
-section[data-alert="success"] > div > p:first-child {
+.alert[data-alert="success"] > .content > .header {
     color: #16a34a;
 }
 
-section[data-alert="warning"] {
+.alert[data-alert="warning"] {
     background: #fffbeb;
     border-color: #d97706;
 }
 
-section[data-alert="warning"] > div > p:first-child {
+.alert[data-alert="warning"] > .content > .header {
     color: #d97706;
 }
 
-section[data-alert="error"] {
+.alert[data-alert="error"] {
     background: #fef2f2;
     border-color: #dc2626;
 }
 
-section[data-alert="error"] > div > p:first-child {
+.alert[data-alert="error"] > .content > .header {
     color: #dc2626;
 }
 
 @media (prefers-color-scheme: dark) {
-    section[data-alert="info"] {
+    .alert[data-alert="info"] {
         background: rgba(0, 102, 204, 0.1);
     }
-    section[data-alert="success"] {
+    .alert[data-alert="success"] {
         background: rgba(22, 163, 74, 0.1);
     }
-    section[data-alert="warning"] {
+    .alert[data-alert="warning"] {
         background: rgba(217, 119, 6, 0.1);
     }
-    section[data-alert="error"] {
+    .alert[data-alert="error"] {
         background: rgba(220, 38, 38, 0.1);
     }
 }

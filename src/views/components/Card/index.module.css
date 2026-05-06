@@ -1,40 +1,40 @@
 /* Card layout only — colors/borders come from global article styles */
 
-article[data-card] {
+.card {
   border: var(--border-width-thin) solid var(--color-border);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
-article[data-card] > header {
+.card > .header {
   padding: var(--space-md) var(--space-lg);
   border-bottom: var(--border-width-thin) solid var(--color-border);
 }
 
-article[data-card] > header h3 {
+.card > .header h3 {
   margin: 0;
   font-size: var(--font-size-heading);
   font-weight: var(--font-weight-semibold);
 }
 
-article[data-card] > div {
+.card > .body {
   padding: var(--space-lg);
 }
 
-article[data-card] > footer {
+.card > .footer {
   padding: var(--space-md) var(--space-lg);
   border-top: var(--border-width-thin) solid var(--color-border);
   background: var(--color-surface);
 }
 
-article[data-card="flat"] {
+.card[data-card="flat"] {
   border: none;
 }
 
-article[data-card="hover"] {
+.card[data-card="hover"] {
   transition: box-shadow 0.2s ease;
 }
 
-article[data-card="hover"]:hover {
+.card[data-card="hover"]:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }

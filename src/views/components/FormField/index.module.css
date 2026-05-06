@@ -1,23 +1,23 @@
 /* Layout only — label/input styles are global */
 
-div[data-field] {
+.field {
   margin-block-end: var(--space-md);
 }
 
-div[data-field] > label > span {
+.field > label > .required {
   color: #dc2626;
   margin-inline-start: var(--space-xs);
 }
 
-div[data-field="error"] > input {
+.field[data-field="error"] > input {
   border-color: #dc2626;
 }
 
-div[data-field="error"] > input:focus {
+.field[data-field="error"] > input:focus {
   box-shadow: 0 0 0 var(--space-xs) rgba(220, 38, 38, 0.15);
 }
 
-div[data-field] > p {
+.field > .error {
   font-size: var(--font-size-smaller);
   color: #dc2626;
   margin-block-start: var(--space-xs);

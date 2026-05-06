@@ -12,6 +12,7 @@
     "noImplicitOverride": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "plugins": [{ "name": "typescript-plugin-css-modules" }],
   },
   "include": ["node_modules", "src/**/*", "worker-configuration.d.ts"],
 }

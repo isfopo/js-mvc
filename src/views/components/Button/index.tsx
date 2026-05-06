@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import styles from "./index.module.css";
 
 export interface ButtonProps {
   variant?: "primary" | "secondary" | "danger" | "ghost";
@@ -15,7 +16,7 @@ export const Button: FC<ButtonProps> = ({
   type = "button",
   disabled = false,
 }) => (
-  <button data-variant={variant} data-size={size} type={type} disabled={disabled}>
+  <button class={styles.button} data-variant={variant} data-size={size} type={type} disabled={disabled}>
     {children}
   </button>
 );

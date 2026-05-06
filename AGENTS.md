@@ -21,9 +21,9 @@ No linter, formatter, or test framework yet.
 
 The CSS build is **automatic** with full HMR support:
 
-1. **Development** (`npm run dev`): 
+1. **Development** (`npm run dev`):
    - CSS builds once at startup
-   - Vite watches `src/styles/**/*.css` files
+   - Vite watches `src/styles/**/*.css` and `src/views/components/**/*.module.css` files
    - On save: CSS rebuilds + Layout HMR updates instantly
    
 2. **Production build** (`npm run build`): CSS builds, then Vite bundles
@@ -53,13 +53,13 @@ The CSS build is **automatic** with full HMR support:
     - Interactive: `details.css`
     - Forms: `forms/label.css`, `forms/input.css`, `forms/button.css`, `forms/textarea.css`, `forms/select.css`
   - Build process recursively discovers all `.css` files in `src/styles/` (excluding `public/`)
-  - Build process automatically discovers all page components in `src/views/pages/`
-  - PurgeCSS generates route-specific optimized CSS files in `public/styles/{route}.css`
-  - Layout component imports CSS via Vite (`import styles from "../../../public/styles/home.css?raw"`)
-  - Route names are auto-generated from page filenames (e.g., `HomePage.tsx` → `home`, `UserProfile.tsx` → `user-profile`)
+  - Component styles use CSS Modules: `src/views/components/{Component}/index.module.css`
+  - Components import their CSS Module (`import styles from "./index.module.css"`) and use scoped class names
+  - The build script scopes `.module.css` classes automatically (e.g., `.alert` → `Alert_alert`)
+  - All styles are combined into a single global bundle at `public/styles/index.css`
   - Edit source files, then `npm run build:css` to regenerate
-  - To add a new route, just create a new page component - CSS will be auto-generated
   - To add styles for a new HTML element, create a file in `src/styles/elements/{element-name}.css`
+  - To add a new component with scoped styles, create `src/views/components/{Component}/index.tsx` and `index.module.css`
 
 ## Routing Convention
 
