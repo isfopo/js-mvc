@@ -61,7 +61,7 @@ function cssBuilderPlugin(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [cssBuilderPlugin(), cloudflare()],
+  plugins: [cssBuilderPlugin(), cloudflare({ inspectorPort: 9229 })],
   build: {
     cssMinify: true,
   },
