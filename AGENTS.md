@@ -45,20 +45,25 @@ The CSS build is **automatic** with full HMR support:
   - Use `FC` from `hono/jsx` with a typed `ViewModel` interface.
 - **Styles** (`src/styles/`):
   - `variables.css` - CSS custom properties (colors, typography, spacing)
-  - `base.css` - Reset and base styles
-  - `layout.css` - Layout components (header, nav, footer, main)
-  - `elements/` - One file per HTML element:
-    - Content: `headings.css`, `paragraphs.css`, `links.css`, `lists.css`, `code.css`, `blockquote.css`, `hr.css`
-    - Media: `media.css` (img, video, figure), `tables.css`
-    - Interactive: `details.css`
-    - Forms: `forms/label.css`, `forms/input.css`, `forms/button.css`, `forms/textarea.css`, `forms/select.css`
+  - `themes.css` - Light and dark color schemes
+  - `reset.css` - Box-sizing, document/landmark base styles
+  - `typography.css` - Headings, paragraphs, lists, blockquotes, links
+  - `buttons.css` - Button elements
+  - `forms.css` - Inputs, selects, textareas, labels, fieldsets, validation
+  - `forms-checks.css` - Checkboxes, radios, switches
+  - `forms-special.css` - Color, datetime, file, range, search inputs
+  - `tables.css` - Table styles
+  - `media.css` - Images, video, audio, svg, iframe, figure
+  - `code.css` - Code blocks and inline code
+  - `layout.css` - Cards, accordion, groups, nav, modal, progress, tooltips, loading
+  - `misc.css` - HR, hidden, template, canvas
+  - `accessibility.css` - ARIA helpers, RTL, reduced motion
   - Build process recursively discovers all `.css` files in `src/styles/` (excluding `public/`)
   - Component styles use CSS Modules: `src/views/components/{Component}/index.module.css`
   - Components import their CSS Module (`import styles from "./index.module.css"`) and use scoped class names
   - The build script scopes `.module.css` classes automatically (e.g., `.alert` → `Alert_alert`)
   - All styles are combined into a single global bundle at `public/styles/index.css`
   - Edit source files, then `npm run build:css` to regenerate
-  - To add styles for a new HTML element, create a file in `src/styles/elements/{element-name}.css`
   - To add a new component with scoped styles, create `src/views/components/{Component}/index.tsx` and `index.module.css`
 
 ## Routing Convention

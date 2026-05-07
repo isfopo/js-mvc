@@ -5,4 +5,5 @@
   - have a nested component structure for loading html with htmx. Only allow htmx targets at the top level of components/pages. Maybe have some middleware wrapper around components to add this automatically
 - Put local state in cookies?
 - use arktype for type validation (post, put)
-- Could there be a way setup storybook for component development?
+- Could there be a way setup ~~storybook~~ for component development? Not storybook - maybe something homebrewed? Serve the components?
+- serve styles from a controller?

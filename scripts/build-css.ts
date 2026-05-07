@@ -64,8 +64,8 @@ function getCSSFiles(): string[] {
     const aName = basename(a);
     const bName = basename(b);
 
-    // Priority order: variables -> base -> layout -> everything else
-    const priority = ["variables.css", "base.css", "layout.css"];
+    // Priority order: variables -> themes -> reset -> layout -> everything else
+    const priority = ["variables.css", "themes.css", "reset.css", "layout.css"];
     const aPriority = priority.indexOf(aName);
     const bPriority = priority.indexOf(bName);
 
