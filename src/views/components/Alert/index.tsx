@@ -1,13 +1,15 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
 import styles from "./index.module.css";
 
+export type AlertVariant = "info" | "success" | "warning" | "error";
+
 export interface AlertProps extends PropsWithChildren {
-  variant: "info" | "success" | "warning" | "error";
+  variant: AlertVariant;
   header: string;
   subheader?: string;
 }
 
-const icons: Record<string, string> = {
+const icons: Record<AlertVariant, string> = {
   info: "ℹ",
   success: "✓",
   warning: "⚠",
