@@ -74,7 +74,7 @@ export function cssBuilderPlugin(): Plugin {
       }
     },
 
-    // Watch CSS files for changes
+    // Watch CSS and icon files for changes
     configureServer(server: ViteDevServer) {
       const stylesDir = resolve(process.cwd(), "src", "styles");
       const componentsDir = resolve(
@@ -83,13 +83,17 @@ export function cssBuilderPlugin(): Plugin {
         "views",
         "components",
       );
+      const iconsDir = resolve(process.cwd(), "src", "assets", "icons");
 
       server.watcher.add(stylesDir);
       server.watcher.add(componentsDir);
+      server.watcher.add(iconsDir);
 
       server.watcher.on("change", (file: string) => {
         if (
-          (file.endsWith(".css") || file.endsWith(".module.css")) &&
+          (file.endsWith(".css") ||
+            file.endsWith(".module.css") ||
+            file.endsWith(".svg")) &&
           !file.includes("/public/")
         ) {
           console.log(

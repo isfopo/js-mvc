@@ -23,6 +23,43 @@ function getFiles(dir: string, ext: string, files: string[] = []): string[] {
   return files;
 }
 
+// Inline SVG references in CSS: url("inline-svg:icons/name.svg")
+function inlineSVGs(css: string, cssFilePath: string): string {
+  const svgRefRegex = /url\(\s*["']?inline-svg:([^"')]+)["']?\s*\)/gi;
+
+  return css.replace(svgRefRegex, (match, svgPath: string) => {
+    try {
+      let resolvedPath: string;
+      if (svgPath.startsWith("./") || svgPath.startsWith("../")) {
+        resolvedPath = resolve(dirname(cssFilePath), svgPath);
+      } else {
+        resolvedPath = resolve(rootDir, "src", "assets", svgPath);
+      }
+
+      let svg = readFileSync(resolvedPath, "utf-8");
+
+      // Simple minification: remove XML comments and collapse whitespace
+      svg = svg
+        .replace(/<!--[\s\S]*?-->/g, "")
+        .replace(/>\s+</g, "><")
+        .trim();
+
+      const encoded = encodeURIComponent(svg)
+        .replace(/%20/g, " ")
+        .replace(/%3D/g, "=")
+        .replace(/%3A/g, ":")
+        .replace(/%2F/g, "/");
+
+      return `url("data:image/svg+xml,${encoded}")`;
+    } catch (e) {
+      console.warn(
+        `Warning: Could not inline SVG ${svgPath} from ${cssFilePath}`,
+      );
+      return match;
+    }
+  });
+}
+
 // Apply CSS Modules scoping to a file's content
 function scopeCSSModules(css: string, filePath: string): string {
   const componentName = basename(dirname(filePath));
@@ -91,6 +128,9 @@ function combineCSS(): string {
     .map((f) => {
       try {
         let content = readFileSync(f, "utf-8");
+
+        // Inline SVG references before scoping
+        content = inlineSVGs(content, f);
 
         // Scope CSS Modules files to match Vite's generateScopedName
         if (f.endsWith(".module.css")) {
