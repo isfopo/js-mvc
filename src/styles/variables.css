@@ -1,14 +1,17 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+
 :root,
 :host {
-    --pico-font-family-emoji:
-        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
-        "Noto Color Emoji";
     --pico-font-family-sans-serif:
-        system-ui, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, Helvetica,
-        Arial, "Helvetica Neue", sans-serif, var(--pico-font-family-emoji);
+        "Open Sans", system-ui, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+        Helvetica, Arial, "Helvetica Neue", sans-serif,
+        var(--pico-font-family-emoji);
     --pico-font-family-monospace:
         ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
         "Liberation Mono", monospace, var(--pico-font-family-emoji);
+    --pico-font-family-emoji:
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
     --pico-font-family: var(--pico-font-family-sans-serif);
     --pico-line-height: 1.5;
     --pico-font-weight: 400;
