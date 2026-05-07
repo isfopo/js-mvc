@@ -26,7 +26,7 @@ export const Alert: FC<AlertProps> = ({
     </span>
     <div class={styles.content}>
       <h5 class={styles.header}>{header}</h5>
-      {subheader && <h6 class={styles.subheader}>{subheader}</h6>}
+      {subheader && <h6>{subheader}</h6>}
     </div>
     {children}
   </section>

@@ -66,6 +66,13 @@ The CSS build is **automatic** with full HMR support:
   - Edit source files, then `npm run build:css` to regenerate
   - To add a new component with scoped styles, create `src/views/components/{Component}/index.tsx` and `index.module.css`
 
+## Component Philosophy
+
+- **Components should be minimal.** Only add the CSS necessary to make the component functional or to express its specific semantics. Everything else falls back to Pico defaults.
+- **Prefer semantic HTML.** Use native elements (`<button>`, `<h1>`, `<p>`, `<table>`, `<input>`, etc.) directly whenever possible. Do not create a component just to wrap a single semantic element.
+- **Create components only when semantic HTML is insufficient.** Good reasons include: composite structures (e.g., a dashboard widget with header/chart/legend), stateful variants (e.g., alert with info/success/warning/error states), or reusable layouts that Pico does not provide.
+- **CSS Modules scope the minimum.** A component's `index.module.css` should define only its custom properties and layout overrides. Typography, spacing, color, and form styling are inherited from Pico.
+
 ## Routing Convention
 
 Routes are declared with decorators from `HandlerBase`:
