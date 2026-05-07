@@ -21,7 +21,9 @@ export const Alert: FC<AlertProps> = ({
   children,
 }) => (
   <section class={styles.alert} data-alert={variant}>
-    <span class={styles.icon} aria-hidden="true">{icons[variant]}</span>
+    <span class={styles.icon} aria-hidden="true">
+      {icons[variant]}
+    </span>
     <div class={styles.content}>
       <h5 class={styles.header}>{header}</h5>
       {subheader && <h6 class={styles.subheader}>{subheader}</h6>}
