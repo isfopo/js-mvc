@@ -1,7 +1,7 @@
 import { Env, Hono } from "hono";
-import HomeController from "./HomeController";
-import ComponentsController from "./ComponentsController";
-import WellKnownController from "./WellKnownController";
+import HomeController from "../../pages/Home/controller";
+import ComponentsController from "../../pages/Components/controller";
+import WellKnownController from "../../api/WellKnown/controller";
 
 export const registerControllers = <T extends Env>(app: Hono<T>) => {
   HomeController.register(app);

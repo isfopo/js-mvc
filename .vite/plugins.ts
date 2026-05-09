@@ -39,7 +39,6 @@ export function cssModulesPlugin(): Plugin {
       const filePath = resolve(
         process.cwd(),
         "src",
-        "views",
         "components",
         componentName,
         "index.module.css",
@@ -81,7 +80,6 @@ export function cssBuilderPlugin(): Plugin {
       const componentsDir = resolve(
         process.cwd(),
         "src",
-        "views",
         "components",
       );
       const iconsDir = resolve(process.cwd(), "src", "assets", "icons");
@@ -110,8 +108,7 @@ export function cssBuilderPlugin(): Plugin {
               const layoutFile = resolve(
                 process.cwd(),
                 "src",
-                "views",
-                "shared",
+                "layouts",
                 "Layout.tsx",
               );
               server.watcher.emit("change", layoutFile);

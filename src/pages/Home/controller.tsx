@@ -1,15 +1,14 @@
 import { Context, Env } from "hono";
-import { Get, ControllerBase } from "./ControllerBase";
-import { Home } from "../views/pages/Home";
-import { HomeViewBuilder } from "../view-builders/HomeViewBuilder";
+import { Get, ControllerBase } from "../../infrastructure/ControllerBase";
+import { viewBuilder } from "./view-builder";
+import { View as HomeView } from "./views/index";
 
 class HomeController<T extends Env> extends ControllerBase<T> {
   override base = "home";
-  viewBuilder = new HomeViewBuilder();
 
   @Get("/")
   index({ render }: Context) {
-    return render(<Home {...this.viewBuilder.index()} />);
+    return render(<HomeView {...viewBuilder.index()} />);
   }
 
   @Get("/about")

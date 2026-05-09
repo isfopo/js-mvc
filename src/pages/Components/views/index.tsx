@@ -1,10 +1,10 @@
 import type { FC } from "hono/jsx";
-import { Alert } from "../components/Alert";
-import { Action } from "../components/Action";
+import { Alert } from "../../../components/Alert";
+import { Action } from "../../../utils/Action";
 
 const Confirm = Action("confirm");
 
-export const Components: FC = () => (
+export const View: FC = () => (
   <section>
     <h2>Alerts</h2>
 

@@ -80,10 +80,10 @@ function scopeCSSModules(css: string, filePath: string): string {
     .join("");
 }
 
-// Get all CSS files from src/styles and src/views/components
+// Get all CSS files from src/styles and src/components
 function getCSSFiles(): string[] {
   const stylesDir = resolve(rootDir, "src", "styles");
-  const componentsDir = resolve(rootDir, "src", "views", "components");
+  const componentsDir = resolve(rootDir, "src", "components");
 
   let cssFiles = getFiles(stylesDir, ".css").filter(
     (f) => !f.includes("/public/"),

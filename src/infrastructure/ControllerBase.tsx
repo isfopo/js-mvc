@@ -20,8 +20,8 @@
 
 import { Context, Env, Hono } from "hono";
 import { renderToString } from "hono/jsx/dom/server";
-import { Layout } from "../views/shared/Layout";
-import { handleError } from "../errors";
+import { Layout } from "../layouts/Layout";
+import { handleError } from "./errors/index";
 
 /* ---------- Symbol.metadata polyfill ---------- */
 

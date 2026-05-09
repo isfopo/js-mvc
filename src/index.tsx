@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { registerControllers } from "./controllers";
+import { registerControllers } from "./infrastructure/controllers";
 
 const app = new Hono<{ Bindings: Cloudflare.Env }>();
 

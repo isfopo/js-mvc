@@ -1,5 +1,5 @@
 import { StatusCode } from "hono/utils/http-status";
-import { ResultsView } from "../views/shared/Results";
+import { ResultsView } from "../../layouts/Results";
 import { Context } from "hono";
 
 export class AppError extends Error {
