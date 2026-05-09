@@ -17,7 +17,7 @@
  *         data-confirm-message="Delete?">Delete</button>
  */
 
-import type { Handler } from "../types";
+import type { Handler } from "./types";
 
 export abstract class BaseHandler implements Handler {
   /** The root element that declared data-controller */

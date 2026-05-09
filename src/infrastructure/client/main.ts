@@ -3,7 +3,9 @@
  * Compiled to public/client/main.js and loaded by the server-rendered layout.
  */
 
-import "./handlers";
+// Import each handler to trigger its side-effect registration with the dispatcher
+import "../../handlers/DismissHandler";
+import "../../handlers/ConfirmHandler";
 import { start } from "./dispatcher";
 
 console.log("js-mvc client loaded");
@@ -18,8 +20,6 @@ export function onReady(cb: () => void): void {
     cb();
   }
 }
-
-// --- Bootstrap ---
 
 // --- Bootstrap ---
 

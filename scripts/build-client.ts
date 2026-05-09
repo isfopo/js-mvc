@@ -17,7 +17,7 @@ async function main() {
   console.log("🔨 Building client JS...");
 
   await build({
-    entryPoints: [resolve(rootDir, "src", "client", "main.ts")],
+    entryPoints: [resolve(rootDir, "src", "infrastructure", "client", "main.ts")],
     outfile: resolve(rootDir, "public", "client", "main.js"),
     bundle: true,
     format: "esm",

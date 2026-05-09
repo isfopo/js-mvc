@@ -17,7 +17,7 @@ export const Layout: FC<LayoutProps> = ({ children, head = "" }) => {
         {import.meta.env.DEV ? (
           <>
             <script type="module" src="/@vite/client"></script>
-            <script type="module" src="/src/client/main.ts"></script>
+            <script type="module" src="/src/infrastructure/client/main.ts"></script>
           </>
         ) : (
           <script type="module" src="/client/main.js"></script>
