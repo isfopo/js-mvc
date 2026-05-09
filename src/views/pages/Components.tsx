@@ -1,6 +1,8 @@
 import type { FC } from "hono/jsx";
 import { Alert } from "../components/Alert";
-import { action, handler } from "../shared/action";
+import { Action } from "../components/Action";
+
+const Confirm = Action("confirm");
 
 export const Components: FC = () => (
   <section>
@@ -24,25 +26,18 @@ export const Components: FC = () => (
 
     <h2>Interactive — Confirm Action</h2>
 
-    <div
-      data-controller={handler("confirm")}
-      data-confirm-message="Are you sure you want to proceed?"
-    >
+    <Confirm data-confirm-message="Are you sure?">
       <p>
         The button below triggers a native confirm dialog via the
-        <code>confirm</code> controller.
+        <code>confirm</code> handler.
       </p>
-      <a
-        href="/"
-        role="button"
-        data-action={action("click", "confirm", "ask")}
-      >
-        Try confirm dialog
-      </a>
-    </div>
+      <Confirm.Trigger event="click" method="ask">
+        <a href="/" role="button">Try confirm dialog</a>
+      </Confirm.Trigger>
+    </Confirm>
 
     <p>
-      Alerts above are dismissible via the <code>dismiss</code> controller.
+      Alerts above are dismissible via the <code>dismiss</code> handler.
       Click the ✕ button on any alert to dismiss it.
     </p>
   </section>

@@ -2,7 +2,7 @@ var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
-// src/client/handlers/base-handler.ts
+// src/client/handlers/BaseHandler.ts
 var BaseHandler = class {
   constructor(element) {
     /** The root element that declared data-controller */
@@ -144,7 +144,7 @@ function start() {
   });
 }
 
-// src/client/handlers/confirm-handler.ts
+// src/client/handlers/ConfirmHandler.ts
 var ConfirmHandler = class extends BaseHandler {
   connect() {
   }
@@ -163,7 +163,7 @@ var ConfirmHandler = class extends BaseHandler {
 __publicField(ConfirmHandler, "handlerName", "confirm");
 register("confirm", ConfirmHandler);
 
-// src/client/handlers/dismiss-handler.ts
+// src/client/handlers/DismissHandler.ts
 var DismissHandler = class extends BaseHandler {
   connect() {
   }
