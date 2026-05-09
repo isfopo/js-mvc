@@ -152,7 +152,7 @@ var ConfirmHandler = class extends BaseHandler {
   connect() {
   }
   /**
-   * Called via data-action="click->confirm#ask".
+   * Called when the trigger element's event fires.
    * Stops the default behavior unless the user confirms.
    */
   ask(event) {

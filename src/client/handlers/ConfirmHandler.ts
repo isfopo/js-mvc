@@ -1,10 +1,12 @@
 /**
  * Confirm handler — shows a native confirm dialog before an action proceeds.
  *
- * Usage:
- *   <div data-controller="confirm" data-confirm-message="Delete this item?">
- *     <button data-action="click->confirm#ask">Delete</button>
- *   </div>
+ * Usage with Action component (Trigger-only, recommended):
+ *   const Confirm = Action("confirm");
+ *
+ *   <Confirm.Trigger event="click" method="ask" message="Delete this item?">
+ *     <button>Delete</button>
+ *   </Confirm.Trigger>
  *
  * The event is prevented if the user cancels the confirm dialog.
  */
@@ -22,7 +24,7 @@ export class ConfirmHandler extends BaseHandler {
   }
 
   /**
-   * Called via data-action="click->confirm#ask".
+   * Called when the trigger element's event fires.
    * Stops the default behavior unless the user confirms.
    */
   ask(event: Event): void {

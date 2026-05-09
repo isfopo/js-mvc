@@ -3,14 +3,22 @@
  *
  * Useful for dismissible alerts, banners, toasts, modals.
  *
- * Usage:
- *   <div data-controller="dismiss" role="alert">
- *     <span>Something happened.</span>
- *     <button data-action="click->dismiss#hide">✕</button>
- *   </div>
+ * Usage with Action component (Wrapper + Trigger):
+ *   const Dismiss = Action("dismiss");
  *
- * By default the root element is hidden. Set data-dismiss-remove="true"
- * to remove the element from the DOM instead.
+ *   <Dismiss role="alert">
+ *     <span>Something happened.</span>
+ *     <Dismiss.Trigger event="click" method="hide">
+ *       <button>✕</button>
+ *     </Dismiss.Trigger>
+ *   </Dismiss>
+ *
+ * The controller is on the Wrapper because hide() hides the container
+ * element itself (this.element). Set data-dismiss-remove="true" via
+ * Trigger to remove the element from the DOM instead:
+ *   <Dismiss.Trigger event="click" method="hide" remove="true">
+ *     <button>✕</button>
+ *   </Dismiss.Trigger>
  */
 
 import { BaseHandler } from "./BaseHandler";

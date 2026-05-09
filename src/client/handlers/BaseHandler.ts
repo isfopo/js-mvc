@@ -4,10 +4,17 @@
  * Mirrors the server-side ControllerBase pattern. Subclasses declare
  * a static `handlerName` and implement `connect()`.
  *
- * Usage in HTML:
- *   <div data-controller="confirm" data-confirm-message="Delete?">
- *     <button data-action="click->confirm#ask">Delete</button>
- *   </div>
+ * Usage is via the Action component factory (src/views/components/Action.tsx).
+ * The handler name is bound once, and data params are passed as props:
+ *
+ *   const Confirm = Action("confirm");
+ *   <Confirm.Trigger event="click" method="ask" message="Delete?">
+ *     <button>Delete</button>
+ *   </Confirm.Trigger>
+ *
+ * This renders: <button data-controller="confirm"
+ *         data-action="click->confirm#ask"
+ *         data-confirm-message="Delete?">Delete</button>
  */
 
 import type { Handler } from "../types";
