@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../src/client/main.ts"],
+  "sourcesContent": ["/**\n * Client-side entry point for js-mvc.\n * Compiled to public/client/main.js and loaded by the server-rendered layout.\n */\n\nconsole.log(\"js-mvc client loaded\");\n\n// --- Utility functions ---\n\n/** Throttle a function to run at most once per `delay` ms */\nexport function throttle<T extends (...args: unknown[]) => void>(\n  fn: T,\n  delay: number,\n): (...args: Parameters<T>) => void {\n  let lastCall = 0;\n  return (...args: Parameters<T>) => {\n    const now = Date.now();\n    if (now - lastCall >= delay) {\n      lastCall = now;\n      fn(...args);\n    }\n  };\n}\n\n// --- DOM helpers ---\n\n/** Waits for the DOM to be ready, then runs the callback */\nexport function onReady(cb: () => void): void {\n  if (document.readyState === \"loading\") {\n    document.addEventListener(\"DOMContentLoaded\", cb);\n  } else {\n    cb();\n  }\n}\n\n// --- Bootstrap ---\n\nonReady(() => {\n  console.log(\"js-mvc DOM ready\");\n});\n"],
+  "mappings": ";AAKA,QAAQ,IAAI,sBAAsB;AAK3B,SAAS,SACd,IACA,OACkC;AAClC,MAAI,WAAW;AACf,SAAO,IAAI,SAAwB;AACjC,UAAM,MAAM,KAAK,IAAI;AACrB,QAAI,MAAM,YAAY,OAAO;AAC3B,iBAAW;AACX,SAAG,GAAG,IAAI;AAAA,IACZ;AAAA,EACF;AACF;AAKO,SAAS,QAAQ,IAAsB;AAC5C,MAAI,SAAS,eAAe,WAAW;AACrC,aAAS,iBAAiB,oBAAoB,EAAE;AAAA,EAClD,OAAO;AACL,OAAG;AAAA,EACL;AACF;AAIA,QAAQ,MAAM;AACZ,UAAQ,IAAI,kBAAkB;AAChC,CAAC;",
+  "names": []
+}

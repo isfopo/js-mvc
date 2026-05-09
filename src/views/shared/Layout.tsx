@@ -13,6 +13,16 @@ export const Layout: FC<LayoutProps> = ({ children, head = "" }) => {
         <meta name="description" content="JS-MVC" />
         <title>JS-MVC</title>
         <link rel="stylesheet" href="/styles/index.css" />
+
+        {import.meta.env.DEV ? (
+          <>
+            <script type="module" src="/@vite/client"></script>
+            <script type="module" src="/src/client/main.ts"></script>
+          </>
+        ) : (
+          <script type="module" src="/client/main.js"></script>
+        )}
+
         {head}
       </head>
       <body>
