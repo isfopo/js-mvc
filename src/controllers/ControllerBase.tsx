@@ -37,7 +37,7 @@ export const Put = (path: string) => httpRoute("put", path);
 export const Delete = (path: string) => httpRoute("delete", path);
 export const Patch = (path: string) => httpRoute("patch", path);
 
-export abstract class HandlerBase<T extends Env> {
+export abstract class ControllerBase<T extends Env> {
   _app: Hono<T>;
   abstract base: string;
 

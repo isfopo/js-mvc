@@ -1,8 +1,8 @@
 import { Context, Env } from "hono";
-import { Get, HandlerBase } from "./HandlerBase";
+import { Get, ControllerBase } from "./ControllerBase";
 import { Components } from "../views/pages/Components";
 
-class ComponentsHandler<T extends Env> extends HandlerBase<T> {
+class ComponentsController<T extends Env> extends ControllerBase<T> {
   override base = "components";
 
   @Get("/")
@@ -11,4 +11,4 @@ class ComponentsHandler<T extends Env> extends HandlerBase<T> {
   }
 }
 
-export default new ComponentsHandler();
+export default new ComponentsController();

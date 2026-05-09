@@ -36,8 +36,8 @@ The CSS build is **automatic** with full HMR support:
 
 ## Architecture
 
-- **Entry point:** `src/index.tsx` — creates the `Hono` app, mounts handlers, and defines the root route directly.
-- **Handlers** (`src/handlers/`): Each handler extends `HandlerBase`, sets an override `base` string (the route prefix), and declares routes via decorators (see **Routing Convention** below). New handlers must be registered in `handlers/index.ts`.
+- **Entry point:** `src/index.tsx` — creates the `Hono` app, mounts controllers, and defines the root route directly.
+- **Controllers** (`src/controllers/`): Each controller extends `ControllerBase`, sets an override `base` string (the route prefix), and declares routes via decorators (see **Routing Convention** below). New controllers must be registered in `controllers/index.ts`.
 - **Views** (`src/views/`):
   - `pages/` — top-level page components
   - `components/` — reusable UI pieces
@@ -75,12 +75,12 @@ The CSS build is **automatic** with full HMR support:
 
 ## Routing Convention
 
-Routes are declared with decorators from `HandlerBase`:
+Routes are declared with decorators from `ControllerBase`:
 
 ```ts
-import { Get, Post, Delete, HandlerBase } from "./HandlerBase";
+import { Get, Post, Delete, ControllerBase } from "./ControllerBase";
 
-class MyHandler extends HandlerBase {
+class MyController extends ControllerBase {
   override base = "api";
 
   @Get("/")          // GET /api
@@ -97,10 +97,10 @@ class MyHandler extends HandlerBase {
 
 ## Layout / Rendering
 
-Handlers can wrap every route response in a layout automatically. Set it in the constructor:
+Controllers can wrap every route response in a layout automatically. Set it in the constructor:
 
 ```ts
-class MyHandler extends HandlerBase {
+class MyController extends ControllerBase {
   override base = "my";
 
   constructor() {
@@ -114,9 +114,9 @@ class MyHandler extends HandlerBase {
 }
 ```
 
-- Call `this.setLayout(Layout)` once per handler to enable auto-wrapping.
+- Call `this.setLayout(Layout)` once per controller to enable auto-wrapping.
 - Use `c.render(<View />)` instead of `c.html(<Layout><View /></Layout>)`.
-- Handlers without a layout set fall back to returning raw `Response` objects.
+- Controllers without a layout set fall back to returning raw `Response` objects.
 - Layout components receive `{ children }` and optionally `head` props.
 
 ## Conventions

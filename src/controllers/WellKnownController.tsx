@@ -1,9 +1,9 @@
 import process from "node:process";
 import crypto from "node:crypto";
 import { Context, Env } from "hono";
-import { Get, HandlerBase } from "./HandlerBase";
+import { Get, ControllerBase } from "./ControllerBase";
 
-class WellKnownHandler<T extends Env> extends HandlerBase<T> {
+class WellKnownController<T extends Env> extends ControllerBase<T> {
   override base = ".well-known";
 
   // Chrome devtools endpoint
@@ -18,4 +18,4 @@ class WellKnownHandler<T extends Env> extends HandlerBase<T> {
   }
 }
 
-export default new WellKnownHandler();
+export default new WellKnownController();

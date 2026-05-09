@@ -1,5 +1,6 @@
 import type { FC } from "hono/jsx";
 import { Alert } from "../components/Alert";
+import { action, handler } from "../shared/action";
 
 export const Components: FC = () => (
   <section>
@@ -20,5 +21,29 @@ export const Components: FC = () => (
     <Alert variant="error" header="Payment Failed">
       Your credit card was declined. Please update your payment method.
     </Alert>
+
+    <h2>Interactive — Confirm Action</h2>
+
+    <div
+      data-controller={handler("confirm")}
+      data-confirm-message="Are you sure you want to proceed?"
+    >
+      <p>
+        The button below triggers a native confirm dialog via the
+        <code>confirm</code> controller.
+      </p>
+      <a
+        href="/"
+        role="button"
+        data-action={action("click", "confirm", "ask")}
+      >
+        Try confirm dialog
+      </a>
+    </div>
+
+    <p>
+      Alerts above are dismissible via the <code>dismiss</code> controller.
+      Click the ✕ button on any alert to dismiss it.
+    </p>
   </section>
 );

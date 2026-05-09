@@ -1,9 +1,9 @@
 import { Context, Env } from "hono";
-import { Get, HandlerBase } from "./HandlerBase";
+import { Get, ControllerBase } from "./ControllerBase";
 import { Home } from "../views/pages/Home";
 import { HomeService } from "../services/HomeService";
 
-class HomeHandler<T extends Env> extends HandlerBase<T> {
+class HomeController<T extends Env> extends ControllerBase<T> {
   override base = "home";
   service = new HomeService();
 
@@ -28,4 +28,4 @@ class HomeHandler<T extends Env> extends HandlerBase<T> {
   }
 }
 
-export default new HomeHandler();
+export default new HomeController();
