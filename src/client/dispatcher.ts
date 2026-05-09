@@ -56,9 +56,11 @@ function connectElement(element: HTMLElement): void {
     const instance = new Ctor(element);
     handlers.push(instance);
 
-    // Wire up data-action attributes within this handler's scope
-    element.querySelectorAll<HTMLElement>("[data-action]").forEach((target) => {
-      const raw = target.getAttribute("data-action") ?? "";
+    // Wire up data-action attributes within this handler's scope.
+    // The element itself is checked too, supporting Trigger-only usage
+    // where data-controller and data-action live on the same element.
+
+    function wireAction(target: HTMLElement, raw: string) {
       for (const part of raw.split(";")) {
         const desc = parseAction(part);
         if (desc && desc.handler === name) {
@@ -72,7 +74,16 @@ function connectElement(element: HTMLElement): void {
           }
         }
       }
-    });
+    }
+
+    // Check the element itself
+    const selfAction = element.getAttribute("data-action");
+    if (selfAction) wireAction(element, selfAction);
+
+    // Check descendants
+    element
+      .querySelectorAll<HTMLElement>("[data-action]")
+      .forEach((target) => wireAction(target, target.getAttribute("data-action") ?? ""));
 
     instance.connect();
   }

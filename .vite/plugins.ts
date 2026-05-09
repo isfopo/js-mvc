@@ -13,6 +13,7 @@ export function extractClassNames(css: string): Set<string> {
   while ((match = classRegex.exec(css)) !== null) {
     classNames.add(match[1]);
   }
+
   return classNames;
 }
 

@@ -63,15 +63,7 @@ function connectElement(element) {
   const names = (element.getAttribute("data-controller") ?? "").split(/\s+/).filter(Boolean);
   const handlers = [];
   for (const name of names) {
-    const Ctor = registry.get(name);
-    if (!Ctor) {
-      console.warn(`[dispatcher] No handler registered for "${name}"`);
-      continue;
-    }
-    const instance = new Ctor(element);
-    handlers.push(instance);
-    element.querySelectorAll("[data-action]").forEach((target) => {
-      const raw = target.getAttribute("data-action") ?? "";
+    let wireAction2 = function(target, raw) {
       for (const part of raw.split(";")) {
         const desc = parseAction(part);
         if (desc && desc.handler === name) {
@@ -85,7 +77,18 @@ function connectElement(element) {
           }
         }
       }
-    });
+    };
+    var wireAction = wireAction2;
+    const Ctor = registry.get(name);
+    if (!Ctor) {
+      console.warn(`[dispatcher] No handler registered for "${name}"`);
+      continue;
+    }
+    const instance = new Ctor(element);
+    handlers.push(instance);
+    const selfAction = element.getAttribute("data-action");
+    if (selfAction) wireAction2(element, selfAction);
+    element.querySelectorAll("[data-action]").forEach((target) => wireAction2(target, target.getAttribute("data-action") ?? ""));
     instance.connect();
   }
   if (handlers.length > 0) {

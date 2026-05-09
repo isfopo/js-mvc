@@ -6,19 +6,28 @@
  *
  * Usage:
  *
+ *   // Wrapper + Trigger — handler scoped to a container element
  *   const Dismiss = Action("dismiss");
  *
  *   <Dismiss class="card">
  *     <span>Content</span>
  *     <Dismiss.Trigger event="click" method="hide">
- *       <button aria-label="Dismiss">✕</button>
+ *       <button>✕</button>
  *     </Dismiss.Trigger>
  *   </Dismiss>
  *
- * Action(name) returns a component (the Wrapper) with a .Trigger
- * sub-component attached. Trigger injects data-action directly into
- * the child element — no wrapper or tag prop needed.
+ *   // Trigger only — handler lives on the interactive element itself
+ *   const Confirm = Action("confirm");
+ *
+ *   <Confirm.Trigger event="click" method="ask" message="Are you sure?">
+ *     <a href="/">Proceed</a>
+ *   </Confirm.Trigger>
+ *
+ * Data params passed to Trigger (like `message`) are automatically
+ * converted to data-{handler}-{key} attributes on the child element.
  */
+
+import { JSX } from "hono/jsx";
 
 // ---------------------------------------------------------------------------
 // Handler/method registry
@@ -73,22 +82,20 @@ type WrapperProps = {
 /**
  * Create a scoped Wrapper + Trigger pair for a client-side handler.
  *
- * Call once at the component level. The returned Wrapper component
- * renders data-controller on its root element. Trigger injects
- * data-action into the first child element.
+ * Call once at the component level.
  *
- * @example
- *   const Confirm = Action("confirm");
+ * Wrapper renders a container element with data-controller — use when
+ * the handler must be scoped to a container (e.g. dismiss, where hide()
+ * hides the container itself).
  *
- *   <Confirm data-confirm-message="Are you sure?">
- *     <Confirm.Trigger event="click" method="ask">
- *       <a href="/">Proceed</a>
- *     </Confirm.Trigger>
- *   </Confirm>
+ * Trigger renders its child element with data-controller, data-action,
+ * and any extra props as data-{handler}-{key} attributes merged in.
+ * Use Trigger alone when the interactive element is the right scope
+ * for the handler (e.g. confirm).
  */
 export function Action<E extends keyof HandlerActions>(name: E) {
   function Wrapper({ tag, children, ...rest }: WrapperProps) {
-    const Tag = tag ?? "div";
+    const Tag = (tag ?? "div") as keyof JSX.IntrinsicElements;
     return (
       <Tag data-controller={name} {...rest}>
         {children}
@@ -96,32 +103,37 @@ export function Action<E extends keyof HandlerActions>(name: E) {
     );
   }
 
-  function Trigger({ event, method, children, ...rest }: TriggerProps<E>) {
-    const dataAction = `${event}->${name}#${method}`;
+  function Trigger({ event, method, children, ...dataProps }: TriggerProps<E>) {
+    // Attributes to inject into the child element
+    const inject: Record<string, string> = {
+      "data-controller": name,
+      "data-action": `${event}->${name}#${method}`,
+    };
 
-    // Single child element — re-render it with data-action merged in
+    // Convert extra props to data-{handler}-{key}
+    for (const key of Object.keys(dataProps)) {
+      inject[`data-${name}-${key}`] = String(dataProps[key]);
+    }
+
+    // Single child element — re-render with all injected attributes merged in
     if (
       children != null &&
       typeof children === "object" &&
       "tag" in children &&
       !Array.isArray(children)
     ) {
-      const Tag = children.tag;
+      const Tag = (children as any).tag as keyof JSX.IntrinsicElements;
       const childProps = (children as any).props || {};
       const childChildren = (children as any).children;
       return (
-        <Tag {...childProps} data-action={dataAction} {...rest}>
+        <Tag {...childProps} {...inject}>
           {childChildren}
         </Tag>
       );
     }
 
-    // Fallback: wrap in a span with the action attribute
-    return (
-      <span data-action={dataAction} {...rest}>
-        {children}
-      </span>
-    );
+    // Fallback: wrap in a span
+    return <span {...inject}>{children}</span>;
   }
 
   Wrapper.Trigger = Trigger;

@@ -25,16 +25,14 @@ export const Components: FC = () => (
     </Alert>
 
     <h2>Interactive — Confirm Action</h2>
-
-    <Confirm data-confirm-message="Are you sure?">
-      <p>
-        The button below triggers a native confirm dialog via the
-        <code>confirm</code> handler.
-      </p>
-      <Confirm.Trigger event="click" method="ask">
-        <a href="/" role="button">Try confirm dialog</a>
-      </Confirm.Trigger>
-    </Confirm>
+    <p>
+      The link below uses <code>Confirm.Trigger</code> without a Wrapper.
+      Data params (<code>message</code>) are passed directly to Trigger
+      and converted to <code>data-confirm-message</code>.
+    </p>
+    <Confirm.Trigger event="click" method="ask" message="Are you sure you want to proceed?">
+      <a href="/" role="button">Try confirm dialog</a>
+    </Confirm.Trigger>
 
     <p>
       Alerts above are dismissible via the <code>dismiss</code> handler.
