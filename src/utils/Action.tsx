@@ -42,6 +42,7 @@ export interface HandlerActions {
   confirm: "ask";
   vote: "submit";
   status: "transition";
+  addoption: "add";
 }
 
 // ---------------------------------------------------------------------------

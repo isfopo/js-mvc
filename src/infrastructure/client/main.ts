@@ -8,6 +8,7 @@ import "../../handlers/DismissHandler";
 import "../../handlers/ConfirmHandler";
 import "../../handlers/VoteHandler";
 import "../../handlers/StatusTransitionHandler";
+import "../../handlers/AddOptionHandler";
 import { start } from "./dispatcher";
 
 console.log("js-mvc client loaded");

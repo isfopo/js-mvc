@@ -2,6 +2,58 @@ import type { FC } from "hono/jsx";
 import type { TenetFormViewModel } from "../view-model";
 import styles from "./new.module.css";
 
+/** Renders a single option row with the given index. */
+function OptionCard(idx: number) {
+  return (
+    <article class={styles.optionCard}>
+      <legend>Option {idx + 1}</legend>
+      <label for={`opt-${idx}-title`}>Title</label>
+      <input id={`opt-${idx}-title`} name={`options[${idx}][title]`} type="text" required />
+
+      <label for={`opt-${idx}-desc`}>Description</label>
+      <textarea id={`opt-${idx}-desc`} name={`options[${idx}][description]`} rows={2} />
+
+      <div class={styles.prosConsGrid}>
+        <label for={`opt-${idx}-pros`}>
+          Pros
+          <textarea id={`opt-${idx}-pros`} name={`options[${idx}][pros]`} rows={3} />
+        </label>
+        <label for={`opt-${idx}-cons`}>
+          Cons
+          <textarea id={`opt-${idx}-cons`} name={`options[${idx}][cons]`} rows={3} />
+        </label>
+      </div>
+    </article>
+  );
+}
+
+/** Template for the client-side AddOptionHandler to clone. */
+function OptionTemplate() {
+  return (
+    <template>
+      <article class={styles.optionCard}>
+        <legend>Option __IDX_PLUS_ONE__</legend>
+        <label for="opt-__IDX__-title">Title</label>
+        <input id="opt-__IDX__-title" name="options[__IDX__][title]" type="text" required />
+
+        <label for="opt-__IDX__-desc">Description</label>
+        <textarea id="opt-__IDX__-desc" name="options[__IDX__][description]" rows={2} />
+
+        <div class={styles.prosConsGrid}>
+          <label for="opt-__IDX__-pros">
+            Pros
+            <textarea id="opt-__IDX__-pros" name="options[__IDX__][pros]" rows={3} />
+          </label>
+          <label for="opt-__IDX__-cons">
+            Cons
+            <textarea id="opt-__IDX__-cons" name="options[__IDX__][cons]" rows={3} />
+          </label>
+        </div>
+      </article>
+    </template>
+  );
+}
+
 export const View: FC<TenetFormViewModel> = ({ validationErrors }) => (
   <section>
     <hgroup>
@@ -37,24 +89,22 @@ export const View: FC<TenetFormViewModel> = ({ validationErrors }) => (
           <small>Each option represents a possible choice. Add pros and cons for each.</small>
         </p>
 
-        <article class={styles.optionCard}>
-          <label for="opt-0-title">Option 1 title</label>
-          <input id="opt-0-title" name="options[0][title]" type="text" required />
-
-          <label for="opt-0-desc">Description</label>
-          <textarea id="opt-0-desc" name="options[0][description]" rows={2} />
-
-          <div class={styles.prosConsGrid}>
-            <label for="opt-0-pros">
-              Pros
-              <textarea id="opt-0-pros" name="options[0][pros]" rows={3} />
-            </label>
-            <label for="opt-0-cons">
-              Cons
-              <textarea id="opt-0-cons" name="options[0][cons]" rows={3} />
-            </label>
+        <div data-controller="addoption" data-addoption-start="2">
+          <div data-option-container>
+            {OptionCard(0)}
+            {OptionCard(1)}
           </div>
-        </article>
+
+          {OptionTemplate()}
+
+          <button
+            type="button"
+            class="outline"
+            data-action="click->addoption#add"
+          >
+            + Add option
+          </button>
+        </div>
 
         {validationErrors?.options && <small>{validationErrors.options}</small>}
       </fieldset>
