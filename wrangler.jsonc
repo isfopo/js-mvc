@@ -3,28 +3,26 @@
   "name": "js-mvc",
   "main": "src/index.tsx",
   "compatibility_date": "2026-05-02",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./public",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
   },
   "vars": {
     "GITHUB_CLIENT_ID": "",
-    "GITHUB_CLIENT_SECRET": ""
+    "GITHUB_CLIENT_SECRET": "",
   },
   "kv_namespaces": [
     {
       "binding": "SESSIONS",
-      "id": "placeholder-kv-id"
-    }
+      "id": "04d997aca3014f0c9dd7100a0048fa33",
+    },
   ],
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "tenet-db",
-      "database_id": "placeholder-d1-id"
-    }
-  ]
+      "database_id": "2042bb60-f2f0-4c0e-9968-0fdacee59c95",
+    },
+  ],
 }
