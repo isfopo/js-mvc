@@ -4,6 +4,8 @@ import { buildAuthorizeUrl, exchangeCode, fetchUser } from "./github";
 import { usersRepo } from "../../data/repos/users";
 import { createSession, destroySession } from "../../infrastructure/middlewares/auth";
 
+const DEFAULT_REDIRECT = "/tenets";
+
 class AuthController<T extends Env> extends ControllerBase<T> {
   override base = "auth";
 
@@ -12,7 +14,11 @@ class AuthController<T extends Env> extends ControllerBase<T> {
     const clientId = c.env.GITHUB_CLIENT_ID;
     const origin = new URL(c.req.url).origin;
     const redirectUri = `${origin}/auth/callback`;
-    const url = buildAuthorizeUrl(clientId, redirectUri);
+
+    // Pass the intended destination as OAuth state so it's round-tripped
+    const state = c.req.query("redirect") ?? DEFAULT_REDIRECT;
+
+    const url = buildAuthorizeUrl(clientId, redirectUri, state);
     return c.redirect(url);
   }
 
@@ -20,8 +26,11 @@ class AuthController<T extends Env> extends ControllerBase<T> {
   async callback(c: Context) {
     const code = c.req.query("code");
     if (!code) {
-      return c.redirect("/auth/login");
+      return c.redirect(`/auth/login?redirect=${DEFAULT_REDIRECT}`);
     }
+
+    // The state parameter carries the original destination
+    const state = c.req.query("state") ?? DEFAULT_REDIRECT;
 
     try {
       const clientId = c.env.GITHUB_CLIENT_ID;
@@ -40,10 +49,10 @@ class AuthController<T extends Env> extends ControllerBase<T> {
       const cookie = await createSession(c.env.SESSIONS, user.id);
       c.header("Set-Cookie", cookie);
 
-      return c.redirect("/tenets");
+      return c.redirect(state);
     } catch (error) {
       console.error("Auth callback failed:", error);
-      return c.redirect("/auth/login");
+      return c.redirect(`/auth/login?redirect=${encodeURIComponent(state)}`);
     }
   }
 

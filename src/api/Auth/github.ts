@@ -70,15 +70,20 @@ export async function fetchUser(token: string): Promise<GitHubUser> {
 
 /**
  * Build the GitHub OAuth authorize URL.
+ *
+ * The `state` parameter is round-tripped through the OAuth flow;
+ * we use it to carry the post-login redirect destination.
  */
 export function buildAuthorizeUrl(
   clientId: string,
   redirectUri: string,
+  state?: string,
 ): string {
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
     scope: "read:user",
   });
+  if (state) params.set("state", state);
   return `https://github.com/login/oauth/authorize?${params}`;
 }

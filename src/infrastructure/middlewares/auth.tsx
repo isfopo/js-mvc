@@ -32,7 +32,8 @@ export function requireAuth(): MiddlewareHandler {
     const sessionId = readCookie(c, SESSION_COOKIE);
 
     if (!sessionId) {
-      return c.redirect("/auth/login");
+      const dest = encodeURIComponent(c.req.path);
+      return c.redirect(`/auth/login?redirect=${dest}`);
     }
 
     const raw = await env.SESSIONS.get(sessionId);
@@ -42,7 +43,8 @@ export function requireAuth(): MiddlewareHandler {
         "Set-Cookie",
         `${SESSION_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`,
       );
-      return c.redirect("/auth/login");
+      const dest = encodeURIComponent(c.req.path);
+      return c.redirect(`/auth/login?redirect=${dest}`);
     }
 
     const session = JSON.parse(raw) as {
