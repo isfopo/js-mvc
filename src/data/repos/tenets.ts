@@ -29,7 +29,9 @@ export class TenetsRepository extends RepositoryBase<TenetRow> {
     );
   }
 
-  async getWithProposer(db: D1Database, slug: string) {
+  async getWithProposer(
+    db: D1Database, slug: string,
+  ): Promise<(TenetRow & { proposer_login: string; proposer_avatar: string | null }) | null> {
     return this.queryOne(
       db,
       `SELECT t.*, u.login AS proposer_login, u.avatar_url AS proposer_avatar

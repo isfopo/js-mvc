@@ -6,6 +6,8 @@
 // Import each handler to trigger its side-effect registration with the dispatcher
 import "../../handlers/DismissHandler";
 import "../../handlers/ConfirmHandler";
+import "../../handlers/VoteHandler";
+import "../../handlers/StatusTransitionHandler";
 import { start } from "./dispatcher";
 
 console.log("js-mvc client loaded");

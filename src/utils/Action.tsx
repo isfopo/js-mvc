@@ -40,6 +40,8 @@ import { JSX } from "hono/jsx";
 export interface HandlerActions {
   dismiss: "hide";
   confirm: "ask";
+  vote: "submit";
+  status: "transition";
 }
 
 // ---------------------------------------------------------------------------
