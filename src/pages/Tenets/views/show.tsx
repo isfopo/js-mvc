@@ -2,6 +2,7 @@ import type { FC } from "hono/jsx";
 import type { TenetDetailViewModel } from "../view-model";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { UserAvatar } from "../../../components/UserAvatar";
+import styles from "./show.module.css";
 
 const STATUS_TRANSITIONS: Record<string, { label: string; target: string }[]> = {
   draft: [{ label: "Start Voting", target: "voting" }],
@@ -17,9 +18,9 @@ const STATUS_TRANSITIONS: Record<string, { label: string; target: string }[]> = 
 };
 
 const VOTE_CHOICES = [
-  { value: "approve", label: "Approve", style: "primary" },
-  { value: "abstain", label: "Abstain", style: "secondary outline" },
-  { value: "block", label: "Block", style: "outline" },
+  { value: "approve", label: "Approve", class: "primary" },
+  { value: "abstain", label: "Abstain", class: "secondary outline" },
+  { value: "block", label: "Block", class: "outline" },
 ];
 
 export const View: FC<TenetDetailViewModel> = ({
@@ -31,19 +32,19 @@ export const View: FC<TenetDetailViewModel> = ({
   allowedTransitions,
 }) => (
   <section>
-    <header style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap;">
+    <header>
       <StatusBadge status={tenet.status} />
-      <span style="font-size: 0.85rem; color: var(--pico-muted-color);">
+      <small>
         Proposed by {tenet.proposedBy.login} on {new Date(tenet.createdAt).toLocaleDateString()}
-      </span>
+      </small>
     </header>
 
     <h1>{tenet.title}</h1>
 
     {tenet.decision && (
-      <article style="border-left: 3px solid var(--pico-success-color); padding-left: 1rem;">
+      <article class={styles.decisionBox}>
         <strong>Decision:</strong> {tenet.decision}
-        {tenet.rationale && <p style="margin-top: 0.5rem;"><strong>Rationale:</strong> {tenet.rationale}</p>}
+        {tenet.rationale && <p><strong>Rationale:</strong> {tenet.rationale}</p>}
       </article>
     )}
 
@@ -53,20 +54,20 @@ export const View: FC<TenetDetailViewModel> = ({
     </hgroup>
 
     <h2>Options</h2>
-    {tenet.options.map((opt, i) => (
+    {tenet.options.map((opt) => (
       <article key={opt.id}>
         <h3>{opt.title}</h3>
         {opt.description && <p>{opt.description}</p>}
         {opt.pros && (
           <details>
             <summary>Pros</summary>
-            <p style="color: var(--pico-success-color);">{opt.pros}</p>
+            <p>{opt.pros}</p>
           </details>
         )}
         {opt.cons && (
           <details>
             <summary>Cons</summary>
-            <p style="color: var(--pico-error-color);">{opt.cons}</p>
+            <p>{opt.cons}</p>
           </details>
         )}
       </article>
@@ -78,17 +79,17 @@ export const View: FC<TenetDetailViewModel> = ({
         {userVote ? (
           <p>
             You voted: <strong>{userVote.choice}</strong>
-            {userVote.reason && <span> — {userVote.reason}</span>}
+            {userVote.reason && <> &mdash; {userVote.reason}</>}
           </p>
         ) : null}
         <form method="post" action={`/tenets/${tenet.slug}/vote`}>
           <input type="hidden" name="choice" />
           <input type="hidden" name="reason" />
-          <div style="display: flex; gap: 0.5rem;">
+          <div class={styles.voteGroup}>
             {VOTE_CHOICES.map((vc) => (
               <button
                 type="submit"
-                class={vc.style}
+                class={vc.class}
                 data-vote-choice={vc.value}
                 data-controller="vote"
                 data-action={`click->vote#submit`}
@@ -103,7 +104,7 @@ export const View: FC<TenetDetailViewModel> = ({
 
     <h2>Votes</h2>
     {tenet.votes.length === 0 ? (
-      <p style="color: var(--pico-muted-color);">No votes yet.</p>
+      <p><small>No votes yet.</small></p>
     ) : (
       <table>
         <thead>
@@ -116,23 +117,11 @@ export const View: FC<TenetDetailViewModel> = ({
         <tbody>
           {tenet.votes.map((v) => (
             <tr key={v.userId}>
-              <td style="display: flex; align-items: center; gap: 0.5rem;">
-                <UserAvatar login={v.user.login} avatarUrl={v.user.avatarUrl} />
-                {v.user.login}
-              </td>
               <td>
-                <span
-                  style={`font-weight: 600; ${
-                    v.choice === "approve"
-                      ? "color: var(--pico-success-color);"
-                      : v.choice === "block"
-                      ? "color: var(--pico-error-color);"
-                      : ""
-                  }`}
-                >
-                  {v.choice}
-                </span>
+                <UserAvatar login={v.user.login} avatarUrl={v.user.avatarUrl} />
+                {" "}{v.user.login}
               </td>
+              <td><strong>{v.choice}</strong></td>
               <td>{v.reason ?? ""}</td>
             </tr>
           ))}
@@ -141,21 +130,23 @@ export const View: FC<TenetDetailViewModel> = ({
     )}
 
     {canTransition && (
-      <div style="display: flex; gap: 0.5rem; margin-top: 2rem;">
-        {STATUS_TRANSITIONS[tenet.status]?.filter((t) => allowedTransitions.includes(t.target as any)).map((t) => (
-          <form method="post" action={`/tenets/${tenet.slug}/status`} style="display: inline;">
-            <input type="hidden" name="status" value={t.target} />
-            <button
-              type="submit"
-              data-controller="status"
-              data-action={`click->status#transition`}
-              data-status-target={t.target}
-              data-status-message={`Change status to ${t.target}?`}
-            >
-              {t.label}
-            </button>
-          </form>
-        ))}
+      <div class={styles.transitionGroup}>
+        {STATUS_TRANSITIONS[tenet.status]
+          ?.filter((t) => allowedTransitions.includes(t.target as any))
+          .map((t) => (
+            <form method="post" action={`/tenets/${tenet.slug}/status`} class={styles.inlineForm}>
+              <input type="hidden" name="status" value={t.target} />
+              <button
+                type="submit"
+                data-controller="status"
+                data-action={`click->status#transition`}
+                data-status-target={t.target}
+                data-status-message={`Change status to ${t.target}?`}
+              >
+                {t.label}
+              </button>
+            </form>
+          ))}
       </div>
     )}
   </section>

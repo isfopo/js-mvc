@@ -1,0 +1,21 @@
+.decisionBox {
+  border-left: 3px solid var(--pico-success-color);
+  padding-left: 1rem;
+}
+
+.voteGroup {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.transitionGroup {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.inlineForm {
+  display: inline;
+}
