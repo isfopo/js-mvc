@@ -23,6 +23,9 @@ node_modules/
 # infra config (contains real D1/KV IDs)
 wrangler.jsonc
 
+# auto-generated from local wrangler.jsonc
+worker-configuration.d.ts
+
 # logs
 logs/
 *.log
