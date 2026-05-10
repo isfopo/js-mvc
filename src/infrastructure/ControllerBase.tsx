@@ -22,6 +22,8 @@ import { Context, Env, Hono } from "hono";
 import { renderToString } from "hono/jsx/dom/server";
 import { Layout } from "../layouts/Layout";
 import { handleError } from "./errors/index";
+import type { GuardDescriptor } from "./validation/GuardDescriptor";
+import { executeGuard } from "./validation/guard-executor";
 
 /* ---------- Symbol.metadata polyfill ---------- */
 
@@ -39,6 +41,9 @@ export interface RouteDescriptor {
 
 /** Well-known key used to store routes inside the decorator metadata. */
 const ROUTES_KEY = Symbol("hono:routes");
+
+/** Well-known key used to store guard descriptors inside the decorator metadata. */
+const GUARDS_KEY = Symbol("hono:guards");
 
 /* ---------- Decorator factory ---------- */
 
@@ -84,13 +89,19 @@ export abstract class ControllerBase<T extends Env> {
        class. */
     const metadata = (this.constructor as any)[Symbol.metadata];
     const routes: RouteDescriptor[] = metadata?.[ROUTES_KEY] ?? [];
+    const guards: GuardDescriptor[] = metadata?.[GUARDS_KEY] ?? [];
 
     /* Attach a renderer that wraps every response in the shared layout.
        This is inherited by all routes registered below. */
     this._app.use("*", async (c, next) => {
-      c.setRenderer((content) => {
+      c.setRenderer((content: any) => {
+        const user = (c as any).get("user");
         const doctype = "<!DOCTYPE html>";
-        const body = renderToString(<Layout>{content}</Layout>);
+        const body = renderToString(
+          <Layout user={user} currentPath={c.req.path}>
+            {content}
+          </Layout>,
+        );
         return c.html(doctype + body);
       });
       await next();
@@ -98,8 +109,16 @@ export abstract class ControllerBase<T extends Env> {
 
     /* Wire each route to the matching handler on this controller. */
     for (const route of routes) {
+      const handlerGuards = guards.filter(
+        (g) => g.handlerName === route.handlerName,
+      );
+
       this._app[route.method](route.path, async (c: Context) => {
         try {
+          /* Execute guards in declaration order before the handler. */
+          for (const guard of handlerGuards) {
+            await executeGuard(guard, c);
+          }
           return (this as any)[route.handlerName](c);
         } catch (error: unknown) {
           return handleError(c, error);

@@ -1,11 +1,27 @@
 import { Hono } from "hono";
 import { registerControllers } from "./infrastructure/controllers";
+import { initDatabase } from "./infrastructure/db/init";
 
-const app = new Hono<{ Bindings: Cloudflare.Env }>();
+const app = new Hono<{ Bindings: CloudflareBindings }>();
+
+// Run DB schema initialization once on first request
+let initialized = false;
+app.use("*", async (c, next) => {
+  if (!initialized) {
+    initialized = true;
+    try {
+      await initDatabase(c.env.DB);
+      console.log("Database initialized");
+    } catch (e) {
+      console.error("Database init failed:", e);
+    }
+  }
+  await next();
+});
 
 registerControllers(app);
 
-// Redirect root to /home
-app.get("/", (c) => c.redirect("/home"));
+// Redirect root to /tenets
+app.get("/", (c) => c.redirect("/tenets"));
 
 export default app;
