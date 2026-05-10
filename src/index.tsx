@@ -6,15 +6,26 @@ const app = new Hono<{ Bindings: CloudflareBindings }>();
 
 // Run DB schema initialization once on first request
 let initialized = false;
+let initPromise: Promise<void> | null = null;
 app.use("*", async (c, next) => {
   if (!initialized) {
-    initialized = true;
-    try {
-      await initDatabase(c.env.DB);
-      console.log("Database initialized");
-    } catch (e) {
-      console.error("Database init failed:", e);
+    if (!initPromise) {
+      initPromise = (async () => {
+        const env = c.env as Record<string, unknown>;
+        if (!env.DB) {
+          console.error("DB binding is not available. Available keys:", Object.keys(env));
+          return;
+        }
+        try {
+          await initDatabase(env.DB as D1Database);
+          initialized = true;
+          console.log("Database initialized");
+        } catch (e) {
+          console.error("Database init failed:", e);
+        }
+      })();
     }
+    await initPromise;
   }
   await next();
 });
