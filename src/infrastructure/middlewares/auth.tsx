@@ -53,7 +53,7 @@ export function requireAuth(): MiddlewareHandler {
     };
 
     // Fetch user from D1
-    const user = await env.tenet_db
+    const user = await env.DB
       .prepare("SELECT * FROM users WHERE id = ?")
       .bind(session.userId)
       .first<UserRow>();
