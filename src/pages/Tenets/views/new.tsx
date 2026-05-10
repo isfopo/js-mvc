@@ -1,6 +1,9 @@
 import type { FC } from "hono/jsx";
 import type { TenetFormViewModel } from "../view-model";
+import { Action } from "../../../utils/Action";
 import styles from "./new.module.css";
+
+const AddOption = Action("addoption");
 
 /** Renders a single option row with the given index. */
 function OptionCard(idx: number) {
@@ -89,7 +92,7 @@ export const View: FC<TenetFormViewModel> = ({ validationErrors }) => (
           <small>Each option represents a possible choice. Add pros and cons for each.</small>
         </p>
 
-        <div data-controller="addoption" data-addoption-start="2">
+        <AddOption start="2">
           <div data-option-container>
             {OptionCard(0)}
             {OptionCard(1)}
@@ -97,14 +100,10 @@ export const View: FC<TenetFormViewModel> = ({ validationErrors }) => (
 
           {OptionTemplate()}
 
-          <button
-            type="button"
-            class="outline"
-            data-action="click->addoption#add"
-          >
-            + Add option
-          </button>
-        </div>
+          <AddOption.Trigger event="click" method="add">
+            <button type="button" class="outline">+ Add option</button>
+          </AddOption.Trigger>
+        </AddOption>
 
         {validationErrors?.options && <small>{validationErrors.options}</small>}
       </fieldset>

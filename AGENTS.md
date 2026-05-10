@@ -9,7 +9,7 @@ Cloudflare Worker using **Hono** with server-side JSX (`hono/jsx`). MVC architec
 | Task | Command |
 |---|---|
 | Dev server | `npm run dev` |
-| Deploy | `npm run deploy` |
+| Deploy | `npm run build && wrangler deploy` |
 | Build (for preview) | `npm run build` |
 | Preview build | `npm run preview` |
 | Generate Cloudflare binding types | `npm run cf-typegen` |
@@ -23,7 +23,7 @@ The CSS build is **automatic** with full HMR support:
 
 1. **Development** (`npm run dev`):
    - CSS builds once at startup
-   - Vite watches `src/styles/**/*.css` and `src/views/components/**/*.module.css` files
+   - Vite watches `src/styles/**/*.css`, `src/components/**/*.module.css`, and `src/pages/**/*.module.css`
    - On save: CSS rebuilds + Layout HMR updates instantly
    
 2. **Production build** (`npm run build`): CSS builds, then Vite bundles
@@ -37,41 +37,15 @@ The CSS build is **automatic** with full HMR support:
 ## Architecture
 
 - **Entry point:** `src/index.tsx` — creates the `Hono` app, mounts controllers, and defines the root route directly.
-- **Controllers** (`src/controllers/`): Each controller extends `ControllerBase`, sets an override `base` string (the route prefix), and declares routes via decorators (see **Routing Convention** below). New controllers must be registered in `controllers/index.ts`.
-- **Views** (`src/views/`):
-  - `pages/` — top-level page components
-  - `components/` — reusable UI pieces
-  - `shared/` — shared layouts and wrappers (e.g. `Layout.tsx`)
-  - Use `FC` from `hono/jsx` with a typed `ViewModel` interface.
-- **Styles** (`src/styles/`):
-  - `variables.css` - CSS custom properties (colors, typography, spacing)
-  - `themes.css` - Light and dark color schemes
-  - `reset.css` - Box-sizing, document/landmark base styles
-  - `typography.css` - Headings, paragraphs, lists, blockquotes, links
-  - `buttons.css` - Button elements
-  - `forms.css` - Inputs, selects, textareas, labels, fieldsets, validation
-  - `forms-checks.css` - Checkboxes, radios, switches
-  - `forms-special.css` - Color, datetime, file, range, search inputs
-  - `tables.css` - Table styles
-  - `media.css` - Images, video, audio, svg, iframe, figure
-  - `code.css` - Code blocks and inline code
-  - `layout.css` - Cards, accordion, groups, nav, modal, progress, tooltips, loading
-  - `misc.css` - HR, hidden, template, canvas
-  - `accessibility.css` - ARIA helpers, RTL, reduced motion
-  - Build process recursively discovers all `.css` files in `src/styles/` (excluding `public/`)
-  - Component styles use CSS Modules: `src/views/components/{Component}/index.module.css`
-  - Components import their CSS Module (`import styles from "./index.module.css"`) and use scoped class names
-  - The build script scopes `.module.css` classes automatically (e.g., `.alert` → `Alert_alert`)
-  - All styles are combined into a single global bundle at `public/styles/index.css`
-  - Edit source files, then `npm run build:css` to regenerate
-  - To add a new component with scoped styles, create `src/views/components/{Component}/index.tsx` and `index.module.css`
-
-## Component Philosophy
-
-- **Components should be minimal.** Only add the CSS necessary to make the component functional or to express its specific semantics. Everything else falls back to Pico defaults.
-- **Prefer semantic HTML.** Use native elements (`<button>`, `<h1>`, `<p>`, `<table>`, `<input>`, etc.) directly whenever possible. Do not create a component just to wrap a single semantic element.
-- **Create components only when semantic HTML is insufficient.** Good reasons include: composite structures (e.g., a dashboard widget with header/chart/legend), stateful variants (e.g., alert with info/success/warning/error states), or reusable layouts that Pico does not provide.
-- **CSS Modules scope the minimum.** A component's `index.module.css` should define only its custom properties and layout overrides. Typography, spacing, color, and form styling are inherited from Pico.
+- **Controllers** (`src/pages/*/controller.tsx`): Each controller extends `ControllerBase`, sets an override `base` string (the route prefix), and declares routes via decorators (see **Routing Convention** below). New controllers must be registered in `infrastructure/controllers/index.ts`.
+- **API Controllers** (`src/api/*/controller.tsx`): Same pattern but return JSON. Share business logic via services.
+- **Views** (`src/pages/*/views/`): Top-level page components using `FC` from `hono/jsx` with typed ViewModel.
+- **Components** (`src/components/`): Reusable UI pieces. Use `Action()` for client-side handler wiring.
+- **Services** (`src/services/`): Business logic layer shared between HTML and API controllers. Extend `ServiceBase`.
+- **Repositories** (`src/data/repos/`): Data access layer. Extend `RepositoryBase<T>`. Use `db.prepare(sql).bind(params).all<T>()`.
+- **Models** (`src/data/models/`): Row types matching D1 table columns.
+- **Requests** (`src/data/requests/`): IValidatable form objects with `validate()` method.
+- **Infrastructure** (`src/infrastructure/`): Framework base classes (ControllerBase, RepositoryBase, ServiceBase), validation decorators, auth middleware.
 
 ## Routing Convention
 
@@ -94,39 +68,79 @@ class MyController extends ControllerBase {
 - Any valid Hono path works (`:id`, `*` wildcards, nested segments, etc.).
 - The full route is `base` + decorator `path`.
 
-## Layout / Rendering
+## Guard Decorators
 
-Controllers can wrap every route response in a layout automatically. Set it in the constructor:
+Use validation/guard decorators to handle cross-cutting concerns before route handlers:
 
 ```ts
-class MyController extends ControllerBase {
-  override base = "my";
+import { Exists, Validate } from "../../infrastructure/validation/decorators";
+import { ProposeTenetRequest } from "../../data/requests/ProposeTenetRequest";
 
-  constructor() {
-    super();
+class TenetsController extends ControllerBase {
+  @Get("/:slug")
+  @Exists("tenet", (c) => tenetsRepo.findBySlug(c.env.DB, c.req.param("slug")!))
+  async show(c: Context) {
+    const tenet = c.get("tenet"); // loaded by @Exists, throws 404 if missing
+    // ...
   }
 
-  @Get("/")
-  index(c: Context) {
-    return c.render(<p>Content only — Layout is applied automatically</p>);
+  @Post("/")
+  @Validate(ProposeTenetRequest)
+  async create(c: Context) {
+    const input = c.get("validated") as ProposeTenetRequest; // already validated
+    // ...
   }
 }
 ```
 
-- Call `this.setLayout(Layout)` once per controller to enable auto-wrapping.
-- Use `c.render(<View />)` instead of `c.html(<Layout><View /></Layout>)`.
-- Controllers without a layout set fall back to returning raw `Response` objects.
-- Layout components receive `{ children }` and optionally `head` props.
+## Client-Side Handlers — Use `Action()` Always
+
+**Never write `data-controller` or `data-action` attributes manually.** Always use the `Action()` component factory from `src/utils/Action.tsx`.
+
+```tsx
+import { Action } from "../../../utils/Action";
+
+const MyHandler = Action("myhandler");
+
+// Wrapper + Trigger — handler scoped to a container
+<MyHandler start="2">
+  <div>
+    {content}
+  </div>
+  <MyHandler.Trigger event="click" method="add">
+    <button>Add</button>
+  </MyHandler.Trigger>
+</MyHandler>
+
+// Trigger-only — handler lives on the element itself
+<MyHandler.Trigger event="click" method="submit" choice="approve">
+  <button class="primary">Approve</button>
+</MyHandler.Trigger>
+```
+
+Extra props passed to `Wrapper` or `Trigger` are automatically converted to `data-{handler}-{key}` attributes. This keeps handler names and method names in sync between server views and client handlers.
+
+Every new client handler must:
+1. Be added to `HandlerActions` in `src/utils/Action.tsx`
+2. Be registered in `src/infrastructure/client/main.ts`
+
+## Layout / Rendering
+
+Controllers can wrap every route response in a layout automatically via `ControllerBase.register()`.
+
+- Use `c.render(<View />)` to render JSX wrapped in Layout
+- Controllers that need auth call `this._app.use("*", requireAuth())` in their constructor
+- The Layout receives `user` and `currentPath` from the renderer
 
 ## Conventions
 
 - `"type": "module"` in package.json — always use ESM imports.
 - `noImplicitOverride: true` in tsconfig — `override` keyword required on derived class members.
-- `wrangler.jsonc` uses JSON-with-comments format; do not strip comments when editing.
+- `wrangler.jsonc` is gitignored (contains real D1/KV IDs). Use `wrangler.jsonc.example` as template.
 - `worker-configuration.d.ts` is auto-generated by `npm run cf-typegen`; do not hand-edit.
 - Decorators follow the **Stage 3 TC39 proposal** (not `experimentalDecorators`).
   `reflect-metadata` is **not** used — metadata is stored via `context.metadata`
   and read back via `Constructor[Symbol.metadata]`. A `Symbol.metadata` polyfill
   is included in `ControllerBase.tsx` for environments that lack it.
-
-
+- Views use **semantic HTML** and rely on **Pico CSS defaults** for styling. Inline styles are prohibited.
+  Custom layouts use CSS Modules in the same directory (e.g., `index.module.css`, `new.module.css`).

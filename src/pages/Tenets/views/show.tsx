@@ -1,31 +1,33 @@
 import type { FC } from "hono/jsx";
 import type { TenetDetailViewModel } from "../view-model";
+import { Action } from "../../../utils/Action";
 import { StatusBadge } from "../../../components/StatusBadge";
-import { UserAvatar } from "../../../components/UserAvatar";
 import styles from "./show.module.css";
 
-const STATUS_TRANSITIONS: Record<string, { label: string; target: string }[]> = {
-  draft: [{ label: "Start Voting", target: "voting" }],
+const Vote = Action("vote");
+const Status = Action("status");
+
+const STATUS_TRANSITIONS: Record<string, { label: string; target: string; message: string }[]> = {
+  draft: [{ label: "Start Voting", target: "voting", message: "Start voting on this tenet?" }],
   voting: [
-    { label: "Accept", target: "accepted" },
-    { label: "Reject", target: "rejected" },
+    { label: "Accept", target: "accepted", message: "Accept this tenet?" },
+    { label: "Reject", target: "rejected", message: "Reject this tenet?" },
   ],
   accepted: [
-    { label: "Mark Implemented", target: "implemented" },
-    { label: "Supersede", target: "superseded" },
+    { label: "Mark Implemented", target: "implemented", message: "Mark as implemented?" },
+    { label: "Supersede", target: "superseded", message: "Supersede this tenet?" },
   ],
-  implemented: [{ label: "Supersede", target: "superseded" }],
+  implemented: [{ label: "Supersede", target: "superseded", message: "Supersede this tenet?" }],
 };
 
 const VOTE_CHOICES = [
-  { value: "approve", label: "Approve", class: "primary" },
-  { value: "abstain", label: "Abstain", class: "secondary outline" },
-  { value: "block", label: "Block", class: "outline" },
+  { value: "approve", label: "Approve", css: "primary" },
+  { value: "abstain", label: "Abstain", css: "secondary outline" },
+  { value: "block", label: "Block", css: "outline" },
 ];
 
 export const View: FC<TenetDetailViewModel> = ({
   tenet,
-  currentUser,
   userVote,
   canVote,
   canTransition,
@@ -79,7 +81,7 @@ export const View: FC<TenetDetailViewModel> = ({
         {userVote ? (
           <p>
             You voted: <strong>{userVote.choice}</strong>
-            {userVote.reason && <> &mdash; {userVote.reason}</>}
+            {userVote.reason && <span> &mdash; {userVote.reason}</span>}
           </p>
         ) : null}
         <form method="post" action={`/tenets/${tenet.slug}/vote`}>
@@ -87,15 +89,9 @@ export const View: FC<TenetDetailViewModel> = ({
           <input type="hidden" name="reason" />
           <div class={styles.voteGroup}>
             {VOTE_CHOICES.map((vc) => (
-              <button
-                type="submit"
-                class={vc.class}
-                data-vote-choice={vc.value}
-                data-controller="vote"
-                data-action={`click->vote#submit`}
-              >
-                {vc.label}
-              </button>
+              <Vote.Trigger event="click" method="submit" choice={vc.value}>
+                <button type="submit" class={vc.css}>{vc.label}</button>
+              </Vote.Trigger>
             ))}
           </div>
         </form>
@@ -117,10 +113,7 @@ export const View: FC<TenetDetailViewModel> = ({
         <tbody>
           {tenet.votes.map((v) => (
             <tr key={v.userId}>
-              <td>
-                <UserAvatar login={v.user.login} avatarUrl={v.user.avatarUrl} />
-                {" "}{v.user.login}
-              </td>
+              <td>{v.user.login}</td>
               <td><strong>{v.choice}</strong></td>
               <td>{v.reason ?? ""}</td>
             </tr>
@@ -136,15 +129,9 @@ export const View: FC<TenetDetailViewModel> = ({
           .map((t) => (
             <form method="post" action={`/tenets/${tenet.slug}/status`} class={styles.inlineForm}>
               <input type="hidden" name="status" value={t.target} />
-              <button
-                type="submit"
-                data-controller="status"
-                data-action={`click->status#transition`}
-                data-status-target={t.target}
-                data-status-message={`Change status to ${t.target}?`}
-              >
-                {t.label}
-              </button>
+              <Status.Trigger event="click" method="transition" target={t.target} message={t.message}>
+                <button type="submit">{t.label}</button>
+              </Status.Trigger>
             </form>
           ))}
       </div>
