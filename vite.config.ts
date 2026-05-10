@@ -1,10 +1,9 @@
 import { cloudflare } from "@cloudflare/vite-plugin";
-import { defineConfig, type Plugin, type ViteDevServer } from "vite";
-import { cssModulesPlugin, cssBuilderPlugin } from "./.vite/plugins";
+import { defineConfig } from "vite";
+import { cssBuilderPlugin } from "./.vite/plugins";
 
 export default defineConfig({
   plugins: [
-    cssModulesPlugin(),
     cssBuilderPlugin(),
     cloudflare({ inspectorPort: 9229 }),
   ],
@@ -21,5 +20,4 @@ export default defineConfig({
   css: {
     postcss: {},
   },
-  assetsInclude: ["**/*.css"],
 });

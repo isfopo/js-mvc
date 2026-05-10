@@ -80,10 +80,11 @@ function scopeCSSModules(css: string, filePath: string): string {
     .join("");
 }
 
-// Get all CSS files from src/styles and src/components
+// Get all CSS files from src/styles, src/components, and src/pages
 function getCSSFiles(): string[] {
   const stylesDir = resolve(rootDir, "src", "styles");
   const componentsDir = resolve(rootDir, "src", "components");
+  const pagesDir = resolve(rootDir, "src", "pages");
 
   let cssFiles = getFiles(stylesDir, ".css").filter(
     (f) => !f.includes("/public/"),
@@ -95,6 +96,14 @@ function getCSSFiles(): string[] {
     cssFiles = cssFiles.concat(componentCSS);
   } catch {
     // No components directory yet
+  }
+
+  // Add page CSS modules
+  try {
+    const pageCSS = getFiles(pagesDir, ".css");
+    cssFiles = cssFiles.concat(pageCSS);
+  } catch {
+    // No pages directory yet
   }
 
   return cssFiles.sort((a, b) => {
