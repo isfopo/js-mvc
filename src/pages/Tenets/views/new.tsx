@@ -11,19 +11,36 @@ function OptionCard(idx: number) {
     <article class={styles.optionCard}>
       <legend>Option {idx + 1}</legend>
       <label for={`opt-${idx}-title`}>Title</label>
-      <input id={`opt-${idx}-title`} name={`options[${idx}][title]`} type="text" required />
+      <input
+        id={`opt-${idx}-title`}
+        name={`options[${idx}][title]`}
+        type="text"
+        required
+      />
 
       <label for={`opt-${idx}-desc`}>Description</label>
-      <textarea id={`opt-${idx}-desc`} name={`options[${idx}][description]`} rows={2} />
+      <textarea
+        id={`opt-${idx}-desc`}
+        name={`options[${idx}][description]`}
+        rows={2}
+      />
 
       <div class={styles.prosConsGrid}>
         <label for={`opt-${idx}-pros`}>
           Pros
-          <textarea id={`opt-${idx}-pros`} name={`options[${idx}][pros]`} rows={3} />
+          <textarea
+            id={`opt-${idx}-pros`}
+            name={`options[${idx}][pros]`}
+            rows={3}
+          />
         </label>
         <label for={`opt-${idx}-cons`}>
           Cons
-          <textarea id={`opt-${idx}-cons`} name={`options[${idx}][cons]`} rows={3} />
+          <textarea
+            id={`opt-${idx}-cons`}
+            name={`options[${idx}][cons]`}
+            rows={3}
+          />
         </label>
       </div>
     </article>
@@ -37,19 +54,36 @@ function OptionTemplate() {
       <article class={styles.optionCard}>
         <legend>Option __IDX_PLUS_ONE__</legend>
         <label for="opt-__IDX__-title">Title</label>
-        <input id="opt-__IDX__-title" name="options[__IDX__][title]" type="text" required />
+        <input
+          id="opt-__IDX__-title"
+          name="options[__IDX__][title]"
+          type="text"
+          required
+        />
 
         <label for="opt-__IDX__-desc">Description</label>
-        <textarea id="opt-__IDX__-desc" name="options[__IDX__][description]" rows={2} />
+        <textarea
+          id="opt-__IDX__-desc"
+          name="options[__IDX__][description]"
+          rows={2}
+        />
 
         <div class={styles.prosConsGrid}>
           <label for="opt-__IDX__-pros">
             Pros
-            <textarea id="opt-__IDX__-pros" name="options[__IDX__][pros]" rows={3} />
+            <textarea
+              id="opt-__IDX__-pros"
+              name="options[__IDX__][pros]"
+              rows={3}
+            />
           </label>
           <label for="opt-__IDX__-cons">
             Cons
-            <textarea id="opt-__IDX__-cons" name="options[__IDX__][cons]" rows={3} />
+            <textarea
+              id="opt-__IDX__-cons"
+              name="options[__IDX__][cons]"
+              rows={3}
+            />
           </label>
         </div>
       </article>
@@ -89,10 +123,13 @@ export const View: FC<TenetFormViewModel> = ({ validationErrors }) => (
       <fieldset>
         <legend>Options</legend>
         <p>
-          <small>Each option represents a possible choice. Add pros and cons for each.</small>
+          <small>
+            Each option represents a possible choice. Add pros and cons for
+            each.
+          </small>
         </p>
 
-        <AddOption start="2">
+        <AddOption start="3">
           <div data-option-container>
             {OptionCard(0)}
             {OptionCard(1)}
@@ -101,7 +138,9 @@ export const View: FC<TenetFormViewModel> = ({ validationErrors }) => (
           {OptionTemplate()}
 
           <AddOption.Trigger event="click" method="add">
-            <button type="button" class="outline">+ Add option</button>
+            <button type="button" class="outline">
+              + Add option
+            </button>
           </AddOption.Trigger>
         </AddOption>
 

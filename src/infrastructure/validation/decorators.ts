@@ -10,8 +10,9 @@ import type { IValidatable } from "./IValidatable";
 /**
  * Well-known symbol key used to store guard descriptors
  * inside the decorator metadata object.
+ * Shared with ControllerBase via import.
  */
-const GUARDS_KEY = Symbol("hono:guards");
+export const GUARDS_KEY = Symbol("hono:guards");
 
 // ── Helper to append a guard to the shared metadata array ────────
 

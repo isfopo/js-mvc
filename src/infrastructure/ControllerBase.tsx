@@ -24,6 +24,7 @@ import { Layout } from "../layouts/Layout";
 import { handleError } from "./errors/index";
 import type { GuardDescriptor } from "./validation/GuardDescriptor";
 import { executeGuard } from "./validation/guard-executor";
+import { GUARDS_KEY } from "./validation/decorators";
 
 /* ---------- Symbol.metadata polyfill ---------- */
 
@@ -41,9 +42,6 @@ export interface RouteDescriptor {
 
 /** Well-known key used to store routes inside the decorator metadata. */
 const ROUTES_KEY = Symbol("hono:routes");
-
-/** Well-known key used to store guard descriptors inside the decorator metadata. */
-const GUARDS_KEY = Symbol("hono:guards");
 
 /* ---------- Decorator factory ---------- */
 
