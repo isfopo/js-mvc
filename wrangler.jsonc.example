@@ -6,23 +6,23 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./public",
-    "binding": "ASSETS",
+    "binding": "ASSETS"
   },
   "vars": {
     "GITHUB_CLIENT_ID": "",
-    "GITHUB_CLIENT_SECRET": "",
+    "GITHUB_CLIENT_SECRET": ""
   },
   "kv_namespaces": [
     {
       "binding": "SESSIONS",
-      "id": "04d997aca3014f0c9dd7100a0048fa33",
-    },
+      "id": "replace-with-your-kv-id"
+    }
   ],
   "d1_databases": [
     {
       "binding": "tenet_db",
       "database_name": "tenet-db",
-      "database_id": "2042bb60-f2f0-4c0e-9968-0fdacee59c95",
-    },
-  ],
+      "database_id": "replace-with-your-d1-id"
+    }
+  ]
 }

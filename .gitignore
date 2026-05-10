@@ -20,6 +20,9 @@ node_modules/
 .env.production
 .dev.vars
 
+# infra config (contains real D1/KV IDs)
+wrangler.jsonc
+
 # logs
 logs/
 *.log
