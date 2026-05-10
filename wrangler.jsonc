@@ -20,7 +20,7 @@
   ],
   "d1_databases": [
     {
-      "binding": "DB",
+      "binding": "tenet_db",
       "database_name": "tenet-db",
       "database_id": "2042bb60-f2f0-4c0e-9968-0fdacee59c95",
     },

@@ -43,7 +43,8 @@ class AuthController<T extends Env> extends ControllerBase<T> {
       const githubUser = await fetchUser(token);
 
       // Upsert user in D1
-      const user = await usersRepo.upsertFromGithub(c.env.DB, githubUser);
+      const env = c.env as CloudflareBindings;
+      const user = await usersRepo.upsertFromGithub(env.tenet_db, githubUser);
 
       // Create session
       const cookie = await createSession(c.env.SESSIONS, user.id);

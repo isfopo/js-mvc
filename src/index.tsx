@@ -11,13 +11,13 @@ app.use("*", async (c, next) => {
   if (!initialized) {
     if (!initPromise) {
       initPromise = (async () => {
-        const env = c.env as Record<string, unknown>;
-        if (!env.DB) {
+        const env = c.env as unknown as Record<string, unknown>;
+        if (!env.tenet_db) {
           console.error("DB binding is not available. Available keys:", Object.keys(env));
           return;
         }
         try {
-          await initDatabase(env.DB as D1Database);
+          await initDatabase(env.tenet_db as D1Database);
           initialized = true;
           console.log("Database initialized");
         } catch (e) {
