@@ -1398,3 +1398,190 @@ Before implementation starts:
 - [ ] Create `.dev.vars` with `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
 - [ ] Run `npm run cf-typegen` to regenerate binding types
 - [ ] Run `npx wrangler d1 migrations apply tenet-db` to create tables
+
+---
+
+## 17. Testing Strategy
+
+### Tools
+
+| Tool | Purpose |
+|---|---|
+| **Vitest** | Test runner |
+| **`@cloudflare/vitest-pool-workers`** | Workers/D1/KV bindings in tests via `cloudflareTest` plugin |
+| **`hono/jsx/dom/server`** | `renderToString` for server-side JSX render testing |
+| **`hono/testing`** | `testClient` for HTTP endpoint tests |
+
+### Test Location Convention
+
+Tests live alongside the code they test, using a `.test.ts` or `.test.tsx` suffix:
+
+```
+src/data/requests/ProposeTenetRequest.ts
+src/data/requests/ProposeTenetRequest.test.ts     ← colocated
+
+src/services/TenetsService.ts
+src/services/TenetsService.test.ts                 ← colocated
+```
+
+---
+
+### Test Layers
+
+#### 1. Request Validation — Pure Unit Tests
+
+No bindings, no rendering. Fastest tier.
+
+```typescript
+// src/data/requests/ProposeTenetRequest.test.ts
+it("rejects empty title", () => {
+  const req = new ProposeTenetRequest({
+    title: "", context: "c", options: [{ title: "A" }],
+  });
+  expect(req.validate().valid).toBe(false);
+});
+```
+
+**Scope:** Every `IValidatable` class — each validation rule in isolation, plus valid inputs.
+
+**Status:** ✅ 10 tests (ProposeTenetRequest + VoteRequest)
+
+---
+
+#### 2. Repository — Integration Tests with D1
+
+Data access layer against real D1 via the Workers pool.
+
+```typescript
+// src/data/repos/tenets.test.ts
+import { env } from "cloudflare:workers";
+import { tenetsRepo } from "./tenets";
+
+it("creates and finds by slug", async () => {
+  await tenetsRepo.createWithOptions(env.DB, { ... }, []);
+  const found = await tenetsRepo.findBySlug(env.DB, "test-slug");
+  expect(found).not.toBeNull();
+});
+```
+
+**Setup:** `beforeAll` runs `initDatabase(env.DB)` to apply schema.
+
+**Scope:** Each repository method — CRUD, joins, filters, ordering.
+
+**Status:** ⬜ Not yet — top priority to add.
+
+---
+
+#### 3. Service — Integration Tests with D1
+
+Business logic layer against real D1.
+
+```typescript
+// src/services/TenetsService.test.ts
+import { env } from "cloudflare:workers";
+import { tenetService } from "./TenetsService";
+
+it("proposes a new tenet", async () => {
+  const detail = await tenetService.propose(env.DB, 1, input);
+  expect(detail.title).toBe("Use React");
+});
+```
+
+**Setup:** `beforeAll` runs migrations, seeds a test user. Tests build on each other to share state.
+
+**Scope:** Happy path for each method, authorization rules, business rule enforcement, error cases.
+
+**Status:** ✅ 8 tests (propose, list, getBySlug, transition, vote, block validation, authz, accept)
+
+---
+
+#### 4. View/Component — JSX Render Tests
+
+Server-side JSX renders to HTML strings. No DOM needed.
+
+```typescript
+// src/pages/Tenets/views/index.test.tsx
+import { renderToString } from "hono/jsx/dom/server";
+import { View } from "./index";
+
+it("renders empty state when no tenets exist", () => {
+  const html = renderToString(
+    <View tenets={[]} currentUser={mockUser} />
+  );
+  expect(html).toContain("No tenets yet");
+});
+```
+
+**CSS module handling:** The Workers pool doesn't handle `.module.css` imports natively. A vitest setup file stubs them:
+
+```typescript
+// vitest.setup.ts
+import { vi } from "vitest";
+vi.mock("*.module.css", () => new Proxy({}, {
+  get: (_, key) => String(key),
+}));
+```
+
+**Scope:** Each ViewModel state maps to correct rendered output — empty state, list, logged in/out, canVote/not, edge cases (nulls, empty arrays, long text).
+
+**Status:** ⬜ Not yet — needs CSS module shim first.
+
+---
+
+#### 5. Controller — HTTP Tests (Future)
+
+End-to-end HTTP via `hono/testing`:
+
+```typescript
+import { testClient } from "hono/testing";
+import controller from "../controller";
+
+it("GET /tenets returns 200", async () => {
+  const res = await testClient(controller._app).index.$get();
+  expect(res.status).toBe(200);
+});
+```
+
+**Scope:** Route existence, guard behavior (@Exists → 404, @Validate → 400), auth redirects.
+
+**Note:** Controllers are thin wrappers over services + guards. Service tests cover most business logic, making controller tests a lower priority. Requires handling auth middleware in test setup.
+
+**Status:** ⬜ Deferred — lower priority.
+
+---
+
+#### 6. Client Handlers (Future)
+
+DOM interaction tests would need a DOM environment (happy-dom or Playwright). Handlers are thin wiring layers, making this the lowest priority.
+
+**Status:** ⬜ Deferred — lowest priority.
+
+---
+
+### Test Execution
+
+```bash
+npm test          # Run all tests (watch mode)
+npm run test:run  # Single run (CI)
+```
+
+### Current Coverage
+
+| Layer | Test File | Status |
+|---|---|---|
+| Request validation | `ProposeTenetRequest.test.ts` | ✅ 10 tests |
+| Service | `TenetsService.test.ts` | ✅ 8 tests |
+| Repository | — | ⬜ Next |
+| View rendering | — | ⬜ Next |
+| Controller HTTP | — | ⬜ Deferred |
+| Client handlers | — | ⬜ Deferred |
+
+### CI Setup
+
+```yaml
+# .github/workflows/ci.yml (future)
+- run: npm ci
+- run: cp wrangler.jsonc.example wrangler.jsonc
+- run: npm run cf-typegen
+- run: npm run test:run
+```
