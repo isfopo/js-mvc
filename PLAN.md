@@ -1366,7 +1366,22 @@ interface CloudflareBindings extends Cloudflare.Env {
 - Register TenetsController + TenetsApiController
 - Update root redirect
 
-### Milestone 3 — Voting + Status
+### Milestone 3 — Testing Foundation
+
+> **Gate:** All tests must pass before proceeding to Milestone 4. This ensures the data access layer and UI rendering are verified before building interactive features on top of them.
+
+- Add CSS module shim to vitest setup (`vitest.setup.ts`)
+- Write repository integration tests (`data/repos/tenets.test.ts`, `data/repos/votes.test.ts`, `data/repos/users.test.ts`)
+  - CRUD operations, joins, filters, ordering, edge cases (nulls, duplicates, FK violations)
+- Write view/component render tests
+  - `pages/Tenets/views/index.test.tsx` — empty state, populated list, status badges
+  - `pages/Tenets/views/show.test.tsx` — detail view, voting states, transitions
+  - `pages/Tenets/views/new.test.tsx` — form rendering, validation errors
+  - Component tests: `TenetCard`, `StatusBadge`, `UserAvatar`
+- Run full test suite, verify all pass
+- Update coverage table in Section 17
+
+### Milestone 4 — Voting + Status
 
 - Build `VoteButtons` component
 - Build `VoteProgress` component
@@ -1377,7 +1392,7 @@ interface CloudflareBindings extends Cloudflare.Env {
 - Add `vote` and `status` to HandlerActions
 - Register handlers in client/main.ts
 
-### Milestone 4 — Polish
+### Milestone 5 — Polish
 
 - Empty state for tenets list
 - Error handling for form validation
@@ -1468,7 +1483,7 @@ it("creates and finds by slug", async () => {
 
 **Scope:** Each repository method — CRUD, joins, filters, ordering.
 
-**Status:** ⬜ Not yet — top priority to add.
+**Status:** ⬜ Milestone 3 — top priority.
 
 ---
 
@@ -1524,7 +1539,7 @@ vi.mock("*.module.css", () => new Proxy({}, {
 
 **Scope:** Each ViewModel state maps to correct rendered output — empty state, list, logged in/out, canVote/not, edge cases (nulls, empty arrays, long text).
 
-**Status:** ⬜ Not yet — needs CSS module shim first.
+**Status:** ⬜ Milestone 3 — needs CSS module shim first.
 
 ---
 
@@ -1567,14 +1582,15 @@ npm run test:run  # Single run (CI)
 
 ### Current Coverage
 
-| Layer | Test File | Status |
-|---|---|---|
-| Request validation | `ProposeTenetRequest.test.ts` | ✅ 10 tests |
-| Service | `TenetsService.test.ts` | ✅ 8 tests |
-| Repository | — | ⬜ Next |
-| View rendering | — | ⬜ Next |
-| Controller HTTP | — | ⬜ Deferred |
-| Client handlers | — | ⬜ Deferred |
+| Layer | Test File | Status | Milestone |
+|---|---|---|---|
+| Request validation | `ProposeTenetRequest.test.ts`, `VoteRequest.test.ts` | ✅ 10 tests | 1 (done) |
+| Service | `TenetsService.test.ts` | ✅ 8 tests | 2 (done) |
+| Repository | `tenets.test.ts`, `votes.test.ts`, `users.test.ts` | ⬜ Milestone 3 | 3 |
+| View rendering | `index.test.tsx`, `show.test.tsx`, `new.test.tsx` | ⬜ Milestone 3 | 3 |
+| Component rendering | `TenetCard`, `StatusBadge`, `UserAvatar` | ⬜ Milestone 3 | 3 |
+| Controller HTTP | — | ⬜ Deferred | — |
+| Client handlers | — | ⬜ Deferred | — |
 
 ### CI Setup
 
