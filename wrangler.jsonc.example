@@ -20,7 +20,7 @@
   ],
   "d1_databases": [
     {
-      "binding": "tenet_db",
+      "binding": "DB",
       "database_name": "tenet-db",
       "database_id": "replace-with-your-d1-id"
     }
