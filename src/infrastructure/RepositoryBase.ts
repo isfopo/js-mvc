@@ -4,7 +4,40 @@
  * Follows the same pattern as ControllerBase and BaseHandler.
  * Subclasses declare a table name and inherit generic CRUD.
  * D1Database is passed per-call (repos are stateless singletons).
+ *
+ * Named parameters: SQL files can use @paramName syntax. The helpers
+ * below translate @name → ? and map named args to positional order
+ * at runtime, since D1 only supports positional binding.
  */
+
+/**
+ * Replace @paramName placeholders with ? and return the positional
+ * values array. Handles repeated params (same name → same position).
+ */
+function resolveNamedParams(
+  sql: string,
+  params: Record<string, unknown>,
+): [string, unknown[]] {
+  const paramOrder: string[] = [];
+  const seen = new Set<string>();
+
+  // Collect params in order of first appearance
+  sql.replace(/@(\w+)/g, (_, name: string) => {
+    if (!seen.has(name)) {
+      seen.add(name);
+      paramOrder.push(name);
+    }
+    return "";
+  });
+
+  // Replace @name with ?
+  const resolved = sql.replace(/@(\w+)/g, "?");
+
+  // Build positional array
+  const values = paramOrder.map((name) => params[name]);
+
+  return [resolved, values];
+}
 
 export abstract class RepositoryBase<T extends { id: number }> {
   /** Each repository declares its table name. */
@@ -93,34 +126,59 @@ export abstract class RepositoryBase<T extends { id: number }> {
 
   // ── Helpers for subclasses ────────────────────────
 
-  /** Run a SELECT query returning multiple rows. */
+  /** Run a SELECT query returning multiple rows. Supports @named params or positional. */
   protected queryAll<TResult>(
     db: D1Database,
     sql: string,
     ...params: unknown[]
   ): Promise<TResult[]> {
+    const [resolved, values] = this._resolveParams(sql, params);
     return db
-      .prepare(sql)
-      .bind(...params)
+      .prepare(resolved)
+      .bind(...values)
       .all<TResult>()
       .then((r) => r.results);
   }
 
-  /** Run a SELECT query returning at most one row. */
+  /** Run a SELECT query returning at most one row. Supports @named params or positional. */
   protected queryOne<TResult>(
     db: D1Database,
     sql: string,
     ...params: unknown[]
   ): Promise<TResult | null> {
-    return db.prepare(sql).bind(...params).first<TResult>();
+    const [resolved, values] = this._resolveParams(sql, params);
+    return db.prepare(resolved).bind(...values).first<TResult>();
   }
 
-  /** Run an INSERT/UPDATE/DELETE. */
+  /** Run an INSERT/UPDATE/DELETE. Supports @named params or positional. */
   protected execute(
     db: D1Database,
     sql: string,
     ...params: unknown[]
   ): Promise<D1Result> {
-    return db.prepare(sql).bind(...params).run();
+    const [resolved, values] = this._resolveParams(sql, params);
+    return db.prepare(resolved).bind(...values).run();
   }
+
+  /**
+   * Resolve params: if SQL uses @named syntax and a single plain-object
+   * arg is passed, translate to positional. Otherwise pass through as-is.
+   */
+  private _resolveParams(
+    sql: string,
+    params: unknown[],
+  ): [string, unknown[]] {
+    const hasNamed = /@\w+/.test(sql);
+    const isNamedCall = hasNamed && params.length === 1 && isPlainObject(params[0]);
+
+    if (isNamedCall) {
+      return resolveNamedParams(sql, params[0] as Record<string, unknown>);
+    }
+    return [sql, params];
+  }
+}
+
+/** Check if value is a plain object (not null, array, or primitive). */
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
 }

@@ -1,31 +1,45 @@
 import { RepositoryBase } from "../../infrastructure/RepositoryBase";
+import { loadQueries } from "../../infrastructure/QueryLoader";
 import type { TenetRow, TenetOptionRow, TenetStatus } from "./model";
 import type { VoteRow } from "../vote/model";
+
+// Keep this in sync with the .sql files in ./queries/
+type TenetQuery =
+  | "findBySlug"
+  | "getOptions"
+  | "getWithProposer"
+  | "insertOption"
+  | "listWithProposer"
+  | "updateStatus";
+
+// Preload all SQL queries at module initialization
+const queries = await loadQueries<TenetQuery>(
+  import.meta.glob("./queries/*.sql", { query: "raw", import: "default" }),
+);
 
 export class TenetsRepository extends RepositoryBase<TenetRow> {
   override readonly tableName = "tenets";
 
   async findBySlug(db: D1Database, slug: string): Promise<TenetRow | null> {
     return this.queryOne<TenetRow>(
-      db, "SELECT * FROM tenets WHERE slug = ?", slug,
+      db,
+      queries.findBySlug,
+      { slug },
     );
   }
 
   async getOptions(db: D1Database, tenetId: number): Promise<TenetOptionRow[]> {
     return this.queryAll<TenetOptionRow>(
       db,
-      "SELECT * FROM tenet_options WHERE tenet_id = ? ORDER BY sort_order",
-      tenetId,
+      queries.getOptions,
+      { tenetId },
     );
   }
 
   async listWithProposer(db: D1Database): Promise<(TenetRow & { proposer_login: string; proposer_avatar: string | null })[]> {
     return this.queryAll(
       db,
-      `SELECT t.*, u.login AS proposer_login, u.avatar_url AS proposer_avatar
-       FROM tenets t
-       JOIN users u ON u.id = t.proposed_by_id
-       ORDER BY t.created_at DESC`,
+      queries.listWithProposer,
     );
   }
 
@@ -34,11 +48,8 @@ export class TenetsRepository extends RepositoryBase<TenetRow> {
   ): Promise<(TenetRow & { proposer_login: string; proposer_avatar: string | null }) | null> {
     return this.queryOne(
       db,
-      `SELECT t.*, u.login AS proposer_login, u.avatar_url AS proposer_avatar
-       FROM tenets t
-       JOIN users u ON u.id = t.proposed_by_id
-       WHERE t.slug = ?`,
-      slug,
+      queries.getWithProposer,
+      { slug },
     );
   }
 
@@ -58,10 +69,15 @@ export class TenetsRepository extends RepositoryBase<TenetRow> {
       const opt = options[i];
       await this.execute(
         db,
-        `INSERT INTO tenet_options (tenet_id, title, description, pros, cons, sort_order)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        row.id, opt.title, opt.description ?? null,
-        opt.pros ?? null, opt.cons ?? null, i,
+        queries.insertOption,
+        {
+          tenetId: row.id,
+          title: opt.title,
+          description: opt.description ?? null,
+          pros: opt.pros ?? null,
+          cons: opt.cons ?? null,
+          sortOrder: i,
+        },
       );
     }
 
@@ -75,8 +91,8 @@ export class TenetsRepository extends RepositoryBase<TenetRow> {
   ): Promise<void> {
     await this.execute(
       db,
-      "UPDATE tenets SET status = ?, updated_at = datetime('now') WHERE id = ?",
-      status, id,
+      queries.updateStatus,
+      { id, status },
     );
   }
 }

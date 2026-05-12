@@ -2,7 +2,7 @@ var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
-// src/client/handlers/BaseHandler.ts
+// src/infrastructure/client/BaseHandler.ts
 var BaseHandler = class {
   constructor(element) {
     /** The root element that declared data-controller */
@@ -47,7 +47,7 @@ var BaseHandler = class {
 /** Static handler name — override in subclasses */
 __publicField(BaseHandler, "handlerName", "");
 
-// src/client/dispatcher.ts
+// src/infrastructure/client/dispatcher.ts
 var registry = /* @__PURE__ */ new Map();
 function register(name, ctor) {
   registry.set(name, ctor);
@@ -147,7 +147,24 @@ function start() {
   });
 }
 
-// src/client/handlers/ConfirmHandler.ts
+// src/views/handlers/DismissHandler.ts
+var DismissHandler = class extends BaseHandler {
+  connect() {
+  }
+  /** Hide the handler's root element */
+  hide() {
+    const shouldRemove = this.data("remove") === "true";
+    if (shouldRemove) {
+      this.element.remove();
+    } else {
+      this.element.style.display = "none";
+    }
+  }
+};
+__publicField(DismissHandler, "handlerName", "dismiss");
+register("dismiss", DismissHandler);
+
+// src/views/handlers/ConfirmHandler.ts
 var ConfirmHandler = class extends BaseHandler {
   connect() {
   }
@@ -166,24 +183,76 @@ var ConfirmHandler = class extends BaseHandler {
 __publicField(ConfirmHandler, "handlerName", "confirm");
 register("confirm", ConfirmHandler);
 
-// src/client/handlers/DismissHandler.ts
-var DismissHandler = class extends BaseHandler {
+// src/views/handlers/VoteHandler.ts
+var VoteHandler = class extends BaseHandler {
   connect() {
   }
-  /** Hide the handler's root element */
-  hide() {
-    const shouldRemove = this.data("remove") === "true";
-    if (shouldRemove) {
-      this.element.remove();
-    } else {
-      this.element.style.display = "none";
+  submit(event) {
+    const target = event.currentTarget;
+    const choice = target.getAttribute("data-vote-choice");
+    const form = this.element.closest("form");
+    if (!form || !choice) return;
+    if (choice === "block") {
+      const reason = prompt("Why are you blocking this tenet?");
+      if (!reason) {
+        event.preventDefault();
+        return;
+      }
+      form.querySelector("[name=reason]").value = reason;
     }
+    form.querySelector("[name=choice]").value = choice;
+    form.requestSubmit();
   }
 };
-__publicField(DismissHandler, "handlerName", "dismiss");
-register("dismiss", DismissHandler);
+__publicField(VoteHandler, "handlerName", "vote");
+register("vote", VoteHandler);
 
-// src/client/main.ts
+// src/views/handlers/StatusTransitionHandler.ts
+var StatusTransitionHandler = class extends BaseHandler {
+  connect() {
+  }
+  transition(event) {
+    const target = event.currentTarget;
+    const status = target.getAttribute("data-status-target");
+    const message = target.getAttribute("data-status-message") ?? "Change status?";
+    if (!confirm(message)) {
+      event.preventDefault();
+      return;
+    }
+    const form = this.element.closest("form");
+    if (!form || !status) return;
+    form.querySelector("[name=status]").value = status;
+    form.requestSubmit();
+  }
+};
+__publicField(StatusTransitionHandler, "handlerName", "status");
+register("status", StatusTransitionHandler);
+
+// src/views/handlers/AddOptionHandler.ts
+var AddOptionHandler = class extends BaseHandler {
+  constructor() {
+    super(...arguments);
+    __publicField(this, "counter", 1);
+  }
+  // template has index 0, so start at 1
+  connect() {
+    const start2 = this.data("start");
+    if (start2) this.counter = parseInt(start2, 10);
+  }
+  add() {
+    const template = this.element.querySelector("template");
+    const container = this.element.querySelector("[data-option-container]");
+    if (!template || !container) return;
+    let raw = template.innerHTML.replace(/__IDX__/g, String(this.counter));
+    raw = raw.replace(/__IDX_PLUS_ONE__/g, String(this.counter + 1));
+    container.insertAdjacentHTML("beforeend", raw);
+    this.counter++;
+  }
+};
+__publicField(AddOptionHandler, "handlerName", "addoption");
+register("addoption", AddOptionHandler);
+
+// src/infrastructure/client/main.ts
 console.log("js-mvc client loaded");
 function onReady(cb) {
   if (document.readyState === "loading") {
