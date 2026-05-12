@@ -6,6 +6,12 @@ const Confirm = Action("confirm");
 
 export const View: FC = () => (
   <section>
+    <nav>
+      <ul>
+        <li><a href="/_demo/state"><strong>State() Demos</strong></a></li>
+      </ul>
+    </nav>
+
     <h2>Alerts</h2>
 
     <Alert variant="info" header="New Feature Available">
