@@ -1081,6 +1081,8 @@ register<E extends Env>(app: Hono<E>): void {
 }
 ```
 
+
+
 ### Request objects
 
 ```typescript
