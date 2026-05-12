@@ -5,8 +5,8 @@
  * The template uses `__IDX__` as a placeholder for the field index.
  */
 
-import { BaseHandler } from "../infrastructure/client/BaseHandler";
-import { register } from "../infrastructure/client/dispatcher";
+import { BaseHandler } from "../../infrastructure/client/BaseHandler";
+import { register } from "../../infrastructure/client/dispatcher";
 
 export class AddOptionHandler extends BaseHandler {
   static override readonly handlerName = "addoption";

@@ -1,6 +1,6 @@
-import { RepositoryBase } from "../../infrastructure/db/RepositoryBase";
-import type { TenetRow, TenetOptionRow, TenetStatus } from "../models/tenet";
-import type { VoteRow } from "../models/vote";
+import { RepositoryBase } from "../../infrastructure/RepositoryBase";
+import type { TenetRow, TenetOptionRow, TenetStatus } from "./model";
+import type { VoteRow } from "../vote/model";
 
 export class TenetsRepository extends RepositoryBase<TenetRow> {
   override readonly tableName = "tenets";

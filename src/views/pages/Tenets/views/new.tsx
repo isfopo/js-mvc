@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import type { TenetFormViewModel } from "../view-model";
-import { Action } from "../../../utils/Action";
+import { Action } from "../../../../utils/Action";
 import styles from "./new.module.css";
 
 const AddOption = Action("addoption");

@@ -1,4 +1,4 @@
-import type { ValidationResult, IValidatable } from "../../infrastructure/validation/IValidatable";
+import type { ValidationResult, IValidatable } from "../../../../infrastructure/validation/IValidatable";
 
 export interface OptionInput {
   title: string;

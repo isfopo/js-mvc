@@ -1,5 +1,5 @@
-import type { TenetDetail, TenetSummary, UserInfo } from "../../services/TenetsService";
-import type { TenetStatus } from "../../data/models/tenet";
+import type { TenetDetail, TenetSummary, UserInfo } from "../../../db/tenet/service";
+import type { TenetStatus } from "../../../db/tenet/model";
 
 export type { TenetStatus, TenetDetail, TenetSummary, UserInfo };
 

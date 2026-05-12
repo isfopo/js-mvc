@@ -1,17 +1,17 @@
 import { Context, Env } from "hono";
-import { Get, Post, ControllerBase } from "../../infrastructure/ControllerBase";
-import { Exists, Validate } from "../../infrastructure/validation/decorators";
-import { requireAuth } from "../../infrastructure/middlewares/auth";
-import { tenetService } from "../../services/TenetsService";
-import { tenetsRepo } from "../../data/repos/tenets";
+import { Get, Post, ControllerBase } from "../../../infrastructure/ControllerBase";
+import { Exists, Validate } from "../../../infrastructure/validation/decorators";
+import { requireAuth } from "../../../middlewares/auth";
+import { tenetService } from "../../../db/tenet/service";
+import { tenetsRepo } from "../../../db/tenet/repo";
 import { viewBuilder } from "./view-builder";
-import { ProposeTenetRequest } from "../../data/requests/ProposeTenetRequest";
-import { VoteRequest } from "../../data/requests/VoteRequest";
+import { ProposeTenetRequest } from "./requests/ProposeTenetRequest";
+import { VoteRequest } from "./requests/VoteRequest";
 import { View as IndexView } from "./views/index";
 import { View as ShowView } from "./views/show";
 import { View as NewView } from "./views/new";
-import type { UserRow } from "../../data/models/user";
-import type { TenetRow } from "../../data/models/tenet";
+import type { UserRow } from "../../../db/user/model";
+import type { TenetRow } from "../../../db/tenet/model";
 
 class TenetsController<T extends Env> extends ControllerBase<T> {
   override base = "tenets";

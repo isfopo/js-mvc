@@ -1,5 +1,5 @@
-import { RepositoryBase } from "../../infrastructure/db/RepositoryBase";
-import type { UserRow } from "../models/user";
+import { RepositoryBase } from "../../infrastructure/RepositoryBase";
+import type { UserRow } from "./model";
 
 export class UsersRepository extends RepositoryBase<UserRow> {
   override readonly tableName = "users";

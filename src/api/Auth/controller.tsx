@@ -1,8 +1,8 @@
 import { Context, Env } from "hono";
 import { Get, Post, ControllerBase } from "../../infrastructure/ControllerBase";
 import { buildAuthorizeUrl, exchangeCode, fetchUser } from "./github";
-import { usersRepo } from "../../data/repos/users";
-import { createSession, destroySession } from "../../infrastructure/middlewares/auth";
+import { usersRepo } from "../../db/user/repo";
+import { createSession, destroySession } from "../../middlewares/auth";
 
 const DEFAULT_REDIRECT = "/tenets";
 

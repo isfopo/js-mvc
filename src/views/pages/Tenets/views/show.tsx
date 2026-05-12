@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import type { TenetDetailViewModel } from "../view-model";
-import { Action } from "../../../utils/Action";
+import { Action } from "../../../../utils/Action";
 import { StatusBadge } from "../../../components/StatusBadge";
 import styles from "./show.module.css";
 

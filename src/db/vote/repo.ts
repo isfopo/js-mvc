@@ -1,6 +1,5 @@
-import { RepositoryBase } from "../../infrastructure/db/RepositoryBase";
-import type { VoteRow } from "../models/vote";
-import type { VoteChoice } from "../models/vote";
+import { RepositoryBase } from "../../infrastructure/RepositoryBase";
+import type { VoteRow, VoteChoice } from "./model";
 
 export interface VoteWithUserRow extends VoteRow {
   user_login: string;

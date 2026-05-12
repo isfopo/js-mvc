@@ -1,5 +1,5 @@
 import { Context, Env } from "hono";
-import { Get, ControllerBase } from "../../infrastructure/ControllerBase";
+import { Get, ControllerBase } from "../../../infrastructure/ControllerBase";
 import { View } from "./views/index";
 
 class ComponentsController<T extends Env> extends ControllerBase<T> {

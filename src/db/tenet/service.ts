@@ -1,10 +1,10 @@
-import { ServiceBase } from "../infrastructure/services/ServiceBase";
-import { tenetsRepo } from "../data/repos/tenets";
-import { votesRepo } from "../data/repos/votes";
-import type { TenetRow, TenetOptionRow, TenetStatus } from "../data/models/tenet";
-import type { VoteRow } from "../data/models/vote";
-import type { ProposeTenetRequest } from "../data/requests/ProposeTenetRequest";
-import type { VoteRequest } from "../data/requests/VoteRequest";
+import { ServiceBase } from "../../infrastructure/ServiceBase";
+import { tenetsRepo } from "./repo";
+import { votesRepo } from "../vote/repo";
+import type { TenetRow, TenetOptionRow, TenetStatus } from "./model";
+import type { VoteRow } from "../vote/model";
+import type { ProposeTenetRequest } from "../../views/pages/Tenets/requests/ProposeTenetRequest";
+import type { VoteRequest } from "../../views/pages/Tenets/requests/VoteRequest";
 
 // ── Shared DTOs (consumed by HTML ViewBuilders and API controllers) ──
 

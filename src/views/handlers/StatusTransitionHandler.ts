@@ -2,8 +2,8 @@
  * Status transition handler — confirms before changing tenet status.
  */
 
-import { BaseHandler } from "../infrastructure/client/BaseHandler";
-import { register } from "../infrastructure/client/dispatcher";
+import { BaseHandler } from "../../infrastructure/client/BaseHandler";
+import { register } from "../../infrastructure/client/dispatcher";
 
 export class StatusTransitionHandler extends BaseHandler {
   static override readonly handlerName = "status";

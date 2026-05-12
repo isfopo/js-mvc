@@ -1,5 +1,5 @@
 import type { FC } from "hono/jsx";
-import type { TenetStatus } from "../../data/models/tenet";
+import type { TenetStatus } from "../../../db/tenet/model";
 
 const LABELS: Record<TenetStatus, string> = {
   draft: "Draft",
