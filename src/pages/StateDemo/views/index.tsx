@@ -28,7 +28,7 @@ export const View: FC<StateDemoViewModel> = () => (
       <div class={styles.planOptions}>
         <label>
           <Plan.Trigger value="free">
-            <input type="radio" name="plan" value="free" defaultChecked />
+            <input type="radio" name="plan" value="free" checked />
           </Plan.Trigger>
           Free
         </label>
@@ -156,7 +156,7 @@ export const View: FC<StateDemoViewModel> = () => (
       <div class={styles.planOptions}>
         <label>
           <Color.Trigger value="red">
-            <input type="radio" name="color" value="red" defaultChecked />
+            <input type="radio" name="color" value="red" checked />
           </Color.Trigger>
           Red
         </label>
@@ -186,7 +186,7 @@ export const View: FC<StateDemoViewModel> = () => (
       <div class={styles.planOptions}>
         <label>
           <AnimatedPlan.Trigger value="free">
-            <input type="radio" name="anim-plan" value="free" defaultChecked />
+            <input type="radio" name="anim-plan" value="free" checked />
           </AnimatedPlan.Trigger>
           Free
         </label>

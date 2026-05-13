@@ -83,9 +83,7 @@ export function generateEffectCSS(
       const lines: string[] = [];
       if (isAnimated && preset) {
         lines.push(`${scopeSelector} [${targetAttr}="${when}"] { ${cssBlock(preset.hidden)}; transition: ${transitionString}; }`);
-      }
-      if (isAnimated) {
-        lines.push(`${condSelector} [${targetAttr}="${when}"] { opacity: 1; pointer-events: auto; visibility: visible; }`);
+        lines.push(`${condSelector} [${targetAttr}="${when}"] { opacity: 1; pointer-events: auto; visibility: visible; transition: ${transitionString}; }`);
       } else {
         lines.push(`${condSelector} [${targetAttr}="${when}"] { display: ${displayValue} !important; }`);
       }
@@ -95,7 +93,7 @@ export function generateEffectCSS(
       const lines: string[] = [];
       if (isAnimated && preset) {
         lines.push(`${scopeSelector} [${targetAttr}="${when}"] { transition: ${transitionString}; }`);
-        lines.push(`${condSelector} [${targetAttr}="${when}"] { ${cssBlock(preset.hidden)}; }`);
+        lines.push(`${condSelector} [${targetAttr}="${when}"] { ${cssBlock(preset.hidden)}; transition: ${transitionString}; }`);
       } else {
         lines.push(`${condSelector} [${targetAttr}="${when}"] { display: none; }`);
       }
@@ -106,7 +104,7 @@ export function generateEffectCSS(
       if (isAnimated && preset) {
         lines.push(`${scopeSelector} [${targetAttr}="${when}"] { transition: ${transitionString}; }`);
       }
-      lines.push(`${condSelector} [${targetAttr}="${when}"] { opacity: 0.5; pointer-events: none; user-select: none; }`);
+      lines.push(`${condSelector} [${targetAttr}="${when}"] { opacity: 0.5; pointer-events: none; user-select: none; transition: ${transitionString}; }`);
       return lines.join("\n");
     }
     case "enable": {
@@ -115,7 +113,7 @@ export function generateEffectCSS(
       if (isAnimated && preset) {
         lines.push(`${scopeSelector} [${targetAttr}="${when}"] { transition: ${transitionString}; }`);
       }
-      lines.push(`${condSelector} [${targetAttr}="${when}"] { opacity: 1; pointer-events: auto; user-select: auto; }`);
+      lines.push(`${condSelector} [${targetAttr}="${when}"] { opacity: 1; pointer-events: auto; user-select: auto; transition: ${transitionString}; }`);
       return lines.join("\n");
     }
   }
