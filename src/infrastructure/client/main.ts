@@ -4,11 +4,11 @@
  */
 
 // Import each handler to trigger its side-effect registration with the dispatcher
-import "../../handlers/DismissHandler";
-import "../../handlers/ConfirmHandler";
-import "../../handlers/VoteHandler";
-import "../../handlers/StatusTransitionHandler";
-import "../../handlers/AddOptionHandler";
+import "../../views/handlers/DismissHandler";
+import "../../views/handlers/ConfirmHandler";
+import "../../views/handlers/VoteHandler";
+import "../../views/handlers/StatusTransitionHandler";
+import "../../views/handlers/AddOptionHandler";
 import { start } from "./dispatcher";
 
 console.log("js-mvc client loaded");

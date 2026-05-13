@@ -1,6 +1,13 @@
 import { Hono } from "hono";
-import { registerControllers } from "./infrastructure/controllers";
-import { initDatabase } from "./infrastructure/db/init";
+
+import HomeController from "./views/pages/Home/controller";
+import ComponentsController from "./views/pages/ComponentsDemo/controller";
+import TenetsController from "./views/pages/Tenets/controller";
+import TenetsApiController from "./api/Tenets/controller";
+import WellKnownController from "./api/WellKnown/controller";
+import AuthController from "./api/Auth/controller";
+
+import { initDatabase } from "./db/init";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -13,7 +20,10 @@ app.use("*", async (c, next) => {
       initPromise = (async () => {
         const env = c.env as unknown as Record<string, unknown>;
         if (!env.DB) {
-          console.error("DB binding is not available. Available keys:", Object.keys(env));
+          console.error(
+            "DB binding is not available. Available keys:",
+            Object.keys(env),
+          );
           return;
         }
         try {
@@ -30,7 +40,12 @@ app.use("*", async (c, next) => {
   await next();
 });
 
-registerControllers(app);
+HomeController.register(app);
+ComponentsController.register(app);
+TenetsController.register(app);
+TenetsApiController.register(app);
+WellKnownController.register(app);
+AuthController.register(app);
 
 // Redirect root to /tenets
 app.get("/", (c) => c.redirect("/tenets"));

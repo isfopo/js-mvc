@@ -1,13 +1,13 @@
 import { Context, Env } from "hono";
 import { Get, Post, ControllerBase } from "../../infrastructure/ControllerBase";
 import { Exists, Validate } from "../../infrastructure/validation/decorators";
-import { requireAuth } from "../../infrastructure/middlewares/auth";
-import { tenetService } from "../../services/TenetsService";
-import { tenetsRepo } from "../../data/repos/tenets";
-import { ProposeTenetRequest } from "../../data/requests/ProposeTenetRequest";
-import { VoteRequest } from "../../data/requests/VoteRequest";
-import type { UserRow } from "../../data/models/user";
-import type { TenetRow } from "../../data/models/tenet";
+import { requireAuth } from "../../middlewares/auth";
+import { tenetService } from "../../db/tenet/service";
+import { tenetsRepo } from "../../db/tenet/repo";
+import { ProposeTenetRequest } from "../../views/pages/Tenets/requests/ProposeTenetRequest";
+import { VoteRequest } from "../../views/pages/Tenets/requests/VoteRequest";
+import type { UserRow } from "../../db/user/model";
+import type { TenetRow } from "../../db/tenet/model";
 
 class TenetsApiController<T extends Env> extends ControllerBase<T> {
   override base = "api/tenets";
