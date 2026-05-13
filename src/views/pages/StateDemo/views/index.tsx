@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import type { StateDemoViewModel } from "../view-model";
-import { State } from "../../../utils/State";
+import { State } from "../../../../utils/State";
 import styles from "./index.module.css";
 
 const Plan = State<"plan", "free" | "pro" | "enterprise">("plan");
@@ -20,9 +20,7 @@ export const View: FC<StateDemoViewModel> = () => (
 
     {/* ── Section 1: Radio-based show/hide ─────────────────────── */}
     <h2>1. Plan Selection (Radio → Show/Hide)</h2>
-    <p>
-      Selecting a radio button reveals the corresponding content panel.
-    </p>
+    <p>Selecting a radio button reveals the corresponding content panel.</p>
 
     <Plan>
       <div class={styles.planOptions}>
@@ -69,8 +67,8 @@ export const View: FC<StateDemoViewModel> = () => (
     {/* ── Section 2: Form validity ─────────────────────────────── */}
     <h2>2. Form Validity (valid/invalid → Show/Hide)</h2>
     <p>
-      The submit button is disabled until the form is valid.
-      Error messages appear when fields are invalid.
+      The submit button is disabled until the form is valid. Error messages
+      appear when fields are invalid.
     </p>
 
     <FormValidity tag="form">
@@ -88,7 +86,9 @@ export const View: FC<StateDemoViewModel> = () => (
       </div>
 
       <FormValidity.Show when="invalid">
-        <p class={styles.validationError}>Please fill in all fields correctly.</p>
+        <p class={styles.validationError}>
+          Please fill in all fields correctly.
+        </p>
       </FormValidity.Show>
 
       <FormValidity.Disable when="invalid">
@@ -112,7 +112,9 @@ export const View: FC<StateDemoViewModel> = () => (
       </label>
 
       <Confirm.Disable when="unchecked">
-        <button type="submit" class="outline">Submit (Disable)</button>
+        <button type="submit" class="outline">
+          Submit (Disable)
+        </button>
       </Confirm.Disable>
 
       <Confirm.Disable when="checked">
@@ -120,16 +122,14 @@ export const View: FC<StateDemoViewModel> = () => (
       </Confirm.Disable>
 
       <p class={styles.animationNote}>
-        Uncheck the box: first button disables, second enables.
-        Check the box: first enables, second disables.
+        Uncheck the box: first button disables, second enables. Check the box:
+        first enables, second disables.
       </p>
     </Confirm>
 
     {/* ── Section 4: Focus-based show ──────────────────────────── */}
     <h2>4. Focus-Based Show</h2>
-    <p>
-      Helper text appears when the field is focused.
-    </p>
+    <p>Helper text appears when the field is focused.</p>
 
     <FocusField>
       <label>
@@ -169,18 +169,20 @@ export const View: FC<StateDemoViewModel> = () => (
       </div>
 
       <Color.Show when="red">
-        <p class={styles.colorSwatch} style={{ backgroundColor: "#e74c3c" }}>Red selected</p>
+        <p class={styles.colorSwatch} style={{ backgroundColor: "#e74c3c" }}>
+          Red selected
+        </p>
       </Color.Show>
       <Color.Show when="blue">
-        <p class={styles.colorSwatch} style={{ backgroundColor: "#3498db" }}>Blue selected</p>
+        <p class={styles.colorSwatch} style={{ backgroundColor: "#3498db" }}>
+          Blue selected
+        </p>
       </Color.Show>
     </Color>
 
     {/* ── Section 6: Animation presets ─────────────────────────── */}
     <h2>6. Animation Presets</h2>
-    <p>
-      Animated transitions use opacity/visibility instead of display:none.
-    </p>
+    <p>Animated transitions use opacity/visibility instead of display:none.</p>
 
     <AnimatedPlan>
       <div class={styles.planOptions}>
