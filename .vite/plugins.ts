@@ -33,7 +33,8 @@ export function cssBuilderPlugin(): Plugin {
       server.watcher.on("change", (file: string) => {
         if (
           (file.endsWith(".css") || file.endsWith(".module.css") || file.endsWith(".svg")) &&
-          !file.includes("/public/")
+          !file.includes("/public/") &&
+          !file.includes("/.generated/")
         ) {
           console.log(`\n📝 ${file.split("/").pop()} changed, rebuilding CSS...`);
 

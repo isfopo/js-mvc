@@ -1,8 +1,8 @@
 /**
  * Builds client-side TypeScript to a static JS bundle.
  *
- * Uses esbuild to compile src/client/main.ts → public/client/main.js.
- * Output goes into the public/ directory so it's served as a static asset
+ * Uses esbuild to compile src/infrastructure/client/main.ts → public/.generated/client/main.js.
+ * Output goes into the public/.generated/ directory so it's served as a static asset
  * by the Cloudflare Worker in both dev and production.
  */
 
@@ -18,7 +18,7 @@ async function main() {
 
   await build({
     entryPoints: [resolve(rootDir, "src", "infrastructure", "client", "main.ts")],
-    outfile: resolve(rootDir, "public", "client", "main.js"),
+    outfile: resolve(rootDir, "public", ".generated", "client", "main.js"),
     bundle: true,
     format: "esm",
     target: "es2020",

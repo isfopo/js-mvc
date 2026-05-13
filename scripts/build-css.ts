@@ -162,11 +162,11 @@ async function main() {
   // Step 1: Combine all CSS
   const fullCSS = combineCSS();
 
-  // Step 2: Write full bundle to public/styles/
-  const publicDir = resolve(rootDir, "public", "styles");
-  mkdirSync(publicDir, { recursive: true });
+  // Step 2: Write full bundle to .generated/styles/
+  const outDir = resolve(rootDir, "public", ".generated", "styles");
+  mkdirSync(outDir, { recursive: true });
   const minifiedFull = new CleanCSS().minify(fullCSS).styles;
-  writeFileSync(resolve(publicDir, "index.css"), minifiedFull);
+  writeFileSync(resolve(outDir, "index.css"), minifiedFull);
   console.log(`\n✓ Full bundle: ${minifiedFull.length} bytes (minified)\n`);
 }
 

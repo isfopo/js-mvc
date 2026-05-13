@@ -26,6 +26,9 @@ wrangler.jsonc
 # auto-generated from local wrangler.jsonc
 worker-configuration.d.ts
 
+# build output (CSS + client JS)
+public/.generated/
+
 # logs
 logs/
 *.log
@@ -37,3 +40,4 @@ lerna-debug.log*
 
 # misc
 .DS_Store
+.playwright-mcp/

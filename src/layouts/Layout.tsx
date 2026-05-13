@@ -24,7 +24,7 @@ export const Layout: FC<LayoutProps> = ({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="description" content="Tenet — Team Decision Journal" />
         <title>Tenet</title>
-        <link rel="stylesheet" href="/styles/index.css" />
+        <link rel="stylesheet" href="/.generated/styles/index.css" />
 
         {import.meta.env.DEV ? (
           <>
@@ -32,7 +32,7 @@ export const Layout: FC<LayoutProps> = ({
             <script type="module" src="/src/infrastructure/client/main.ts"></script>
           </>
         ) : (
-          <script type="module" src="/client/main.js"></script>
+          <script type="module" src="/.generated/client/main.js"></script>
         )}
 
         {head}

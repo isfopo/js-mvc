@@ -1,6 +1,6 @@
 /**
  * Client-side entry point for js-mvc.
- * Compiled to public/client/main.js and loaded by the server-rendered layout.
+ * Compiled to public/.generated/client/main.js and loaded by the server-rendered layout.
  */
 
 // Import each handler to trigger its side-effect registration with the dispatcher
