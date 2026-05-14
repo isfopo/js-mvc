@@ -33,7 +33,10 @@ export const Layout: FC<LayoutProps> = ({
         {import.meta.env.DEV ? (
           <>
             <script type="module" src="/@vite/client"></script>
-            <script type="module" src="/src/infrastructure/client/main.ts"></script>
+            <script
+              type="module"
+              src="/src/infrastructure/client/main.ts"
+            ></script>
           </>
         ) : (
           <script type="module" src="/.generated/client/main.js"></script>
@@ -47,7 +50,9 @@ export const Layout: FC<LayoutProps> = ({
             <ul>
               <li>
                 <strong>
-                  <a href="/tenets" style="text-decoration: none;">Tenet</a>
+                  <a href="/tenets" style="text-decoration: none;">
+                    Tenet
+                  </a>
                 </strong>
               </li>
               {isHome && (
@@ -96,9 +101,7 @@ export const Layout: FC<LayoutProps> = ({
             </ul>
           </nav>
         </header>
-        <main>
-          {depth === 0 ? <Outlet /> : children}
-        </main>
+        <main>{depth === 0 ? <Outlet /> : children}</main>
       </body>
     </html>
   );
