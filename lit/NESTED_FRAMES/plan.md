@@ -2,15 +2,17 @@
 
 This plan translates the design in `NESTED_FRAMES.md` into concrete, ordered tasks. Each task specifies exact files, code changes, verification steps, and dependencies.
 
+> **Status Legend:** ✅ Complete · 🔲 Pending · ⚡ In Progress
+
 ---
 
-## Phase 1: Depth-Aware Rendering (Foundation)
+## Phase 1: Depth-Aware Rendering (Foundation) — ✅ COMPLETE
 
 The core change: the server renders different HTML depending on the `_depth` query parameter. At depth 0, the full `Layout` wraps content in an `<Outlet />` (which becomes an `<iframe>`). At depth 1+, `FrameShell` wraps content with no global nav.
 
 ---
 
-### Task 1.1 — Create `FrameContext.ts`
+### Task 1.1 — Create `FrameContext.ts` ✅
 
 **File:** `src/infrastructure/FrameContext.ts` (new)
 
@@ -54,7 +56,7 @@ export function getFrameDepth(): number {
 
 ---
 
-### Task 1.2 — Create `frameMiddleware.ts`
+### Task 1.2 — Create `frameMiddleware.ts` ✅
 
 **File:** `src/infrastructure/frameMiddleware.ts` (new)
 
@@ -95,9 +97,11 @@ export async function frameMiddleware(c: Context, next: Next): Promise<void> {
 
 ---
 
-### Task 1.3 — Create the `Outlet` component
+### Task 1.3 — Create the `Outlet` component ✅
 
 **File:** `src/views/components/Outlet/index.tsx` (new)
+
+> **⚠️ Bug fix applied:** An obsolete `Outlet.tsx` file was shadowing `Outlet/index.tsx`. The old file used `window.location.pathname` which doesn't work server-side. The obsolete file was deleted.
 
 **What:** A server-side JSX component that renders as an `<iframe>` pointing to the same path at the next depth level. Views include `<Outlet />` when they have chrome to wrap around child content.
 
@@ -144,7 +148,7 @@ export const Outlet: FC<OutletProps> = ({ path }) => {
 
 ---
 
-### Task 1.4 — Create the `FrameShell` component
+### Task 1.4 — Create the `FrameShell` component ✅
 
 **File:** `src/views/pages/Shared/FrameShell.tsx` (new)
 
@@ -194,9 +198,11 @@ export const FrameShell: FC<FrameShellProps> = ({ children, depth }) => (
 
 ---
 
-### Task 1.5 — Modify `ControllerBase.tsx` — depth-aware renderer
+### Task 1.5 — Modify `ControllerBase.tsx` — depth-aware renderer ✅
 
 **File:** `src/infrastructure/ControllerBase.tsx` (modify)
+
+> **⚠️ Bug fix applied:** Changed from `c.get("frameDepth")` to `getFrameDepth()` from `FrameContext`. Hono sub-apps get a fresh context, so context variables (`c.set`/`c.get`) don't carry over when a controller is mounted as a sub-app. The module-level `getFrameDepth()` works reliably across sub-app boundaries.
 
 **What:** Change the renderer middleware to wrap responses differently based on depth:
 - **Depth 0:** Render `<Layout>` with `depth={0}`. The Layout itself renders an `<Outlet />` instead of `{children}`. The controller's view content is discarded at depth 0 — only the Layout shell matters.
@@ -265,7 +271,7 @@ import { FrameShell } from "views/pages/Shared/FrameShell";
 
 ---
 
-### Task 1.6 — Modify `Layout.tsx` — render Outlet at depth 0
+### Task 1.6 — Modify `Layout.tsx` — render Outlet at depth 0 ✅
 
 **File:** `src/views/pages/Shared/Layout.tsx` (modify)
 
@@ -324,7 +330,7 @@ export const Layout: FC<LayoutProps> = ({
 
 ---
 
-### Task 1.7 — Modify `auth.tsx` — depth-aware redirects
+### Task 1.7 — Modify `auth.tsx` — depth-aware redirects ✅
 
 **File:** `src/middlewares/auth.tsx` (modify)
 
@@ -382,7 +388,7 @@ Then replace the three `c.redirect(...)` calls in `requireAuth()`:
 
 ---
 
-### Task 1.8 — Modify `handleError` — depth-aware error rendering
+### Task 1.8 — Modify `handleError` — depth-aware error rendering ✅
 
 **File:** `src/infrastructure/errors/index.tsx` (modify)
 
@@ -540,7 +546,7 @@ export function handleError(
 
 ---
 
-### Task 1.9 — Modify `index.tsx` — register frame middleware
+### Task 1.9 — Modify `index.tsx` — register frame middleware ✅
 
 **File:** `src/index.tsx` (modify)
 
@@ -628,7 +634,7 @@ export default app;
 
 ---
 
-### Task 1.10 — Add layout CSS for iframe sizing
+### Task 1.10 — Add layout CSS for iframe sizing ✅
 
 **File:** `src/views/styles/layout.css` (modify — append to existing file)
 
@@ -703,7 +709,7 @@ import styles from "./FrameShell.module.css";
 
 ---
 
-### Task 1.11 — End-to-end verification of Phase 1
+### Task 1.11 — End-to-end verification of Phase 1 ✅
 
 **What:** Comprehensive manual testing of the depth-aware rendering system.
 
@@ -750,15 +756,17 @@ Also, the "Login with GitHub" link should use `target="_top"`:
 
 ---
 
-## Phase 2: History & Navigation
+## Phase 2: History & Navigation — ⚡ IN PROGRESS
 
 Make the browser back/forward buttons work correctly with nested frames. Without this, pressing back after navigating within an iframe would navigate the entire top-level page instead of just the iframe content.
 
 ---
 
-### Task 2.1 — Create `frame-router.ts` — top-level history manager
+### Task 2.1 — Create `frame-router.ts` — top-level history manager ✅
 
 **File:** `src/infrastructure/client/frame-router.ts` (new)
+
+> **Implementation note:** `frame-router.ts` also includes `frame:resize` message handling (originally planned as Phase 3 Task 3.3). This Phase 3 feature was pulled forward because it's a natural fit alongside the `postMessage` infrastructure.
 
 **What:** A script that runs in the top-level frame (depth 0). It listens for `postMessage` events from child iframes announcing navigation, maintains a history stack, and intercepts `popstate` events to route back/forward to the correct iframe.
 
@@ -850,9 +858,11 @@ export function initFrameRouter(): void {
 
 ---
 
-### Task 2.2 — Create `frame-child.ts` — child frame navigation announcer
+### Task 2.2 — Create `frame-child.ts` — child frame navigation announcer ✅
 
 **File:** `src/infrastructure/client/frame-child.ts` (new)
+
+> **Implementation note:** `frame-child.ts` was enhanced beyond the original plan. In addition to announcing navigation via `postMessage`, it now **intercepts link clicks and form submissions** to automatically append `_depth=N` to URLs. This means templates don't need manual URL rewriting — the client script handles it transparently.
 
 **What:** A script that runs inside every nested frame (depth > 0). It announces navigation to the parent frame via `postMessage` so the address bar stays in sync.
 
@@ -905,9 +915,11 @@ history.replaceState = function (...args: Parameters<typeof history.replaceState
 
 ---
 
-### Task 2.3 — Modify `FrameShell.tsx` — include child script and `<base target="_self">`
+### Task 2.3 — Modify `FrameShell.tsx` — include child script and `<base target="_self">` ✅
 
 **File:** `src/views/pages/Shared/FrameShell.tsx` (modify)
+
+> **Implementation note:** No separate `<script>` tag was added to FrameShell. Both `frame-child.ts` and `frame-router.ts` are imported from `main.ts` and bundled into the main client JS. The `<base target="_self">` was already included in Task 1.4. This task is effectively complete without the separate script tag approach described in the original plan.
 
 **What:** Add the `frame-child.ts` script to FrameShell so every nested frame announces navigation to the parent. The `<base target="_self">` is already there from Task 1.4.
 
@@ -972,9 +984,11 @@ For simplicity, we'll go with **Option A** — see Task 2.5.
 
 ---
 
-### Task 2.4 — Modify `Layout.tsx` — include frame-router script (top-level only)
+### Task 2.4 — Modify `Layout.tsx` — include frame-router script (top-level only) ✅
 
 **File:** `src/views/pages/Shared/Layout.tsx` (modify)
+
+> **Implementation note:** No separate `<script>` tag was added to Layout. Both `frame-child.ts` and `frame-router.ts` are imported from `main.ts` and bundled into the main client JS. The scripts self-activate based on the presence/absence of `_depth` in the URL, so no conditional script loading in the template is needed.
 
 **What:** Add the `frame-router` script to the Layout so it initializes in the top-level frame. This script only runs at depth 0.
 
@@ -997,9 +1011,15 @@ Add the frame-router script to the `<head>` section, after the existing scripts:
 
 ---
 
-### Task 2.5 — Modify `main.ts` — conditional init based on depth
+### Task 2.5 — Modify `main.ts` — conditional init based on depth ✅
 
 **File:** `src/infrastructure/client/main.ts` (modify)
+
+> **Implementation note:** Both `frame-child` and `frame-router` are imported from `main.ts` and bundled into the single client JS bundle. They self-activate based on `_depth`:
+> - `frame-child.ts` only activates when `_depth` is present in the URL (depth > 0)
+> - `frame-router.ts` only activates when `_depth` is absent (depth 0 / top-level frame)
+>
+> This eliminates the need for separate script tags in FrameShell or Layout.
 
 **What:** Import the frame-child script so it gets bundled with the main client JS. The frame-router is a separate concern that initializes itself.
 
@@ -1153,9 +1173,11 @@ Navigate within the iframe (click a tenet). The address bar should update via `p
 
 ---
 
-### Task 2.6 — Test back/forward navigation
+### Task 2.6 — Test back/forward navigation 🔲
 
 **What:** Manual testing of history management.
+
+> **Status:** Pending manual testing.
 
 **Test cases:**
 
@@ -1173,13 +1195,15 @@ Navigate within the iframe (click a tenet). The address bar should update via `p
 
 ---
 
-## Phase 3: iframe Sizing
+## Phase 3: iframe Sizing — 🔲 NOT STARTED
 
 Make iframes fill their containers properly. Phase 1's CSS already handles the basic flexbox layout. This phase adds dynamic height reporting for variable-height content.
 
+> **Note:** The `frame:resize` message handling (originally Tasks 3.2 and 3.3) was pulled forward into Phase 2 as part of `frame-child.ts` and `frame-router.ts`. The remaining work is to verify the CSS and test sizing behavior.
+
 ---
 
-### Task 3.1 — Layout CSS for flexbox viewport fill
+### Task 3.1 — Layout CSS for flexbox viewport fill ✅ (done in Task 1.10)
 
 **File:** `src/views/styles/layout.css` (modify — already done in Task 1.10)
 
@@ -1191,9 +1215,11 @@ Make iframes fill their containers properly. Phase 1's CSS already handles the b
 
 ---
 
-### Task 3.2 — FrameShell height reporting via ResizeObserver + postMessage
+### Task 3.2 — FrameShell height reporting via ResizeObserver + postMessage ✅ (pulled forward into Phase 2)
 
 **File:** `src/infrastructure/client/frame-child.ts` (modify)
+
+> **Implementation note:** This was implemented as part of `frame-child.ts` in Phase 2. The `ResizeObserver`-based height reporting and `frame:resize` messages are already in the codebase. No separate task needed.
 
 **What:** Add a `ResizeObserver` that watches the document body height and reports it to the parent frame via `postMessage`. This allows the parent to set the iframe height to match its content.
 
@@ -1244,9 +1270,11 @@ if (typeof window !== "undefined") {
 
 ---
 
-### Task 3.3 — frame-router height listener
+### Task 3.3 — frame-router height listener ✅ (pulled forward into Phase 2)
 
 **File:** `src/infrastructure/client/frame-router.ts` (modify)
+
+> **Implementation note:** This was implemented as part of `frame-router.ts` in Phase 2. The `frame:resize` message listener is already in the codebase. No separate task needed.
 
 **What:** Add a listener for `frame:resize` messages that adjusts the iframe height.
 
@@ -1289,7 +1317,7 @@ export function initFrameRouter(): void {
 
 ---
 
-### Task 3.4 — Test sizing
+### Task 3.4 — Test sizing 🔲
 
 **What:** Manual testing of iframe sizing.
 
@@ -1307,7 +1335,7 @@ export function initFrameRouter(): void {
 
 ---
 
-## Phase 4: Multi-Outlet (Stretch Goal)
+## Phase 4: Multi-Outlet (Stretch Goal) — 🔲 NOT STARTED
 
 Enable section views with multiple Outlets (e.g., sidebar + detail). This is a stretch goal and should only be attempted after Phases 1–3 are stable.
 
@@ -1517,96 +1545,98 @@ async index(c: Context) {
 
 ## Summary: File Changes by Phase
 
-### Phase 1 — New Files
-| File | Purpose |
-|---|---|
-| `src/infrastructure/FrameContext.ts` | Module-level frame context (depth + path) |
-| `src/infrastructure/frameMiddleware.ts` | Hono middleware to extract `_depth` from query |
-| `src/views/components/Outlet/index.tsx` | `<Outlet />` component (renders as `<iframe>`) |
-| `src/views/pages/Shared/FrameShell.tsx` | Minimal HTML shell for nested frames |
-| `src/views/pages/Shared/FrameShell.module.css` | FrameShell body styles |
+### Phase 1 — New Files ✅
+| File | Purpose | Status |
+|---|---|---|
+| `src/infrastructure/FrameContext.ts` | Module-level frame context (depth + path) | ✅ |
+| `src/infrastructure/frameMiddleware.ts` | Hono middleware to extract `_depth` from query | ✅ |
+| `src/views/components/Outlet/index.tsx` | `<Outlet />` component (renders as `<iframe>`) | ✅ |
+| `src/views/pages/Shared/FrameShell.tsx` | Minimal HTML shell for nested frames | ✅ |
+| `src/views/pages/Shared/FrameShell.module.css` | FrameShell body styles | ✅ |
 
-### Phase 1 — Modified Files
-| File | Change |
-|---|---|
-| `src/infrastructure/ControllerBase.tsx` | Depth-aware renderer (Layout at depth 0, FrameShell at depth 1+) |
-| `src/views/pages/Shared/Layout.tsx` | Add `depth` prop, render `<Outlet />` at depth 0 |
-| `src/middlewares/auth.tsx` | `frameRedirect()` helper for depth-aware auth redirects |
-| `src/infrastructure/errors/index.tsx` | Depth-aware error rendering (FrameShell at depth > 0) |
-| `src/views/pages/Shared/Results.tsx` | Add `depth` prop, skip Layout wrapper at depth > 0 |
-| `src/index.tsx` | Register `frameMiddleware` |
-| `src/views/styles/layout.css` | Flexbox rules for iframe sizing |
+### Phase 1 — Modified Files ✅
+| File | Change | Status |
+|---|---|---|
+| `src/infrastructure/ControllerBase.tsx` | Depth-aware renderer (Layout at depth 0, FrameShell at depth 1+). Uses `getFrameDepth()` instead of `c.get("frameDepth")` due to Hono sub-app context isolation. | ✅ |
+| `src/views/pages/Shared/Layout.tsx` | Add `depth` prop, render `<Outlet />` at depth 0 | ✅ |
+| `src/middlewares/auth.tsx` | `frameRedirect()` helper for depth-aware auth redirects | ✅ |
+| `src/infrastructure/errors/index.tsx` | Depth-aware error rendering (FrameShell at depth > 0) | ✅ |
+| `src/views/pages/Shared/Results.tsx` | Add `depth` prop, skip Layout wrapper at depth > 0 | ✅ |
+| `src/index.tsx` | Register `frameMiddleware` | ✅ |
+| `src/views/styles/layout.css` | Flexbox rules for iframe sizing | ✅ |
 
-### Phase 2 — New Files
-| File | Purpose |
-|---|---|
-| `src/infrastructure/client/frame-router.ts` | Top-level history manager |
-| `src/infrastructure/client/frame-child.ts` | Child frame navigation announcer |
+> **Bug fix:** Deleted obsolete `Outlet.tsx` that was shadowing `Outlet/index.tsx` (was using `window.location.pathname` which doesn't work server-side).
 
-### Phase 2 — Modified Files
-| File | Change |
-|---|---|
-| `src/infrastructure/client/main.ts` | Import frame-router and frame-child |
-| `src/views/pages/Shared/Layout.tsx` | (Script tag removed — bundled via main.ts) |
-| `src/views/pages/Shared/FrameShell.tsx` | (Script tag removed — bundled via main.ts) |
+### Phase 2 — New Files ✅
+| File | Purpose | Status |
+|---|---|---|
+| `src/infrastructure/client/frame-router.ts` | Top-level history manager + `frame:resize` listener (Phase 3 feature pulled forward) | ✅ |
+| `src/infrastructure/client/frame-child.ts` | Child frame navigation announcer + link/form interception + `_depth` rewriting + ResizeObserver height reporting (Phase 3 features pulled forward) | ✅ |
 
-### Phase 3 — Modified Files
-| File | Change |
-|---|---|
-| `src/infrastructure/client/frame-child.ts` | Add ResizeObserver height reporting |
-| `src/infrastructure/client/frame-router.ts` | Add `frame:resize` message listener |
+### Phase 2 — Modified Files ✅
+| File | Change | Status |
+|---|---|---|
+| `src/infrastructure/client/main.ts` | Import frame-router and frame-child | ✅ |
+| `src/views/pages/Shared/Layout.tsx` | No separate script tag needed — bundled via main.ts | ✅ |
+| `src/views/pages/Shared/FrameShell.tsx` | No separate script tag needed — bundled via main.ts | ✅ |
 
-### Phase 4 — New Files
-| File | Purpose |
-|---|---|
-| `src/views/pages/Tenets/views/section.tsx` | Section view with two Outlets |
-| `src/views/pages/Tenets/views/section.module.css` | Grid layout for sidebar + detail |
+### Phase 3 — Modified Files ✅ (code complete, testing pending)
+| File | Change | Status |
+|---|---|---|
+| `src/infrastructure/client/frame-child.ts` | ResizeObserver height reporting | ✅ (pulled forward to Phase 2) |
+| `src/infrastructure/client/frame-router.ts` | `frame:resize` message listener | ✅ (pulled forward to Phase 2) |
 
-### Phase 4 — Modified Files
-| File | Change |
-|---|---|
-| `src/views/components/Outlet/index.tsx` | Add `name` prop for named outlets |
-| `src/infrastructure/client/frame-router.ts` | Add `frame:outlet` message handler |
-| `src/views/pages/Tenets/controller.tsx` | Add section route at depth 1 |
+### Phase 4 — New Files 🔲 NOT STARTED
+| File | Purpose | Status |
+|---|---|---|
+| `src/views/pages/Tenets/views/section.tsx` | Section view with two Outlets | 🔲 |
+| `src/views/pages/Tenets/views/section.module.css` | Grid layout for sidebar + detail | 🔲 |
+
+### Phase 4 — Modified Files 🔲 NOT STARTED
+| File | Change | Status |
+|---|---|---|
+| `src/views/components/Outlet/index.tsx` | Add `name` prop for named outlets | 🔲 |
+| `src/infrastructure/client/frame-router.ts` | Add `frame:outlet` message handler | 🔲 |
+| `src/views/pages/Tenets/controller.tsx` | Add section route at depth 1 | 🔲 |
 
 ---
 
 ## Implementation Order
 
 ```
-Phase 1 (Foundation — must be first):
-  1.1 FrameContext.ts          ← no deps
-  1.2 frameMiddleware.ts       ← depends on 1.1
-  1.3 Outlet component         ← depends on 1.1
-  1.4 FrameShell component     ← no deps
-  1.5 ControllerBase.tsx       ← depends on 1.2, 1.4
-  1.6 Layout.tsx               ← depends on 1.3, 1.5
-  1.7 auth.tsx                 ← depends on 1.1
-  1.8 handleError + Results   ← depends on 1.1, 1.4
-  1.9 index.tsx                ← depends on 1.2
-  1.10 layout CSS              ← depends on 1.6
-  1.11 E2E verification        ← depends on all above
+Phase 1 (Foundation — must be first): ✅ COMPLETE
+  1.1 FrameContext.ts          ✅ no deps
+  1.2 frameMiddleware.ts       ✅ depends on 1.1
+  1.3 Outlet component         ✅ depends on 1.1
+  1.4 FrameShell component     ✅ no deps
+  1.5 ControllerBase.tsx       ✅ depends on 1.2, 1.4
+  1.6 Layout.tsx               ✅ depends on 1.3, 1.5
+  1.7 auth.tsx                 ✅ depends on 1.1
+  1.8 handleError + Results   ✅ depends on 1.1, 1.4
+  1.9 index.tsx                ✅ depends on 1.2
+  1.10 layout CSS              ✅ depends on 1.6
+  1.11 E2E verification        ✅ depends on all above
 
-Phase 2 (History — depends on Phase 1):
-  2.1 frame-router.ts          ← no deps
-  2.2 frame-child.ts           ← no deps
-  2.3 FrameShell.tsx update    ← depends on 1.4, 2.2
-  2.4 Layout.tsx update        ← depends on 2.1
-  2.5 main.ts update           ← depends on 2.1, 2.2
-  2.6 Test back/forward        ← depends on all above
+Phase 2 (History — depends on Phase 1): ⚡ IN PROGRESS
+  2.1 frame-router.ts          ✅ no deps (includes frame:resize handler from Phase 3)
+  2.2 frame-child.ts           ✅ no deps (includes link/form interception + _depth rewriting + ResizeObserver from Phase 3)
+  2.3 FrameShell.tsx update    ✅ no separate script tag needed — bundled via main.ts
+  2.4 Layout.tsx update        ✅ no separate script tag needed — bundled via main.ts
+  2.5 main.ts update           ✅ imports frame-child and frame-router
+  2.6 Test back/forward        🔲 depends on all above
 
-Phase 3 (Sizing — depends on Phase 2):
-  3.1 Verify layout CSS        ← depends on 1.10
-  3.2 frame-child height       ← depends on 2.2
-  3.3 frame-router height      ← depends on 2.1, 3.2
-  3.4 Test sizing              ← depends on all above
+Phase 3 (Sizing — depends on Phase 2): MOSTLY DONE (code pulled forward to Phase 2)
+  3.1 Verify layout CSS        ✅ depends on 1.10
+  3.2 frame-child height       ✅ pulled forward into 2.2
+  3.3 frame-router height      ✅ pulled forward into 2.1
+  3.4 Test sizing              🔲 depends on all above
 
-Phase 4 (Multi-Outlet — stretch, depends on Phase 3):
-  4.1 Named outlets            ← depends on 1.3
-  4.2 Section view             ← depends on 4.1
-  4.3 Inter-frame comms        ← depends on 2.1
-  4.4 Controller changes       ← depends on 4.1–4.3
-  4.5 Test multi-outlet        ← depends on all above
+Phase 4 (Multi-Outlet — stretch, depends on Phase 3): 🔲 NOT STARTED
+  4.1 Named outlets            🔲 depends on 1.3
+  4.2 Section view             🔲 depends on 4.1
+  4.3 Inter-frame comms        🔲 depends on 2.1
+  4.4 Controller changes       🔲 depends on 4.1–4.3
+  4.5 Test multi-outlet        🔲 depends on all above
 ```
 
 ---
@@ -1621,3 +1651,39 @@ Phase 4 (Multi-Outlet — stretch, depends on Phase 3):
 | Vite HMR with iframes | Low | Each iframe establishes its own WebSocket — works but N connections for N frames |
 | `postMessage` origin validation | Low | Restrict to app origin in production; use `*` only in dev |
 | CSS isolation across frames | Low | Pico CSS is small (~10KB); each frame parses independently but caches |
+
+---
+
+## Key Design Decisions & Deviations from Original Plan
+
+### 1. `frame-child.ts` intercepts links and forms (not just `postMessage`)
+
+**Original plan:** `frame-child.ts` would only announce navigation to the parent via `postMessage`.
+
+**Actual implementation:** `frame-child.ts` also **intercepts link clicks and form submissions** to automatically append `_depth=N` to URLs. This means templates don't need manual URL rewriting — the client script handles it transparently.
+
+### 2. No separate `<script>` tags for frame scripts
+
+**Original plan:** Tasks 2.3 and 2.4 called for adding separate `<script>` tags to `FrameShell.tsx` and `Layout.tsx` for `frame-child.ts` and `frame-router.ts` respectively.
+
+**Actual implementation:** Both scripts are imported from `main.ts` and bundled into the single main client JS bundle. They self-activate based on the presence/absence of `_depth` in the URL:
+- `frame-child.ts` only activates when `_depth` is present (depth > 0)
+- `frame-router.ts` only activates when `_depth` is absent (depth 0 / top-level frame)
+
+This eliminates the need for conditional script tags in server-rendered templates.
+
+### 3. Phase 3 features pulled forward into Phase 2
+
+**Original plan:** `ResizeObserver` height reporting (Task 3.2) and `frame:resize` message handling (Task 3.3) were separate Phase 3 tasks.
+
+**Actual implementation:** Both features were implemented as part of Phase 2 since they share the same `postMessage` infrastructure. `frame-child.ts` includes the `ResizeObserver` height reporting, and `frame-router.ts` includes the `frame:resize` message listener.
+
+### 4. `getFrameDepth()` instead of `c.get("frameDepth")`
+
+**Original plan:** `ControllerBase.tsx` would read `frameDepth` from the Hono context via `c.get("frameDepth")`.
+
+**Actual implementation:** Changed to use `getFrameDepth()` from `FrameContext` (module-level state). This was necessary because Hono sub-apps get a fresh context, so context variables set by middleware on the parent app don't carry over to sub-app controllers.
+
+### 5. Deleted obsolete `Outlet.tsx`
+
+**Bug found and fixed:** An obsolete `Outlet.tsx` file was shadowing `Outlet/index.tsx`. The old file used `window.location.pathname` which doesn't work server-side. The file was deleted.

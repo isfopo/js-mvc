@@ -26,6 +26,7 @@ import { handleError } from "./errors/index";
 import type { GuardDescriptor } from "./validation/GuardDescriptor";
 import { executeGuard } from "./validation/guard-executor";
 import { GUARDS_KEY } from "./validation/decorators";
+import { getFrameDepth } from "./FrameContext";
 
 /* ---------- Symbol.metadata polyfill ---------- */
 
@@ -94,7 +95,7 @@ export abstract class ControllerBase<T extends Env> {
        based on frame depth. Depth 0 gets the full Layout with Outlet;
        depth 1+ gets a minimal FrameShell. */
     this._app.use("*", async (c, next) => {
-      const depth: number = (c as any).get("frameDepth") ?? 0;
+      const depth: number = getFrameDepth();
 
       if (depth === 0) {
         // Top-level: full Layout with Outlet (iframe pointing to depth 1).
