@@ -8,6 +8,7 @@ import WellKnownController from "api/WellKnown/controller";
 import AuthController from "api/Auth/controller";
 
 import { initDatabase } from "infrastructure/QueryLoader";
+import { frameMiddleware } from "infrastructure/frameMiddleware";
 
 import schemaSql from "db/init.sql?raw";
 
@@ -41,6 +42,9 @@ app.use("*", async (c, next) => {
   }
   await next();
 });
+
+// Extract frame depth from query string
+app.use("*", frameMiddleware);
 
 HomeController.register(app);
 ComponentsController.register(app);

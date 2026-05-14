@@ -793,3 +793,39 @@ template {
 canvas {
     display: inline-block;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Nested Frames: iframe sizing                                       */
+/*                                                                     */
+/*  At depth 0, the Layout renders an <Outlet /> (iframe) inside       */
+/*  <main>. These rules make the iframe fill the available space.     */
+/* ------------------------------------------------------------------ */
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  flex-shrink: 0;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow flexbox to shrink */
+}
+
+main iframe {
+  width: 100%;
+  flex: 1;
+  border: none;
+  min-height: 0; /* Allow flexbox to shrink */
+}

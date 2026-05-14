@@ -1,5 +1,6 @@
 import type { FC, JSXNode, PropsWithChildren } from "hono/jsx";
 import type { UserRow } from "db/user/model";
+import { Outlet } from "views/components/Outlet";
 
 interface LayoutProps extends PropsWithChildren {
   head?: JSXNode;
@@ -7,6 +8,8 @@ interface LayoutProps extends PropsWithChildren {
   user?: Pick<UserRow, "login" | "avatar_url"> | null;
   /** Current request path (for active nav highlighting). */
   currentPath?: string;
+  /** Frame depth (0 = top-level, renders Outlet; >0 should not use Layout). */
+  depth?: number;
 }
 
 export const Layout: FC<LayoutProps> = ({
@@ -14,6 +17,7 @@ export const Layout: FC<LayoutProps> = ({
   head = "",
   user,
   currentPath = "/",
+  depth = 0,
 }) => {
   const isHome = currentPath === "/" || currentPath.startsWith("/tenets");
 
@@ -75,7 +79,7 @@ export const Layout: FC<LayoutProps> = ({
                     )}
                   </li>
                   <li>
-                    <form action="/auth/logout" method="post">
+                    <form action="/auth/logout" method="post" target="_top">
                       <button type="submit" class="outline secondary">
                         Logout
                       </button>
@@ -84,7 +88,7 @@ export const Layout: FC<LayoutProps> = ({
                 </>
               ) : (
                 <li>
-                  <a href="/auth/login" role="button">
+                  <a href="/auth/login" role="button" target="_top">
                     Login with GitHub
                   </a>
                 </li>
@@ -92,7 +96,9 @@ export const Layout: FC<LayoutProps> = ({
             </ul>
           </nav>
         </header>
-        <main>{children}</main>
+        <main>
+          {depth === 0 ? <Outlet /> : children}
+        </main>
       </body>
     </html>
   );
