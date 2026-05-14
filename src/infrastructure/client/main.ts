@@ -11,6 +11,9 @@ import "../../views/handlers/StatusTransitionHandler";
 import "../../views/handlers/AddOptionHandler";
 import { start } from "./dispatcher";
 
+// Frame navigation — intercepts links/forms in nested frames to preserve _depth
+import "./frame-child";
+
 console.log("js-mvc client loaded");
 
 // --- DOM helpers ---
