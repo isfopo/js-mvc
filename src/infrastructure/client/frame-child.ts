@@ -46,11 +46,38 @@ function announce(): void {
   );
 }
 
+/** Report content height to parent for dynamic iframe sizing. */
+function reportHeight(): void {
+  const height = document.documentElement.scrollHeight;
+  parent.postMessage(
+    {
+      type: "frame:resize",
+      height,
+    },
+    "*", // TODO: restrict origin in production
+  );
+}
+
+/** Observe content height changes and report to parent. */
+function initHeightReporting(): void {
+  // Initial report
+  reportHeight();
+
+  // Observe body size changes
+  if (typeof ResizeObserver !== "undefined") {
+    const observer = new ResizeObserver(reportHeight);
+    observer.observe(document.body);
+  }
+}
+
 // Only activate in nested frames (depth > 0)
 const depth = getCurrentDepth();
 if (depth > 0) {
   // Announce initial navigation to parent
   announce();
+
+  // Report content height to parent for dynamic iframe sizing
+  initHeightReporting();
 
   // Intercept link clicks — append _depth to same-origin URLs
   document.addEventListener("click", (e: MouseEvent) => {
