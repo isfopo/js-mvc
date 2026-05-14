@@ -3,7 +3,7 @@ import {
   NotFoundError,
   ForbiddenError,
   ConflictError,
-} from "./errors/index";
+} from "./errors";
 
 /**
  * ServiceBase — abstract base for business-logic services.

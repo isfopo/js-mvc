@@ -7,7 +7,9 @@ import TenetsApiController from "api/Tenets/controller";
 import WellKnownController from "api/WellKnown/controller";
 import AuthController from "api/Auth/controller";
 
-import { initDatabase } from "db/init";
+import { initDatabase } from "infrastructure/QueryLoader";
+
+import schemaSql from "db/init.sql?raw";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -27,7 +29,7 @@ app.use("*", async (c, next) => {
           return;
         }
         try {
-          await initDatabase(env.DB as D1Database);
+          await initDatabase(env.DB as D1Database, schemaSql);
           initialized = true;
           console.log("Database initialized");
         } catch (e) {
