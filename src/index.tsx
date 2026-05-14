@@ -1,13 +1,13 @@
 import { Hono } from "hono";
 
-import HomeController from "./views/pages/Home/controller";
-import ComponentsController from "./views/pages/ComponentsDemo/controller";
-import TenetsController from "./views/pages/Tenets/controller";
-import TenetsApiController from "./api/Tenets/controller";
-import WellKnownController from "./api/WellKnown/controller";
-import AuthController from "./api/Auth/controller";
+import HomeController from "views/pages/Home/controller";
+import ComponentsController from "views/pages/ComponentsDemo/controller";
+import TenetsController from "views/pages/Tenets/controller";
+import TenetsApiController from "api/Tenets/controller";
+import WellKnownController from "api/WellKnown/controller";
+import AuthController from "api/Auth/controller";
 
-import { initDatabase } from "./db/init";
+import { initDatabase } from "db/init";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 

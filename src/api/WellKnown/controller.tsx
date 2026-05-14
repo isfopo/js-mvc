@@ -1,7 +1,7 @@
 import process from "node:process";
 import crypto from "node:crypto";
 import { Context, Env } from "hono";
-import { Get, ControllerBase } from "../../infrastructure/ControllerBase";
+import { Get, ControllerBase } from "infrastructure/ControllerBase";
 
 class WellKnownController<T extends Env> extends ControllerBase<T> {
   override base = ".well-known";

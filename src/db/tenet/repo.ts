@@ -1,7 +1,7 @@
-import { RepositoryBase } from "../../infrastructure/RepositoryBase";
-import { loadQueries } from "../../infrastructure/QueryLoader";
+import { RepositoryBase } from "infrastructure/RepositoryBase";
+import { loadQueries } from "infrastructure/QueryLoader";
 import type { TenetRow, TenetOptionRow, TenetStatus } from "./model";
-import type { VoteRow } from "../vote/model";
+import type { VoteRow } from "db/vote/model";
 
 // Keep this in sync with the .sql files in ./queries/
 type TenetQuery =

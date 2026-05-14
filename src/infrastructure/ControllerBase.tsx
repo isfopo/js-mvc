@@ -20,7 +20,7 @@
 
 import { Context, Env, Hono } from "hono";
 import { renderToString } from "hono/jsx/dom/server";
-import { Layout } from "../views/pages/Shared/Layout";
+import { Layout } from "views/pages/Shared/Layout";
 import { handleError } from "./errors/index";
 import type { GuardDescriptor } from "./validation/GuardDescriptor";
 import { executeGuard } from "./validation/guard-executor";

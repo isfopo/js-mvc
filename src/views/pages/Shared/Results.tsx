@@ -1,7 +1,7 @@
 import { FC } from "hono/jsx";
 import { Layout } from "./Layout";
-import { Alert } from "../../components/Alert";
-import { AppError, ValidationError } from "../../../infrastructure/errors/index";
+import { Alert } from "views/components/Alert";
+import { AppError, ValidationError } from "infrastructure/errors/index";
 
 const DEFAULT_ERROR_MESSAGE = "Something's wrong";
 

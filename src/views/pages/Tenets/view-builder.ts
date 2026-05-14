@@ -1,6 +1,6 @@
-import type { UserRow } from "../../../db/user/model";
-import type { TenetDetail, TenetSummary } from "../../../db/tenet/service";
-import type { TenetStatus } from "../../../db/tenet/model";
+import type { UserRow } from "db/user/model";
+import type { TenetDetail, TenetSummary } from "db/tenet/service";
+import type { TenetStatus } from "db/tenet/model";
 import type {
   TenetListViewModel,
   TenetDetailViewModel,

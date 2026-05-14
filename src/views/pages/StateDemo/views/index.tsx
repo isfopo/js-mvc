@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
-import type { StateDemoViewModel } from "../view-model";
-import { State } from "../../../../utils/State";
+import type { StateDemoViewModel } from "views/pages/StateDemo/view-model";
+import { State } from "utils/State";
 import styles from "./index.module.css";
 
 const Plan = State<"plan", "free" | "pro" | "enterprise">("plan");

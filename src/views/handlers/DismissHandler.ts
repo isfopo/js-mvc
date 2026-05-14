@@ -21,8 +21,8 @@
  *   </Dismiss.Trigger>
  */
 
-import { BaseHandler } from "../../infrastructure/client/BaseHandler";
-import { register } from "../../infrastructure/client/dispatcher";
+import { BaseHandler } from "infrastructure/client/BaseHandler";
+import { register } from "infrastructure/client/dispatcher";
 
 export class DismissHandler extends BaseHandler {
   static override readonly handlerName = "dismiss";

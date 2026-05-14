@@ -1,4 +1,4 @@
-import { RepositoryBase } from "../../infrastructure/RepositoryBase";
+import { RepositoryBase } from "infrastructure/RepositoryBase";
 import type { VoteRow, VoteChoice } from "./model";
 
 export interface VoteWithUserRow extends VoteRow {

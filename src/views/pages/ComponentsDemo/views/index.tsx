@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
-import { Alert } from "../../../components/Alert";
-import { Action } from "../../../../utils/Action";
+import { Alert } from "views/components/Alert";
+import { Action } from "utils/Action";
 
 const Confirm = Action("confirm");
 

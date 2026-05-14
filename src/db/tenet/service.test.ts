@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { tenetService } from "./service";
 import { tenetsRepo } from "./repo";
-import { votesRepo } from "../vote/repo";
-import { usersRepo } from "../user/repo";
-import { ProposeTenetRequest } from "../../views/pages/Tenets/requests/ProposeTenetRequest";
-import { VoteRequest } from "../../views/pages/Tenets/requests/VoteRequest";
-import { initDatabase } from "../init";
+import { votesRepo } from "db/vote/repo";
+import { usersRepo } from "db/user/repo";
+import { ProposeTenetRequest } from "views/pages/Tenets/requests/ProposeTenetRequest";
+import { VoteRequest } from "views/pages/Tenets/requests/VoteRequest";
+import { initDatabase } from "db/init";
 import { env } from "cloudflare:workers";
 
 beforeAll(async () => {

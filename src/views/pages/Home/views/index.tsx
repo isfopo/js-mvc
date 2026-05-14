@@ -1,5 +1,5 @@
 import type { FC } from "hono/jsx";
-import type { HomeViewModel } from "../view-model";
+import type { HomeViewModel } from "views/pages/Home/view-model";
 
 export const View: FC<HomeViewModel> = ({ today }) => {
   return <p>Hi! It's {today.toDateString()}</p>;

@@ -5,7 +5,7 @@
  * For local dev, we run it on first load to ensure tables exist.
  */
 
-import schemaSql from "../../data/init.sql?raw";
+import schemaSql from "views/pages/Tenets/init.sql?raw";
 
 /**
  * Apply the schema migration. Safe to call multiple times (uses IF NOT EXISTS).

@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
-import type { TenetListViewModel } from "../view-model";
-import { TenetCard } from "../../../components/TenetCard";
+import type { TenetListViewModel } from "views/pages/Tenets/view-model";
+import { TenetCard } from "views/components/TenetCard";
 import styles from "./index.module.css";
 
 export const View: FC<TenetListViewModel> = ({ tenets }) => (

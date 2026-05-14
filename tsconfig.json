@@ -11,6 +11,7 @@
     "types": ["./worker-configuration", "vite/client"],
     "noImplicitOverride": true,
     "plugins": [{ "name": "typescript-plugin-css-modules" }],
+    "baseUrl": "src"
   },
   "include": ["node_modules", "src/**/*", "worker-configuration.d.ts"],
 }

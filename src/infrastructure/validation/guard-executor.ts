@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import { NotFoundError, ValidationError } from "../errors/index";
+import { NotFoundError, ValidationError } from "infrastructure/errors/index";
 import type { GuardDescriptor } from "./GuardDescriptor";
 import type { IValidatable } from "./IValidatable";
 
