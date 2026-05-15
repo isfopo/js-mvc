@@ -15,6 +15,7 @@ export const FrameShell: FC<FrameShellProps> = ({ children, depth }) => (
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Tenet</title>
       {/* Links/forms default to staying in this frame */}
       <base target="_self" />
       <link rel="stylesheet" href="/.generated/styles/index.css" />
@@ -27,7 +28,7 @@ export const FrameShell: FC<FrameShellProps> = ({ children, depth }) => (
         <script type="module" src="/.generated/client/main.js"></script>
       )}
     </head>
-    <body class={styles.shellBody}>
+    <body class={styles.shellBody} data-depth={depth}>
       {children}
     </body>
   </html>
