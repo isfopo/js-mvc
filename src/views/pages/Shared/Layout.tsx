@@ -1,6 +1,7 @@
 import type { FC, JSXNode, PropsWithChildren } from "hono/jsx";
 import type { UserRow } from "db/user/model";
 import { Outlet } from "views/components/Outlet";
+import styles from "./Layout.module.css";
 
 interface LayoutProps extends PropsWithChildren {
   head?: JSXNode;
@@ -55,7 +56,7 @@ export const Layout: FC<LayoutProps> = ({
             <ul>
               <li>
                 <strong>
-                  <a href="/tenets" style="text-decoration: none;">
+                  <a href="/tenets" class={styles.brandLink}>
                     Tenet
                   </a>
                 </strong>
@@ -82,7 +83,7 @@ export const Layout: FC<LayoutProps> = ({
                         alt={user.login}
                         width="32"
                         height="32"
-                        style="border-radius: 50%; vertical-align: middle;"
+                        class={styles.avatar}
                       />
                     ) : (
                       <span>{user.login}</span>

@@ -33,7 +33,7 @@ function announce(): void {
       path: url.pathname + url.search,
       frameSrc: location.href,
     },
-    "*", // TODO: restrict origin in production
+    location.origin,
   );
 }
 
@@ -45,7 +45,7 @@ function reportHeight(): void {
       type: "frame:resize",
       height,
     },
-    "*", // TODO: restrict origin in production
+    location.origin,
   );
 }
 
@@ -60,10 +60,14 @@ function listenForSharedStyles(): void {
     try {
       const sheet = new CSSStyleSheet();
       sheet.replaceSync(cssText);
-      document.adoptedStyleSheets = [
-        ...document.adoptedStyleSheets,
-        sheet,
-      ];
+
+      // Remove any previously shared sheets to prevent accumulation on navigation
+      const keep = document.adoptedStyleSheets.filter(
+        (s) => !(s as any).__frameShared,
+      );
+      (sheet as any).__frameShared = true;
+      document.adoptedStyleSheets = [...keep, sheet];
+
       // Mark that styles were shared so FrameShell can skip <link>
       (window as any).__frameStylesShared = true;
 
@@ -92,7 +96,9 @@ function listenForSwap(): void {
       statusCode: number;
     };
 
-    // Swap body content
+    // SECURITY: innerHTML content comes from same-origin fetch().
+    // No sanitization is applied (same-origin trust model).
+    // If any endpoint has a reflected XSS vulnerability, it would render here.
     document.body.innerHTML = bodyHtml;
 
     // Update page title
@@ -101,8 +107,8 @@ function listenForSwap(): void {
     }
 
     // Re-initialize client-side handlers
-    if (typeof (window as any).__restartHandlers === "function") {
-      (window as any).__restartHandlers();
+    if (typeof (window as any).__jsMvc_restartHandlers === "function") {
+      (window as any).__jsMvc_restartHandlers();
     }
 
     // Re-run height reporting for new content (re-attaches ResizeObserver)
@@ -170,7 +176,7 @@ if (depth > 0) {
     url.searchParams.delete("_depth");
     parent.postMessage(
       { type: "frame:navigate", path: url.pathname + url.search },
-      "*",
+      location.origin,
     );
   });
 
@@ -201,11 +207,13 @@ if (depth > 0) {
         // GET forms: redirect via frame:navigate
         const formData = new FormData(form);
         for (const [key, value] of formData.entries()) {
+          // Skip File entries — GET forms should not submit files
+          if (value instanceof File) continue;
           actionUrl.searchParams.set(key, value as string);
         }
         parent.postMessage(
           { type: "frame:navigate", path: actionUrl.pathname + actionUrl.search },
-          "*",
+          location.origin,
         );
       } else {
         // POST/PUT/DELETE: fetch and swap locally
@@ -220,13 +228,15 @@ if (depth > 0) {
         const html = await response.text();
         const doc = new DOMParser().parseFromString(html, "text/html");
 
-        // Swap body content
+        // SECURITY: innerHTML content comes from same-origin fetch().
+        // No sanitization is applied (same-origin trust model).
+        // If any endpoint has a reflected XSS vulnerability, it would render here.
         document.body.innerHTML = doc.body.innerHTML;
         if (doc.title) document.title = doc.title;
 
         // Re-initialize handlers
-        if (typeof (window as any).__restartHandlers === "function") {
-          (window as any).__restartHandlers();
+        if (typeof (window as any).__jsMvc_restartHandlers === "function") {
+          (window as any).__jsMvc_restartHandlers();
         }
 
         reportHeight();

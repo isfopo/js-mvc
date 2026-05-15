@@ -117,10 +117,7 @@ export function handleError(
     return renderError("error", error.message, error, error.statusCode);
   }
 
-  return renderError(
-    "error",
-    error instanceof Error ? error.message : "Unknown error",
-    error instanceof Error ? error : undefined,
-    500,
-  );
+  // Don't expose internal error details to clients
+  console.error("Unhandled error:", error);
+  return renderError("error", "Something went wrong", undefined, 500);
 }

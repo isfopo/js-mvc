@@ -10,6 +10,13 @@ let activeFetch: AbortController | null = null;
 
 const parser = new DOMParser();
 
+/** Build a fallback URL with _depth=1 using the URL API. */
+function buildFallbackUrl(url: string): string {
+  const fallbackUrl = new URL(url, location.origin);
+  fallbackUrl.searchParams.set("_depth", "1");
+  return fallbackUrl.toString();
+}
+
 /** Fetch a page, extract <body> content, and send to child iframe. */
 export async function fetchAndSwap(
   url: string,
@@ -43,6 +50,9 @@ export async function fetchAndSwap(
     const title = doc.title;
 
     if (iframe.contentWindow) {
+      // SECURITY: bodyHtml is fetched from the same origin and sent to
+      // a same-origin iframe via postMessage. No sanitization is applied
+      // (same-origin trust model). See frame-child.ts for where it's injected.
       iframe.contentWindow.postMessage(
         {
           type: "frame:swap",
@@ -51,7 +61,7 @@ export async function fetchAndSwap(
           url, // original URL (without _depth)
           statusCode: response.status,
         },
-        "*",
+        location.origin,
       );
     }
 
@@ -64,10 +74,7 @@ export async function fetchAndSwap(
 
     console.warn("[frame-navigator] Fetch failed, falling back to navigation:", e);
     // Fallback: navigate the iframe directly
-    const fallbackUrl = url.includes("?")
-      ? `${url}&_depth=1`
-      : `${url}?_depth=1`;
-    iframe.src = fallbackUrl;
+    iframe.src = buildFallbackUrl(url);
     // Still update the address bar even on fallback
     history.pushState({ index: -1 }, "", url);
     activeFetch = null;
@@ -113,7 +120,7 @@ export async function fetchAndSwapForPopState(
           url,
           statusCode: response.status,
         },
-        "*",
+        location.origin,
       );
     }
 
@@ -125,10 +132,7 @@ export async function fetchAndSwapForPopState(
     if ((e as Error).name === "AbortError") return;
 
     console.warn("[frame-navigator] PopState fetch failed, falling back:", e);
-    const fallbackUrl = url.includes("?")
-      ? `${url}&_depth=1`
-      : `${url}?_depth=1`;
-    iframe.src = fallbackUrl;
+    iframe.src = buildFallbackUrl(url);
     // Still update the address bar even on fallback
     history.replaceState({ index: -1 }, "", url);
     activeFetch = null;

@@ -35,6 +35,7 @@ app.use("*", async (c, next) => {
           console.log("Database initialized");
         } catch (e) {
           console.error("Database init failed:", e);
+          initPromise = null; // Allow retry on next request
         }
       })();
     }
@@ -55,5 +56,11 @@ AuthController.register(app);
 
 // Redirect root to /tenets
 app.get("/", (c) => c.redirect("/tenets"));
+
+// Global error handler — catches unhandled exceptions from routes
+app.onError((err, c) => {
+  console.error("Unhandled error:", err);
+  return c.text("Internal Server Error", 500);
+});
 
 export default app;

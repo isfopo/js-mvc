@@ -20,6 +20,11 @@ let cachedCssText: string | null = null;
  * Falls back to fetch() if cross-origin restrictions block access.
  */
 async function getCssText(): Promise<string> {
+  // In development, always re-fetch to pick up HMR changes
+  if (import.meta.env.DEV) {
+    cachedCssText = null;
+  }
+
   // Return cached text if available
   if (cachedCssText) return cachedCssText;
 
@@ -66,7 +71,7 @@ function sendStylesToFrame(iframe: HTMLIFrameElement, cssText: string): void {
   if (iframe.contentWindow) {
     iframe.contentWindow.postMessage(
       { type: "frame:styles", cssText },
-      "*", // TODO: restrict origin in production
+      location.origin,
     );
   }
 }

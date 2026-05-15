@@ -16,7 +16,7 @@ import "./frame-child";
 // Frame history — keeps browser address bar in sync with iframe navigation
 import "./frame-router";
 
-console.log("js-mvc client loaded");
+if (import.meta.env.DEV) console.log("js-mvc client loaded");
 
 // --- DOM helpers ---
 
@@ -41,4 +41,4 @@ function restartHandlers(): void {
 }
 
 // Expose for frame-child.ts to call after DOM swaps
-(window as any).__restartHandlers = restartHandlers;
+(window as any).__jsMvc_restartHandlers = restartHandlers;

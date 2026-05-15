@@ -13,16 +13,6 @@
 import { shareStylesWithFrame } from "./frame-styles";
 import { fetchAndSwap, fetchAndSwapForPopState } from "./frame-navigator";
 
-interface HistoryEntry {
-  /** The canonical URL path (for address bar) */
-  path: string;
-  /** Which iframe navigated */
-  frameId: string;
-  /** The iframe's src at this point */
-  frameSrc: string;
-}
-
-const historyStack: HistoryEntry[] = [];
 let initialized = false;
 
 /** Find the iframe element that sent this message. */
@@ -53,10 +43,6 @@ function onFrameNavigate(event: MessageEvent): void {
 
   // Fetch the page and swap content instead of navigating the iframe
   fetchAndSwap(path, iframe);
-
-  // Track history entry
-  const entry: HistoryEntry = { path, frameId, frameSrc: path };
-  historyStack.push(entry);
 
   // Send shared styles to the iframe after navigation
   shareStylesWithFrame(iframe);
@@ -117,10 +103,6 @@ function onNavClick(e: MouseEvent): void {
 
   if (frame) {
     fetchAndSwap(path, frame);
-
-    // Track history entry
-    const entry: HistoryEntry = { path, frameId: "frame-1", frameSrc: path };
-    historyStack.push(entry);
 
     // Send shared styles to the iframe after navigation
     shareStylesWithFrame(frame);
