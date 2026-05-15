@@ -64,10 +64,18 @@ export function requireAuth(): MiddlewareHandler {
       return frameRedirect(c, `/auth/login?redirect=${dest}`);
     }
 
-    const session = JSON.parse(raw) as {
-      userId: number;
-      createdAt: string;
-    };
+    let session: { userId: number; createdAt: string };
+    try {
+      session = JSON.parse(raw) as { userId: number; createdAt: string };
+    } catch {
+      // Invalid session data — treat as missing
+      c.header(
+        "Set-Cookie",
+        `${SESSION_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`,
+      );
+      const dest = encodeURIComponent(c.req.path);
+      return frameRedirect(c, `/auth/login?redirect=${dest}`);
+    }
 
     // Fetch user from D1
     const user = await env.DB
