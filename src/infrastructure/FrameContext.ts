@@ -1,29 +1,38 @@
 // src/infrastructure/FrameContext.ts
 
-/** Carries frame depth information through the request lifecycle. */
-export interface FrameContext {
-  /** The current frame depth (0 = top-level, 1+ = nested). */
-  depth: number;
-  /** The original request path (without _depth param). */
-  path: string;
+import { AsyncLocalStorage } from "node:async_hooks";
+
+/**
+ * Per-request frame context stored in AsyncLocalStorage.
+ *
+ * This provides safe per-request isolation under concurrent Cloudflare Workers
+ * requests. When one request is suspended at an `await`, another request
+ * can execute without overwriting the first request's depth/path values.
+ *
+ * Set by frameMiddleware via frameContextRun(). Read by getFrameDepth()
+ * and getFramePath() from any downstream code (middleware, handlers, JSX).
+ */
+const frameALS = new AsyncLocalStorage<{ depth: number; path: string }>();
+
+/**
+ * Run a callback with the given frame context scoped to the current
+ * async execution. Called by frameMiddleware to provide per-request
+ * isolation.
+ */
+export function frameContextRun<T>(
+  depth: number,
+  path: string,
+  fn: () => T,
+): T {
+  return frameALS.run({ depth, path }, fn);
 }
 
-// Module-level state — safe in Cloudflare Workers (one request per isolate)
-let _currentPath: string = "/";
-let _currentDepth: number = 0;
-
-/** Set the frame context for the current request. Called by frameMiddleware. */
-export function setFrameContext(path: string, depth: number): void {
-  _currentPath = path;
-  _currentDepth = depth;
-}
-
-/** Get the current request path (without _depth). */
-export function getFramePath(): string {
-  return _currentPath;
-}
-
-/** Get the current frame depth. */
+/** Get the current request's frame depth (0 = top-level, 1+ = nested). */
 export function getFrameDepth(): number {
-  return _currentDepth;
+  return frameALS.getStore()?.depth ?? 0;
+}
+
+/** Get the current request's path (without _depth query param). */
+export function getFramePath(): string {
+  return frameALS.getStore()?.path ?? "/";
 }
