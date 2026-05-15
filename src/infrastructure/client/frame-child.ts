@@ -3,10 +3,16 @@
 /**
  * Client script for nested frames (depth > 0).
  *
- * 1. Intercepts same-origin link clicks and form submissions,
- *    appending _depth=N so the server renders FrameShell instead of Layout.
- * 2. Announces navigation to the parent frame via postMessage
- *    so the address bar stays in sync (Phase 2).
+ * 1. Intercepts same-origin link clicks and sends them to the parent
+ *    frame via `frame:navigate` for fetch+swap navigation instead of
+ *    full-page reloads.
+ * 2. Intercepts same-origin form submissions: GET forms are sent to the
+ *    parent as `frame:navigate`, POST/PUT/DELETE forms are fetched locally
+ *    and the response body is swapped in-place.
+ * 3. Listens for `frame:swap` messages from the parent to replace body
+ *    content when the parent performs fetch+swap on behalf of this frame.
+ * 4. Announces navigation to the parent frame via postMessage
+ *    so the address bar stays in sync.
  */
 
 /** Get the current frame depth from the URL query string. */
@@ -14,21 +20,6 @@ function getCurrentDepth(): number {
   const params = new URLSearchParams(location.search);
   const d = params.get("_depth");
   return d ? parseInt(d, 10) : 0;
-}
-
-/** Append _depth to a URL if it's a same-origin path. Returns the modified URL. */
-function withDepth(url: string, depth: number): string {
-  try {
-    const parsed = new URL(url, location.origin);
-    // Only rewrite same-origin URLs
-    if (parsed.origin !== location.origin) return url;
-    // Don't rewrite if _depth is already present
-    if (parsed.searchParams.has("_depth")) return url;
-    parsed.searchParams.set("_depth", String(depth));
-    return parsed.pathname + parsed.search + parsed.hash;
-  } catch {
-    return url;
-  }
 }
 
 /** Strip _depth from the URL before announcing to parent. */
@@ -58,6 +49,75 @@ function reportHeight(): void {
   );
 }
 
+/** Listen for shared styles from the parent frame. */
+function listenForSharedStyles(): void {
+  window.addEventListener("message", (event: MessageEvent) => {
+    if (event.data?.type !== "frame:styles") return;
+    if (event.source !== parent) return;
+
+    const { cssText } = event.data as { cssText: string };
+
+    try {
+      const sheet = new CSSStyleSheet();
+      sheet.replaceSync(cssText);
+      document.adoptedStyleSheets = [
+        ...document.adoptedStyleSheets,
+        sheet,
+      ];
+      // Mark that styles were shared so FrameShell can skip <link>
+      (window as any).__frameStylesShared = true;
+
+      // Remove the <link> stylesheet if present (it's now redundant)
+      const link = document.querySelector(
+        'link[rel="stylesheet"][href*="index.css"]',
+      );
+      if (link) link.remove();
+    } catch (e) {
+      console.warn("[frame-child] Failed to apply shared styles:", e);
+      // Fallback: the <link> tag in FrameShell still works
+    }
+  });
+}
+
+/** Listen for frame:swap messages and replace body content. */
+function listenForSwap(): void {
+  window.addEventListener("message", (event: MessageEvent) => {
+    if (event.data?.type !== "frame:swap") return;
+    if (event.source !== parent) return;
+
+    const { bodyHtml, title, statusCode } = event.data as {
+      bodyHtml: string;
+      title: string;
+      url: string;
+      statusCode: number;
+    };
+
+    // Swap body content
+    document.body.innerHTML = bodyHtml;
+
+    // Update page title
+    if (title) {
+      document.title = title;
+    }
+
+    // Re-initialize client-side handlers
+    if (typeof (window as any).__restartHandlers === "function") {
+      (window as any).__restartHandlers();
+    }
+
+    // Re-run height reporting for new content
+    reportHeight();
+
+    // Scroll to top
+    window.scrollTo(0, 0);
+
+    // Optionally: mark error state
+    if (statusCode >= 400) {
+      document.body.dataset.frameError = String(statusCode);
+    }
+  });
+}
+
 /** Observe content height changes and report to parent. */
 function initHeightReporting(): void {
   // Initial report
@@ -79,7 +139,13 @@ if (depth > 0) {
   // Report content height to parent for dynamic iframe sizing
   initHeightReporting();
 
-  // Intercept link clicks — append _depth to same-origin URLs
+  // Listen for shared styles from parent frame
+  listenForSharedStyles();
+
+  // Listen for frame:swap messages from parent
+  listenForSwap();
+
+  // Intercept link clicks — send to parent for fetch+swap instead of navigating
   document.addEventListener("click", (e: MouseEvent) => {
     const target = (e.target as HTMLElement).closest("a");
     if (!target) return;
@@ -93,17 +159,19 @@ if (depth > 0) {
     // Don't interfere with modifier clicks (open in new tab, etc.)
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 
-    // Rewrite the href to include _depth
-    const newHref = withDepth(target.href, depth);
-    if (newHref !== target.href) {
-      // Prevent default and navigate manually
-      e.preventDefault();
-      location.href = newHref;
-    }
+    e.preventDefault();
+
+    // Send to parent for fetch+swap navigation
+    const url = new URL(target.href, location.origin);
+    url.searchParams.delete("_depth");
+    parent.postMessage(
+      { type: "frame:navigate", path: url.pathname + url.search },
+      "*",
+    );
   });
 
-  // Intercept form submissions — append _depth to the action URL
-  document.addEventListener("submit", (e: SubmitEvent) => {
+  // Intercept form submissions via fetch+swap
+  document.addEventListener("submit", async (e: SubmitEvent) => {
     const form = e.target as HTMLFormElement;
     if (!form || !form.action) return;
 
@@ -118,11 +186,55 @@ if (depth > 0) {
       return;
     }
 
-    // Rewrite the action to include _depth
-    const newAction = withDepth(form.action, depth);
-    if (newAction !== form.action) {
-      form.action = newAction;
-      // Let the form submit normally with the new action
+    e.preventDefault();
+
+    const method = (form.method || "GET").toUpperCase();
+    const actionUrl = new URL(form.action, location.origin);
+    actionUrl.searchParams.set("_depth", String(depth));
+
+    try {
+      if (method === "GET") {
+        // GET forms: redirect via frame:navigate
+        const formData = new FormData(form);
+        for (const [key, value] of formData.entries()) {
+          actionUrl.searchParams.set(key, value as string);
+        }
+        parent.postMessage(
+          { type: "frame:navigate", path: actionUrl.pathname + actionUrl.search },
+          "*",
+        );
+      } else {
+        // POST/PUT/DELETE: fetch and swap locally
+        const formData = new FormData(form);
+        const response = await fetch(actionUrl.toString(), {
+          method,
+          body: formData,
+          credentials: "same-origin",
+          headers: { "X-Requested-With": "frame-swap" },
+        });
+
+        const html = await response.text();
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        // Swap body content
+        document.body.innerHTML = doc.body.innerHTML;
+        if (doc.title) document.title = doc.title;
+
+        // Re-initialize handlers
+        if (typeof (window as any).__restartHandlers === "function") {
+          (window as any).__restartHandlers();
+        }
+
+        reportHeight();
+        window.scrollTo(0, 0);
+
+        // Announce navigation for address bar update
+        announce();
+      }
+    } catch (err) {
+      console.warn("[frame-child] Form submission failed, falling back:", err);
+      // Fallback: submit the form normally
+      form.submit();
     }
   });
 

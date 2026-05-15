@@ -28,6 +28,11 @@ export const Layout: FC<LayoutProps> = ({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="description" content="Tenet — Team Decision Journal" />
         <title>Tenet</title>
+        {/* Preload resources that nested frames will also need */}
+        <link rel="preload" href="/.generated/styles/index.css" as="style" />
+        {import.meta.env.PROD && (
+          <link rel="modulepreload" href="/.generated/client/main.js" />
+        )}
         <link rel="stylesheet" href="/.generated/styles/index.css" />
 
         {import.meta.env.DEV ? (

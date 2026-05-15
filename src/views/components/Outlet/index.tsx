@@ -15,6 +15,11 @@ interface OutletProps {
  *
  * Only used in views that have visual chrome surrounding child content.
  * Views without surrounding chrome render content directly (no Outlet).
+ *
+ * scrolling="no" prevents the iframe from having its own scrollbar.
+ * The iframe height is set dynamically by frame:resize (frame-child.ts
+ * reports content height, frame-router.ts sets iframe.style.height),
+ * so the outer page scrolls instead of the iframe.
  */
 export const Outlet: FC<OutletProps> = ({ path, name }) => {
   const outletPath = path ?? getFramePath();
@@ -31,7 +36,8 @@ export const Outlet: FC<OutletProps> = ({ path, name }) => {
     <iframe
       name={frameName}
       src={src}
-      style="width:100%;height:100%;border:none;"
+      style="width:100%;border:none;"
+      scrolling="no"
       title={path ? `Frame: ${path}` : `Frame depth ${outletDepth}`}
     />
   );

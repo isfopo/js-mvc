@@ -149,12 +149,23 @@ function createObserver(): MutationObserver {
 
 // --- Bootstrap ---
 
+let started = false;
+
 export function start(): void {
+  if (started) return;
+  started = true;
   onReady(() => {
     scan(document);
     createObserver().observe(document.body, {
       childList: true,
       subtree: true,
     });
+  });
+}
+
+/** Re-scan the DOM for new [data-controller] elements without creating a new observer. */
+export function restart(): void {
+  onReady(() => {
+    scan(document);
   });
 }

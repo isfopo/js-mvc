@@ -2,4 +2,5 @@
 .shellBody {
   margin: 0;
   padding: var(--pico-block-spacing-vertical) var(--pico-block-spacing-horizontal);
+  overflow-x: hidden;
 }

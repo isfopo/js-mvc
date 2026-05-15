@@ -10,6 +10,9 @@
  * Only runs in the top-level frame (depth 0).
  */
 
+import { shareStylesWithFrame } from "./frame-styles";
+import { fetchAndSwap, fetchAndSwapForPopState } from "./frame-navigator";
+
 interface HistoryEntry {
   /** The canonical URL path (for address bar) */
   path: string;
@@ -39,15 +42,24 @@ function onFrameNavigate(event: MessageEvent): void {
   if (event.data?.type !== "frame:navigate") return;
   if (event.source === null) return;
 
-  const { path, frameSrc } = event.data;
+  const { path } = event.data;
   const frameId = findFrameId(event.source);
   if (!frameId) return;
 
-  const entry: HistoryEntry = { path, frameId, frameSrc };
+  const iframe = document.querySelector(
+    `iframe[name="${frameId}"]`,
+  ) as HTMLIFrameElement | null;
+  if (!iframe) return;
+
+  // Fetch the page and swap content instead of navigating the iframe
+  fetchAndSwap(path, iframe);
+
+  // Track history entry
+  const entry: HistoryEntry = { path, frameId, frameSrc: path };
   historyStack.push(entry);
 
-  // Update address bar without reload
-  history.pushState({ index: historyStack.length - 1 }, "", path);
+  // Send shared styles to the iframe after navigation
+  shareStylesWithFrame(iframe);
 }
 
 /** Listen for height reports from child frames and adjust iframe height. */
@@ -66,17 +78,14 @@ function onFrameResize(event: MessageEvent): void {
 
 /** Handle browser back/forward. */
 function onPopState(_event: PopStateEvent): void {
-  // The browser has already navigated — update the iframe to match
   const targetPath = location.pathname + location.search;
   const frame = document.querySelector(
     "iframe[name='frame-1']",
   ) as HTMLIFrameElement | null;
 
   if (frame) {
-    // Strip any existing _depth param and add _depth=1
-    const url = new URL(targetPath, location.origin);
-    url.searchParams.set("_depth", "1");
-    frame.src = url.toString();
+    // Fetch and swap instead of changing iframe.src
+    fetchAndSwapForPopState(targetPath, frame);
   }
 }
 
@@ -91,6 +100,13 @@ export function initFrameRouter(): void {
 
   // Replace current history entry with our state
   history.replaceState({ index: 0 }, "", location.pathname);
+
+  // Listen for iframe loads to share styles
+  document.querySelectorAll("iframe").forEach((iframe) => {
+    iframe.addEventListener("load", () => {
+      shareStylesWithFrame(iframe as HTMLIFrameElement);
+    });
+  });
 }
 
 // Auto-initialize at depth 0 only (top-level frame)
