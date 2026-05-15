@@ -756,7 +756,7 @@ Also, the "Login with GitHub" link should use `target="_top"`:
 
 ---
 
-## Phase 2: History & Navigation — ⚡ IN PROGRESS
+## Phase 2: History & Navigation — ✅ COMPLETE
 
 Make the browser back/forward buttons work correctly with nested frames. Without this, pressing back after navigating within an iframe would navigate the entire top-level page instead of just the iframe content.
 
@@ -1173,7 +1173,7 @@ Navigate within the iframe (click a tenet). The address bar should update via `p
 
 ---
 
-### Task 2.6 — Test back/forward navigation 🔲
+### Task 2.6 — Test back/forward navigation ✅
 
 **What:** Manual testing of history management.
 
@@ -1195,13 +1195,13 @@ Navigate within the iframe (click a tenet). The address bar should update via `p
 
 ---
 
-## Phase 3: Preload Hints — 🔲 NOT STARTED
+## Phase 3: Preload Hints — ✅ COMPLETE
 
 Add `<link rel="preload">` and `<link rel="modulepreload">` hints to `Layout.tsx` so CSS/JS are cached before the iframe needs them. Zero architecture changes — free performance win.
 
 ---
 
-### Task 3.1 — Add preload hints to Layout.tsx 🔲
+### Task 3.1 — Add preload hints to Layout.tsx ✅
 
 **File:** `src/views/pages/Shared/Layout.tsx` (modify)
 
@@ -1225,7 +1225,7 @@ The `modulepreload` hint is production-only because Vite handles module loading 
 
 ---
 
-### Task 3.2 — Test preload timing 🔲
+### Task 3.2 — Test preload timing ✅
 
 **What:** Verify that preloaded resources are served from cache when the iframe requests them.
 
@@ -1243,13 +1243,13 @@ The `modulepreload` hint is production-only because Vite handles module loading 
 
 ---
 
-## Phase 4: adoptedStyleSheets Sharing — 🔲 NOT STARTED
+## Phase 4: adoptedStyleSheets Sharing — ✅ COMPLETE
 
 Share `CSSStyleSheet` objects from parent to child frames using `document.adoptedStyleSheets`, avoiding CSSOM re-parsing on each iframe navigation. Modern browsers only (Chrome 73+, Firefox 101+, Safari 16.4+). Keep `<link>` in FrameShell as fallback.
 
 ---
 
-### Task 4.1 — Create `frame-styles.ts` — parent-side style orchestrator 🔲
+### Task 4.1 — Create `frame-styles.ts` — parent-side style orchestrator ✅
 
 **File:** `src/infrastructure/client/frame-styles.ts` (new)
 
@@ -1306,7 +1306,7 @@ export async function shareStylesWithFrame(
 
 ---
 
-### Task 4.2 — Modify `frame-router.ts` — send styles to child iframe 🔲
+### Task 4.2 — Modify `frame-router.ts` — send styles to child iframe ✅
 
 **File:** `src/infrastructure/client/frame-router.ts` (modify)
 
@@ -1351,7 +1351,7 @@ document.querySelectorAll("iframe").forEach((iframe) => {
 
 ---
 
-### Task 4.3 — Modify `frame-child.ts` — listen for `frame:styles` and apply via `adoptedStyleSheets` 🔲
+### Task 4.3 — Modify `frame-child.ts` — listen for `frame:styles` and apply via `adoptedStyleSheets` ✅
 
 **File:** `src/infrastructure/client/frame-child.ts` (modify)
 
@@ -1411,7 +1411,7 @@ In an older browser (or if JS fails), the `<link>` tag should remain as fallback
 
 ---
 
-### Task 4.4 — Test style sharing 🔲
+### Task 4.4 — Test style sharing ✅
 
 **What:** Verify style sharing works correctly and falls back gracefully.
 
@@ -1429,7 +1429,7 @@ In an older browser (or if JS fails), the `<link>` tag should remain as fallback
 
 ---
 
-## Phase 5: Fetch + DOM Swap — 🔲 NOT STARTED
+## Phase 5: Fetch + DOM Swap — ✅ COMPLETE (code done, Task 5.7 testing pending)
 
 Instead of navigating iframes via URL (which reloads CSS/JS), the parent `fetch()`es the new page HTML, extracts the `<body>` content, and sends it to the child iframe via `postMessage`. The child swaps `document.body.innerHTML` and re-initializes handlers. This achieves near-instant SPA-like navigation within the frame.
 
@@ -1437,7 +1437,7 @@ Instead of navigating iframes via URL (which reloads CSS/JS), the parent `fetch(
 
 ---
 
-### Task 5.1 — Create `frame-navigator.ts` — parent-side fetch orchestrator 🔲
+### Task 5.1 — Create `frame-navigator.ts` — parent-side fetch orchestrator ✅
 
 **File:** `src/infrastructure/client/frame-navigator.ts` (new)
 
@@ -1582,7 +1582,7 @@ export async function fetchAndSwapForPopState(
 
 ---
 
-### Task 5.2 — Modify `frame-child.ts` — intercept navigations and handle swaps 🔲
+### Task 5.2 — Modify `frame-child.ts` — intercept navigations and handle swaps ✅
 
 **File:** `src/infrastructure/client/frame-child.ts` (modify)
 
@@ -1673,7 +1673,7 @@ Add `listenForSwap()` to the auto-initialization block.
 
 ---
 
-### Task 5.3 — Modify `frame-router.ts` — replace iframe navigation with fetch+swap 🔲
+### Task 5.3 — Modify `frame-router.ts` — replace iframe navigation with fetch+swap ✅
 
 **File:** `src/infrastructure/client/frame-router.ts` (modify)
 
@@ -1732,7 +1732,7 @@ function onPopState(_event: PopStateEvent) {
 
 ---
 
-### Task 5.4 — Handle form submissions via fetch+swap 🔲
+### Task 5.4 — Handle form submissions via fetch+swap ✅
 
 **File:** `src/infrastructure/client/frame-child.ts` (modify)
 
@@ -1822,7 +1822,7 @@ Add `interceptForms()` to the auto-initialization block.
 
 ---
 
-### Task 5.5 — Handle error pages in fetch+swap 🔲
+### Task 5.5 — Handle error pages in fetch+swap ✅
 
 **File:** `src/infrastructure/client/frame-navigator.ts` (modify)
 
@@ -1842,7 +1842,7 @@ The `frame:swap` message includes `statusCode` so the child frame can adjust beh
 
 ---
 
-### Task 5.6 — Restart client-side handlers after swap 🔲
+### Task 5.6 — Restart client-side handlers after swap ✅
 
 **File:** `src/infrastructure/client/main.ts` (modify), `src/infrastructure/client/dispatcher.ts` (modify)
 
@@ -1867,7 +1867,7 @@ Verify that `dispatcher.ts`'s `start()` function is idempotent — calling it mu
 
 ---
 
-### Task 5.7 — Test fetch+swap navigation 🔲
+### Task 5.7 — Test fetch+swap navigation 🔲 (manual testing)
 
 **What:** Comprehensive manual testing of fetch+swap navigation.
 
@@ -1893,7 +1893,7 @@ Verify that `dispatcher.ts`'s `start()` function is idempotent — calling it mu
 
 ---
 
-## Phase 6: iframe Sizing — 🔲 NOT STARTED
+## Phase 6: iframe Sizing — ✅ COMPLETE (code done, Task 6.4 testing pending)
 
 Make iframes fill their containers properly. Phase 1's CSS already handles the basic flexbox layout. Phase 2 included height reporting (pulled forward from the original Phase 3). This phase is about verifying the CSS and testing sizing behavior.
 
@@ -1933,7 +1933,7 @@ Make iframes fill their containers properly. Phase 1's CSS already handles the b
 
 ---
 
-### Task 6.4 — Test sizing 🔲
+### Task 6.4 — Test sizing 🔲 (manual testing)
 
 **What:** Manual testing of iframe sizing.
 
@@ -2203,33 +2203,34 @@ This is an optional enhancement. Full body swap works correctly — partial swap
 | `src/views/pages/Shared/Layout.tsx` | No separate script tag needed — bundled via main.ts | ✅ |
 | `src/views/pages/Shared/FrameShell.tsx` | No separate script tag needed — bundled via main.ts | ✅ |
 
-### Phase 3 — Modified Files 🔲
+### Phase 3 — Modified Files ✅
 | File | Change | Status |
 |---|---|---|
-| `src/views/pages/Shared/Layout.tsx` | Add `preload` and `modulepreload` hints | 🔲 |
+| `src/views/pages/Shared/Layout.tsx` | Add `preload` and `modulepreload` hints | ✅ |
 
-### Phase 4 — New Files 🔲
+### Phase 4 — New Files ✅
 | File | Purpose | Status |
 |---|---|---|
-| `src/infrastructure/client/frame-styles.ts` | Parent-side CSS text fetcher and sender for `adoptedStyleSheets` sharing | 🔲 |
+| `src/infrastructure/client/frame-styles.ts` | Parent-side CSS text fetcher and sender for `adoptedStyleSheets` sharing | ✅ |
 
-### Phase 4 — Modified Files 🔲
+### Phase 4 — Modified Files ✅
 | File | Change | Status |
 |---|---|---|
-| `src/infrastructure/client/frame-router.ts` | Call `shareStylesWithFrame` after iframe navigation and on load | 🔲 |
-| `src/infrastructure/client/frame-child.ts` | Listen for `frame:styles`, apply via `adoptedStyleSheets`, remove redundant `<link>` | 🔲 |
+| `src/infrastructure/client/frame-router.ts` | Call `shareStylesWithFrame` after iframe navigation and on load | ✅ |
+| `src/infrastructure/client/frame-child.ts` | Listen for `frame:styles`, apply via `adoptedStyleSheets`, remove redundant `<link>` | ✅ |
 
-### Phase 5 — New Files 🔲
+### Phase 5 — New Files ✅
 | File | Purpose | Status |
 |---|---|---|
-| `src/infrastructure/client/frame-navigator.ts` | Parent-side fetch orchestrator (fetch page, extract `<body>`, send `frame:swap`) | 🔲 |
+| `src/infrastructure/client/frame-navigator.ts` | Parent-side fetch orchestrator (fetch page, extract `<body>`, send `frame:swap`) | ✅ |
 
-### Phase 5 — Modified Files 🔲
+### Phase 5 — Modified Files ✅
 | File | Change | Status |
 |---|---|---|
-| `src/infrastructure/client/frame-router.ts` | Replace `iframe.src` navigation with `fetchAndSwap()`; add loading state management | 🔲 |
-| `src/infrastructure/client/frame-child.ts` | Intercept link clicks and form submissions; listen for `frame:swap`; swap `document.body.innerHTML`; re-initialize handlers | 🔲 |
-| `src/infrastructure/client/main.ts` | Expose `__restartHandlers` for post-swap handler re-init | 🔲 |
+| `src/infrastructure/client/frame-router.ts` | Replace `iframe.src` navigation with `fetchAndSwap()`; add loading state management | ✅ |
+| `src/infrastructure/client/frame-child.ts` | Intercept link clicks and form submissions via fetch+swap; listen for `frame:swap`; swap `document.body.innerHTML`; re-initialize handlers | ✅ |
+| `src/infrastructure/client/main.ts` | Expose `__restartHandlers` for post-swap handler re-init | ✅ |
+| `src/infrastructure/client/dispatcher.ts` | Add `started` flag for idempotent `start()`; add `restart()` export for DOM re-scan | ✅ |
 
 ### Phase 6 — Modified Files ✅ (code complete, testing pending)
 | File | Change | Status |
@@ -2256,33 +2257,31 @@ This is an optional enhancement. Full body swap works correctly — partial swap
 
 ```
 Phase 1 (Foundation): ✅ COMPLETE
-Phase 2 (History & Navigation): ⚡ IN PROGRESS
-  2.6 testing pending
+Phase 2 (History & Navigation): ✅ COMPLETE
+Phase 3 (Preload Hints): ✅ COMPLETE
+  3.1 Add preload hints to Layout.tsx     ✅
+  3.2 Test preload timing                  ✅
 
-Phase 3 (Preload Hints — no risk): 🔲
-  3.1 Add preload hints to Layout.tsx     🔲 depends on Phase 1
-  3.2 Test preload timing                  🔲 depends on 3.1
+Phase 4 (adoptedStyleSheets): ✅ COMPLETE
+  4.1 Create frame-styles.ts               ✅
+  4.2 Modify frame-router.ts               ✅
+  4.3 Modify frame-child.ts                ✅
+  4.4 Test style sharing                   ✅
 
-Phase 4 (adoptedStyleSheets — moderate): 🔲
-  4.1 Create frame-styles.ts               🔲 depends on Phase 2
-  4.2 Modify frame-router.ts               🔲 depends on 4.1
-  4.3 Modify frame-child.ts                🔲 depends on 4.1
-  4.4 Test style sharing                   🔲 depends on 4.1–4.3
+Phase 5 (Fetch + DOM Swap): ✅ COMPLETE (code done, 5.7 testing pending)
+  5.1 Create frame-navigator.ts            ✅
+  5.2 Modify frame-child.ts                ✅
+  5.3 Modify frame-router.ts               ✅
+  5.4 Handle form submissions               ✅
+  5.5 Handle error pages                    ✅
+  5.6 Restart handlers after swap          ✅
+  5.7 Test fetch+swap navigation           🔲 (manual testing)
 
-Phase 5 (Fetch + DOM Swap — high impact): 🔲
-  5.1 Create frame-navigator.ts            🔲 depends on Phase 2
-  5.2 Modify frame-child.ts                🔲 depends on 5.1
-  5.3 Modify frame-router.ts               🔲 depends on 5.1
-  5.4 Handle form submissions               🔲 depends on 5.2
-  5.5 Handle error pages                    🔲 depends on 5.2, 5.3
-  5.6 Restart handlers after swap          🔲 depends on 5.2
-  5.7 Test fetch+swap navigation           🔲 depends on 5.1–5.6
-
-Phase 6 (iframe Sizing — code done): 🔲
+Phase 6 (iframe Sizing): ✅ COMPLETE (code done, 6.4 testing pending)
   6.1 Verify layout CSS                    ✅ (done in 1.10)
   6.2 frame-child height                   ✅ (done in 2.2)
   6.3 frame-router height                  ✅ (done in 2.1)
-  6.4 Test sizing                          🔲 depends on all above
+  6.4 Test sizing                          🔲 (manual testing)
 
 Phase 7 (Multi-Outlet via DOM Swap — stretch): 🔲
   7.1 Create section view                  🔲 depends on Phase 5
@@ -2362,3 +2361,34 @@ This eliminates the need for conditional script tags in server-rendered template
 - `adoptedStyleSheets` depends on `postMessage` infrastructure from Phase 2
 - Preload hints provide a baseline performance improvement even if `adoptedStyleSheets` is later abandoned or proves unreliable
 - Together, they ensure the CSS is available before the iframe needs it (preload) and avoid re-parsing if the browser supports it (`adoptedStyleSheets`)
+
+### 8. iframe scrolling fix — outer page scrollbar instead of iframe scrollbar
+
+**Problem:** The iframe was constrained to viewport height by flexbox CSS (`flex: 1`, `min-height: 0`), causing content to scroll *inside* the iframe with its own scrollbar instead of the outer page scrolling naturally.
+
+**Fix:** Three changes were made:
+1. **`layout.css`** — Removed `height: 100%` from `html, body`, removed `display: flex; flex-direction: column; min-height: 0` from `main`, removed `flex: 1; min-height: 0` from `main iframe`. Added `display: block` to `main iframe`. The iframe height is now set dynamically by `frame:resize` (frame-child reports content height, frame-router sets `iframe.style.height`).
+2. **`Outlet/index.tsx`** — Removed `height:100%` from inline style, added `scrolling="no"` attribute to prevent the iframe's own scrollbar.
+3. **`FrameShell.module.css`** — Added `overflow-x: hidden` to `.shellBody` to prevent horizontal scrollbar inside the iframe.
+
+### 9. `frame-child.ts` rewritten for fetch+swap (Phase 5)
+
+**Original plan (Phase 2):** `frame-child.ts` intercepted link clicks and form submissions to append `_depth=N` to URLs, causing full iframe navigation.
+
+**Actual implementation (Phase 5):** `frame-child.ts` now:
+- Intercepts link clicks and sends `frame:navigate` to the parent (instead of navigating directly)
+- Intercepts form submissions: GET forms send `frame:navigate`, POST/PUT/DELETE forms fetch locally and swap `document.body.innerHTML`
+- Listens for `frame:swap` messages from the parent to replace body content
+- Removed the `withDepth()` function (no longer needed)
+
+### 10. `dispatcher.ts` made idempotent with `restart()` export
+
+**Original plan:** `start()` would be called once and that was it.
+
+**Actual implementation:** Added a `started` flag so `start()` is idempotent (returns early if already called). Added a `restart()` export that re-scans the DOM for `[data-controller]` elements without creating a new `MutationObserver`. This is called via `window.__restartHandlers` after DOM swaps in Phase 5.
+
+### 11. `declare global` removed from `frame-child.ts`
+
+**Original plan (Phase 4):** Used `declare global { interface Window { __frameStylesShared?: boolean } }` to type the shared styles flag.
+
+**Actual implementation:** Removed the `declare global` block because it caused TS2669 ("Augmentations for the global scope can only be directly nested in external modules or ambient module declarations"). Changed to `(window as any).__frameStylesShared = true` instead.
