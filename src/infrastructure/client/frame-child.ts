@@ -105,8 +105,8 @@ function listenForSwap(): void {
       (window as any).__restartHandlers();
     }
 
-    // Re-run height reporting for new content
-    reportHeight();
+    // Re-run height reporting for new content (re-attaches ResizeObserver)
+    initHeightReporting();
 
     // Scroll to top
     window.scrollTo(0, 0);
@@ -118,6 +118,9 @@ function listenForSwap(): void {
   });
 }
 
+/** ResizeObserver instance — kept at module level so we can disconnect and re-observe after body swaps. */
+let heightObserver: ResizeObserver | null = null;
+
 /** Observe content height changes and report to parent. */
 function initHeightReporting(): void {
   // Initial report
@@ -125,8 +128,9 @@ function initHeightReporting(): void {
 
   // Observe body size changes
   if (typeof ResizeObserver !== "undefined") {
-    const observer = new ResizeObserver(reportHeight);
-    observer.observe(document.body);
+    if (heightObserver) heightObserver.disconnect();
+    heightObserver = new ResizeObserver(reportHeight);
+    heightObserver.observe(document.body);
   }
 }
 

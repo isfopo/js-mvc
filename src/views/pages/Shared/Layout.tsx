@@ -55,14 +55,14 @@ export const Layout: FC<LayoutProps> = ({
             <ul>
               <li>
                 <strong>
-                  <a href="/tenets" style="text-decoration: none;">
+                  <a href="/tenets" data-frame-nav="" style="text-decoration: none;">
                     Tenet
                   </a>
                 </strong>
               </li>
               {isHome && (
                 <li>
-                  <a href="/tenets">Decisions</a>
+                  <a href="/tenets" data-frame-nav="">Decisions</a>
                 </li>
               )}
             </ul>
@@ -71,7 +71,7 @@ export const Layout: FC<LayoutProps> = ({
               {user ? (
                 <>
                   <li>
-                    <a href="/tenets/new" role="button">
+                    <a href="/tenets/new" role="button" data-frame-nav="">
                       Propose
                     </a>
                   </li>

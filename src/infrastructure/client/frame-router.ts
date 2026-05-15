@@ -89,6 +89,42 @@ function onPopState(_event: PopStateEvent): void {
   }
 }
 
+/** Intercept clicks on [data-frame-nav] links in the top-level nav.
+ *  Instead of reloading the whole page, fetch the content and swap
+ *  it into the child iframe — same as clicking a link inside the iframe.
+ */
+function onNavClick(e: MouseEvent): void {
+  const anchor = (e.target as HTMLElement).closest<HTMLAnchorElement>("a[data-frame-nav]");
+  if (!anchor) return;
+
+  // Don't interfere with modifier clicks (open in new tab, etc.)
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+  // Only intercept same-origin links
+  if (anchor.origin !== location.origin) return;
+
+  e.preventDefault();
+
+  const path = anchor.pathname + anchor.search;
+  const frame = document.querySelector(
+    "iframe[name='frame-1']",
+  ) as HTMLIFrameElement | null;
+
+  if (frame) {
+    fetchAndSwap(path, frame);
+
+    // Track history entry
+    const entry: HistoryEntry = { path, frameId: "frame-1", frameSrc: path };
+    historyStack.push(entry);
+
+    // Send shared styles to the iframe after navigation
+    shareStylesWithFrame(frame);
+  } else {
+    // No iframe found — fall back to full navigation
+    location.href = anchor.href;
+  }
+}
+
 /** Initialize the history manager. Call once at top-level. */
 export function initFrameRouter(): void {
   if (initialized) return;
@@ -97,6 +133,9 @@ export function initFrameRouter(): void {
   window.addEventListener("message", onFrameNavigate);
   window.addEventListener("message", onFrameResize);
   window.addEventListener("popstate", onPopState);
+
+  // Intercept nav clicks at the top level
+  document.addEventListener("click", onNavClick);
 
   // Replace current history entry with our state
   history.replaceState({ index: 0 }, "", location.pathname);

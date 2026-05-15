@@ -64,9 +64,12 @@ export async function fetchAndSwap(
 
     console.warn("[frame-navigator] Fetch failed, falling back to navigation:", e);
     // Fallback: navigate the iframe directly
-    iframe.src = url.includes("?")
+    const fallbackUrl = url.includes("?")
       ? `${url}&_depth=1`
       : `${url}?_depth=1`;
+    iframe.src = fallbackUrl;
+    // Still update the address bar even on fallback
+    history.pushState({ index: -1 }, "", url);
     activeFetch = null;
   }
 }
@@ -122,9 +125,12 @@ export async function fetchAndSwapForPopState(
     if ((e as Error).name === "AbortError") return;
 
     console.warn("[frame-navigator] PopState fetch failed, falling back:", e);
-    iframe.src = url.includes("?")
+    const fallbackUrl = url.includes("?")
       ? `${url}&_depth=1`
       : `${url}?_depth=1`;
+    iframe.src = fallbackUrl;
+    // Still update the address bar even on fallback
+    history.replaceState({ index: -1 }, "", url);
     activeFetch = null;
   }
 }
