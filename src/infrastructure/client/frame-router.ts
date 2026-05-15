@@ -89,19 +89,24 @@ function onPopState(_event: PopStateEvent): void {
   }
 }
 
-/** Intercept clicks on [data-frame-nav] links in the top-level nav.
+/** Intercept same-origin link clicks in the top-level page.
  *  Instead of reloading the whole page, fetch the content and swap
- *  it into the child iframe — same as clicking a link inside the iframe.
+ *  it into the child iframe — same pattern as frame-child.ts uses
+ *  inside the iframe. Links with target="_top" are left alone
+ *  (they break out of the iframe intentionally, e.g. auth redirects).
  */
 function onNavClick(e: MouseEvent): void {
-  const anchor = (e.target as HTMLElement).closest<HTMLAnchorElement>("a[data-frame-nav]");
+  const anchor = (e.target as HTMLElement).closest<HTMLAnchorElement>("a");
   if (!anchor) return;
 
-  // Don't interfere with modifier clicks (open in new tab, etc.)
-  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  // Let links with target="_top" through — they break out intentionally
+  if (anchor.target === "_top") return;
 
   // Only intercept same-origin links
   if (anchor.origin !== location.origin) return;
+
+  // Don't interfere with modifier clicks (open in new tab, etc.)
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 
   e.preventDefault();
 
