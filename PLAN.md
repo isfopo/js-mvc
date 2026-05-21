@@ -1368,20 +1368,20 @@ interface CloudflareBindings extends Cloudflare.Env {
 - Register TenetsController + TenetsApiController
 - Update root redirect
 
-### Milestone 3 — Testing Foundation
+### Milestone 3 — Testing Foundation ✅
 
 > **Gate:** All tests must pass before proceeding to Milestone 4. This ensures the data access layer and UI rendering are verified before building interactive features on top of them.
 
-- Add CSS module shim to vitest setup (`vitest.setup.ts`)
-- Write repository integration tests (`data/repos/tenets.test.ts`, `data/repos/votes.test.ts`, `data/repos/users.test.ts`)
+- [x] Add CSS module shim to vitest setup (`vitest.setup.ts`)
+- [x] Write repository integration tests (`db/user/repo.test.ts`, `db/tenet/repo.test.ts`, `db/vote/repo.test.ts`)
   - CRUD operations, joins, filters, ordering, edge cases (nulls, duplicates, FK violations)
-- Write view/component render tests
-  - `pages/Tenets/views/index.test.tsx` — empty state, populated list, status badges
-  - `pages/Tenets/views/show.test.tsx` — detail view, voting states, transitions
-  - `pages/Tenets/views/new.test.tsx` — form rendering, validation errors
-  - Component tests: `TenetCard`, `StatusBadge`, `UserAvatar`
-- Run full test suite, verify all pass
-- Update coverage table in Section 17
+- [x] Write view/component render tests
+  - `views/pages/Tenets/views/index.test.tsx` — empty state, populated list, status badges
+  - `views/pages/Tenets/views/show.test.tsx` — detail view, voting states, transitions
+  - `views/pages/Tenets/views/new.test.tsx` — form rendering, validation errors
+  - Component tests: `StatusBadge`, `UserAvatar`, `TenetCard`
+- [x] Run full test suite, verify all pass (128 tests across 12 files)
+- [x] Update coverage table in Section 17
 
 ### Milestone 4 — Voting + Status
 
@@ -1588,9 +1588,15 @@ npm run test:run  # Single run (CI)
 |---|---|---|---|
 | Request validation | `ProposeTenetRequest.test.ts`, `VoteRequest.test.ts` | ✅ 10 tests | 1 (done) |
 | Service | `TenetsService.test.ts` | ✅ 8 tests | 2 (done) |
-| Repository | `tenets.test.ts`, `votes.test.ts`, `users.test.ts` | ⬜ Milestone 3 | 3 |
-| View rendering | `index.test.tsx`, `show.test.tsx`, `new.test.tsx` | ⬜ Milestone 3 | 3 |
-| Component rendering | `TenetCard`, `StatusBadge`, `UserAvatar` | ⬜ Milestone 3 | 3 |
+| Repository | `db/user/repo.test.ts` | ✅ 9 tests | 3 (done) |
+| Repository | `db/tenet/repo.test.ts` | ✅ 12 tests | 3 (done) |
+| Repository | `db/vote/repo.test.ts` | ✅ 7 tests | 3 (done) |
+| View rendering | `views/pages/Tenets/views/index.test.tsx` | ✅ 5 tests | 3 (done) |
+| View rendering | `views/pages/Tenets/views/show.test.tsx` | ✅ 14 tests | 3 (done) |
+| View rendering | `views/pages/Tenets/views/new.test.tsx` | ✅ 10 tests | 3 (done) |
+| Component rendering | `views/components/StatusBadge/index.test.tsx` | ✅ 3 tests | 3 (done) |
+| Component rendering | `views/components/UserAvatar/index.test.tsx` | ✅ 6 tests | 3 (done) |
+| Component rendering | `views/components/TenetCard/index.test.tsx` | ✅ 8 tests | 3 (done) |
 | Controller HTTP | — | ⬜ Deferred | — |
 | Client handlers | — | ⬜ Deferred | — |
 
