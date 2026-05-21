@@ -9,9 +9,14 @@ import "../../views/handlers/ConfirmHandler";
 import "../../views/handlers/VoteHandler";
 import "../../views/handlers/StatusTransitionHandler";
 import "../../views/handlers/AddOptionHandler";
-import { start } from "./dispatcher";
+import { start, restart } from "./dispatcher";
 
-console.log("js-mvc client loaded");
+// Frame navigation — intercepts links/forms in nested frames to preserve _depth
+import "./frame-child";
+// Frame history — keeps browser address bar in sync with iframe navigation
+import "./frame-router";
+
+if (import.meta.env.DEV) console.log("js-mvc client loaded");
 
 // --- DOM helpers ---
 
@@ -27,3 +32,13 @@ export function onReady(cb: () => void): void {
 // --- Bootstrap ---
 
 start();
+
+// --- Handler restart for frame swaps ---
+
+/** Re-initialize client-side handlers after a DOM swap. */
+function restartHandlers(): void {
+  restart();
+}
+
+// Expose for frame-child.ts to call after DOM swaps
+(window as any).__jsMvc_restartHandlers = restartHandlers;

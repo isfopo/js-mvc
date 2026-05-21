@@ -8,6 +8,7 @@ import WellKnownController from "api/WellKnown/controller";
 import AuthController from "api/Auth/controller";
 
 import { initDatabase } from "infrastructure/QueryLoader";
+import { frameMiddleware } from "infrastructure/frameMiddleware";
 
 import schemaSql from "db/init.sql?raw";
 
@@ -34,6 +35,7 @@ app.use("*", async (c, next) => {
           console.log("Database initialized");
         } catch (e) {
           console.error("Database init failed:", e);
+          initPromise = null; // Allow retry on next request
         }
       })();
     }
@@ -41,6 +43,9 @@ app.use("*", async (c, next) => {
   }
   await next();
 });
+
+// Extract frame depth from query string
+app.use("*", frameMiddleware);
 
 HomeController.register(app);
 ComponentsController.register(app);
@@ -51,5 +56,11 @@ AuthController.register(app);
 
 // Redirect root to /tenets
 app.get("/", (c) => c.redirect("/tenets"));
+
+// Global error handler — catches unhandled exceptions from routes
+app.onError((err, c) => {
+  console.error("Unhandled error:", err);
+  return c.text("Internal Server Error", 500);
+});
 
 export default app;

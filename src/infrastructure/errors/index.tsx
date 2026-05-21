@@ -1,6 +1,9 @@
 import { StatusCode } from "hono/utils/http-status";
 import { ResultsView } from "views/pages/Shared/Results";
 import { Context } from "hono";
+import { renderToString } from "hono/jsx/dom/server";
+import { getFrameDepth } from "infrastructure/FrameContext";
+import { FrameShell } from "views/pages/Shared/FrameShell";
 
 export class AppError extends Error {
   readonly statusCode: StatusCode;
@@ -68,61 +71,53 @@ export function handleError(
   c: Context,
   error: unknown,
 ): Response | Promise<Response> {
-  if (error instanceof NotFoundError) {
-    c.status(404);
-    return c.html(
-      <ResultsView variant="error" message={error.message} error={error} />,
-    );
-  }
-  if (error instanceof UnauthorizedError) {
-    c.status(401);
-    return c.html(
-      <ResultsView variant="error" message={error.message} error={error} />,
-    );
-  }
-  if (error instanceof ForbiddenError) {
-    c.status(403);
-    return c.html(
-      <ResultsView variant="error" message={error.message} error={error} />,
-    );
-  }
-  if (error instanceof ValidationError) {
-    c.status(400);
-    return c.html(
-      <ResultsView variant="error" message={error.message} error={error} />,
-    );
-  }
-  if (error instanceof ConflictError) {
-    c.status(409);
-    return c.html(
-      <ResultsView variant="error" message={error.message} error={error} />,
-    );
-  }
-  if (error instanceof RateLimitError) {
-    c.status(429);
-    return c.html(
-      <ResultsView variant="error" message={error.message} error={error} />,
-    );
-  }
-  if (error instanceof ServerError) {
-    c.status(500);
-    return c.html(
-      <ResultsView variant="error" message={error.message} error={error} />,
-    );
-  }
-  if (error instanceof AppError) {
-    c.status(error.statusCode);
-    return c.html(
-      <ResultsView variant="error" message={error.message} error={error} />,
-    );
+  const depth = getFrameDepth();
+
+  // Helper to render error in the appropriate shell
+  function renderError(variant: "success" | "error" | "info", message: string, error?: AppError | Error, statusCode?: StatusCode): Response {
+    if (statusCode) {
+      c.status(statusCode);
+    }
+
+    const content = <ResultsView variant={variant} message={message} error={error} depth={depth} />;
+
+    if (depth === 0) {
+      // ResultsView wraps in Layout at depth 0
+      return c.html("<!DOCTYPE html>" + renderToString(content));
+    }
+
+    // At depth > 0, wrap in FrameShell
+    return c.html("<!DOCTYPE html>" + renderToString(
+      <FrameShell depth={depth}>{content}</FrameShell>,
+    ));
   }
 
-  c.status(500);
-  return c.html(
-    <ResultsView
-      variant="error"
-      message={error instanceof Error ? error.message : "Unknown error"}
-      error={error instanceof Error ? error : undefined}
-    />,
-  );
+  if (error instanceof NotFoundError) {
+    return renderError("error", error.message, error, 404);
+  }
+  if (error instanceof UnauthorizedError) {
+    return renderError("error", error.message, error, 401);
+  }
+  if (error instanceof ForbiddenError) {
+    return renderError("error", error.message, error, 403);
+  }
+  if (error instanceof ValidationError) {
+    return renderError("error", error.message, error, 400);
+  }
+  if (error instanceof ConflictError) {
+    return renderError("error", error.message, error, 409);
+  }
+  if (error instanceof RateLimitError) {
+    return renderError("error", error.message, error, 429);
+  }
+  if (error instanceof ServerError) {
+    return renderError("error", error.message, error, 500);
+  }
+  if (error instanceof AppError) {
+    return renderError("error", error.message, error, error.statusCode);
+  }
+
+  // Don't expose internal error details to clients
+  console.error("Unhandled error:", error);
+  return renderError("error", "Something went wrong", undefined, 500);
 }

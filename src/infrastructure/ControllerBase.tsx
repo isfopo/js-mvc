@@ -21,10 +21,12 @@
 import { Context, Env, Hono } from "hono";
 import { renderToString } from "hono/jsx/dom/server";
 import { Layout } from "views/pages/Shared/Layout";
+import { FrameShell } from "views/pages/Shared/FrameShell";
 import { handleError } from "./errors/index";
 import type { GuardDescriptor } from "./validation/GuardDescriptor";
 import { executeGuard } from "./validation/guard-executor";
 import { GUARDS_KEY } from "./validation/decorators";
+import { getFrameDepth } from "./FrameContext";
 
 /* ---------- Symbol.metadata polyfill ---------- */
 
@@ -89,19 +91,36 @@ export abstract class ControllerBase<T extends Env> {
     const routes: RouteDescriptor[] = metadata?.[ROUTES_KEY] ?? [];
     const guards: GuardDescriptor[] = metadata?.[GUARDS_KEY] ?? [];
 
-    /* Attach a renderer that wraps every response in the shared layout.
-       This is inherited by all routes registered below. */
+    /* Attach a renderer that wraps every response in the appropriate shell
+       based on frame depth. Depth 0 gets the full Layout with Outlet;
+       depth 1+ gets a minimal FrameShell. */
     this._app.use("*", async (c, next) => {
-      c.setRenderer((content: any) => {
-        const user = (c as any).get("user");
-        const doctype = "<!DOCTYPE html>";
-        const body = renderToString(
-          <Layout user={user} currentPath={c.req.path}>
-            {content}
-          </Layout>,
-        );
-        return c.html(doctype + body);
-      });
+      const depth: number = getFrameDepth();
+
+      if (depth === 0) {
+        // Top-level: full Layout with Outlet (iframe pointing to depth 1).
+        // The controller's view content is discarded at depth 0 —
+        // the Layout itself is the entire response.
+        c.setRenderer((content: any) => {
+          const user = (c as any).get("user");
+          const doctype = "<!DOCTYPE html>";
+          const body = renderToString(
+            <Layout user={user} currentPath={c.req.path} depth={0} />,
+          );
+          return c.html(doctype + body);
+        });
+      } else {
+        // Nested frame: minimal shell, no global nav.
+        // The controller's view content is rendered inside FrameShell.
+        c.setRenderer((content: any) => {
+          const doctype = "<!DOCTYPE html>";
+          const body = renderToString(
+            <FrameShell depth={depth}>{content}</FrameShell>,
+          );
+          return c.html(doctype + body);
+        });
+      }
+
       await next();
     });
 

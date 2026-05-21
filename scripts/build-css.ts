@@ -130,8 +130,7 @@ function getCSSFiles(): string[] {
 function combineCSS(): string {
   const cssFiles = getCSSFiles();
 
-  console.log(`Found ${cssFiles.length} CSS source files:`);
-  cssFiles.forEach((f) => console.log(`  - ${basename(f)}`));
+  console.log(`Found ${cssFiles.length} CSS source files.`);
 
   return cssFiles
     .map((f) => {

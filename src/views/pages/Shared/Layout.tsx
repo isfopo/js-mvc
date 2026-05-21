@@ -1,5 +1,7 @@
 import type { FC, JSXNode, PropsWithChildren } from "hono/jsx";
 import type { UserRow } from "db/user/model";
+import { Outlet } from "views/components/Outlet";
+import styles from "./Layout.module.css";
 
 interface LayoutProps extends PropsWithChildren {
   head?: JSXNode;
@@ -7,6 +9,8 @@ interface LayoutProps extends PropsWithChildren {
   user?: Pick<UserRow, "login" | "avatar_url"> | null;
   /** Current request path (for active nav highlighting). */
   currentPath?: string;
+  /** Frame depth (0 = top-level, renders Outlet; >0 should not use Layout). */
+  depth?: number;
 }
 
 export const Layout: FC<LayoutProps> = ({
@@ -14,6 +18,7 @@ export const Layout: FC<LayoutProps> = ({
   head = "",
   user,
   currentPath = "/",
+  depth = 0,
 }) => {
   const isHome = currentPath === "/" || currentPath.startsWith("/tenets");
 
@@ -24,12 +29,20 @@ export const Layout: FC<LayoutProps> = ({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="description" content="Tenet — Team Decision Journal" />
         <title>Tenet</title>
+        {/* Preload resources that nested frames will also need */}
+        <link rel="preload" href="/.generated/styles/index.css" as="style" />
+        {import.meta.env.PROD && (
+          <link rel="modulepreload" href="/.generated/client/main.js" />
+        )}
         <link rel="stylesheet" href="/.generated/styles/index.css" />
 
         {import.meta.env.DEV ? (
           <>
             <script type="module" src="/@vite/client"></script>
-            <script type="module" src="/src/infrastructure/client/main.ts"></script>
+            <script
+              type="module"
+              src="/src/infrastructure/client/main.ts"
+            ></script>
           </>
         ) : (
           <script type="module" src="/.generated/client/main.js"></script>
@@ -43,7 +56,9 @@ export const Layout: FC<LayoutProps> = ({
             <ul>
               <li>
                 <strong>
-                  <a href="/tenets" style="text-decoration: none;">Tenet</a>
+                  <a href="/tenets" class={styles.brandLink}>
+                    Tenet
+                  </a>
                 </strong>
               </li>
               {isHome && (
@@ -68,14 +83,14 @@ export const Layout: FC<LayoutProps> = ({
                         alt={user.login}
                         width="32"
                         height="32"
-                        style="border-radius: 50%; vertical-align: middle;"
+                        class={styles.avatar}
                       />
                     ) : (
                       <span>{user.login}</span>
                     )}
                   </li>
                   <li>
-                    <form action="/auth/logout" method="post">
+                    <form action="/auth/logout" method="post" target="_top">
                       <button type="submit" class="outline secondary">
                         Logout
                       </button>
@@ -84,7 +99,7 @@ export const Layout: FC<LayoutProps> = ({
                 </>
               ) : (
                 <li>
-                  <a href="/auth/login" role="button">
+                  <a href="/auth/login" role="button" target="_top">
                     Login with GitHub
                   </a>
                 </li>
@@ -92,7 +107,7 @@ export const Layout: FC<LayoutProps> = ({
             </ul>
           </nav>
         </header>
-        <main>{children}</main>
+        <main>{depth === 0 ? <Outlet /> : children}</main>
       </body>
     </html>
   );

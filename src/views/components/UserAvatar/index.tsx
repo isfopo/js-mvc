@@ -1,4 +1,5 @@
 import type { FC } from "hono/jsx";
+import styles from "./index.module.css";
 
 interface Props {
   login: string;
@@ -13,8 +14,10 @@ export const UserAvatar: FC<Props> = ({ login, avatarUrl, size = 28 }) =>
       alt={login}
       width={size}
       height={size}
-      style={`border-radius: 50%; vertical-align: middle;`}
+      class={styles.avatar}
     />
   ) : (
-    <span style={`font-size: ${size * 0.6}px;`}>{login[0]?.toUpperCase()}</span>
+    <span class={styles.fallback} style={`font-size: ${size * 0.6}px;`}>
+      {login[0]?.toUpperCase()}
+    </span>
   );

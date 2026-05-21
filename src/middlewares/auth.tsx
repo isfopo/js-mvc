@@ -8,6 +8,7 @@
 
 import type { Context, MiddlewareHandler } from "hono";
 import type { UserRow } from "db/user/model";
+import { getFrameDepth } from "infrastructure/FrameContext";
 
 const SESSION_COOKIE = "tenet_session";
 const COOKIE_MAX_AGE = 604800; // 7 days
@@ -25,6 +26,22 @@ function readCookie(c: Context, name: string): string | null {
   return null;
 }
 
+/**
+ * Redirect to a URL, breaking out of the iframe if at depth > 0.
+ * At depth 0, uses a normal HTTP redirect.
+ * At depth > 0, returns an HTML page that sets window.top.location
+ * to break out of the iframe.
+ */
+function frameRedirect(c: Context, url: string): Response {
+  const depth = getFrameDepth();
+  if (depth === 0) {
+    return c.redirect(url);
+  }
+  // Inside an iframe — must break out to the top-level window
+  const html = `<!DOCTYPE html><html><head><script>window.top.location = ${JSON.stringify(url)};</script></head><body></body></html>`;
+  return c.html(html);
+}
+
 /** Attach the authenticated user to the context. */
 export function requireAuth(): MiddlewareHandler {
   return async (c: Context, next) => {
@@ -33,7 +50,7 @@ export function requireAuth(): MiddlewareHandler {
 
     if (!sessionId) {
       const dest = encodeURIComponent(c.req.path);
-      return c.redirect(`/auth/login?redirect=${dest}`);
+      return frameRedirect(c, `/auth/login?redirect=${dest}`);
     }
 
     const raw = await env.SESSIONS.get(sessionId);
@@ -44,13 +61,21 @@ export function requireAuth(): MiddlewareHandler {
         `${SESSION_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`,
       );
       const dest = encodeURIComponent(c.req.path);
-      return c.redirect(`/auth/login?redirect=${dest}`);
+      return frameRedirect(c, `/auth/login?redirect=${dest}`);
     }
 
-    const session = JSON.parse(raw) as {
-      userId: number;
-      createdAt: string;
-    };
+    let session: { userId: number; createdAt: string };
+    try {
+      session = JSON.parse(raw) as { userId: number; createdAt: string };
+    } catch {
+      // Invalid session data — treat as missing
+      c.header(
+        "Set-Cookie",
+        `${SESSION_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`,
+      );
+      const dest = encodeURIComponent(c.req.path);
+      return frameRedirect(c, `/auth/login?redirect=${dest}`);
+    }
 
     // Fetch user from D1
     const user = await env.DB
@@ -65,7 +90,7 @@ export function requireAuth(): MiddlewareHandler {
         "Set-Cookie",
         `${SESSION_COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`,
       );
-      return c.redirect("/auth/login");
+      return frameRedirect(c, "/auth/login");
     }
 
     // Attach user to context

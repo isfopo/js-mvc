@@ -793,3 +793,38 @@ template {
 canvas {
     display: inline-block;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Nested Frames: iframe sizing                                       */
+/*                                                                     */
+/*  At depth 0, the Layout renders an <Outlet /> (iframe) inside       */
+/*  <main>. The iframe height is set dynamically by frame:resize       */
+/*  (frame-child.ts reports content height, frame-router.ts sets       */
+/*  iframe.style.height). scrolling="no" on the iframe prevents its    */
+/*  own scrollbar — the outer page scrolls instead.                    */
+/* ------------------------------------------------------------------ */
+
+html, body {
+  margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  flex-shrink: 0;
+}
+
+main {
+  flex: 1;
+}
+
+main iframe {
+  width: 100%;
+  min-height: 80vh;
+  border: none;
+  display: block;
+}
