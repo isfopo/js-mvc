@@ -7,3 +7,5 @@
   - or keep a "SPA-like" app that always renders to a root html div
 - Create a TSX helper that builds dynamic CSS (:not, :has) selectors for no-JS interactivity
   - Similar to the existing "Action" helper
+
+https://github.com/joshnuss/requel/tree/main - a vite plugin for loading sql. Right now there's a build script
