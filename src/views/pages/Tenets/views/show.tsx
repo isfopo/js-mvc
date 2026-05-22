@@ -2,9 +2,10 @@ import type { FC } from "hono/jsx";
 import type { TenetDetailViewModel } from "views/pages/Tenets/view-model";
 import { Action } from "utils/Action";
 import { StatusBadge } from "views/components/StatusBadge";
+import { VoteButtons } from "views/components/VoteButtons";
+import { VoteProgress } from "views/components/VoteProgress";
 import styles from "./show.module.css";
 
-const Vote = Action("vote");
 const Status = Action("status");
 
 const STATUS_TRANSITIONS: Record<string, { label: string; target: string; message: string }[]> = {
@@ -19,12 +20,6 @@ const STATUS_TRANSITIONS: Record<string, { label: string; target: string; messag
   ],
   implemented: [{ label: "Supersede", target: "superseded", message: "Supersede this tenet?" }],
 };
-
-const VOTE_CHOICES = [
-  { value: "approve", label: "Approve", css: "primary" },
-  { value: "abstain", label: "Abstain", css: "secondary outline" },
-  { value: "block", label: "Block", css: "outline" },
-];
 
 export const View: FC<TenetDetailViewModel> = ({
   tenet,
@@ -75,28 +70,9 @@ export const View: FC<TenetDetailViewModel> = ({
       </article>
     ))}
 
-    {canVote && (
-      <article>
-        <h2>Vote</h2>
-        {userVote ? (
-          <p>
-            You voted: <strong>{userVote.choice}</strong>
-            {userVote.reason && <span> &mdash; {userVote.reason}</span>}
-          </p>
-        ) : null}
-        <form method="post" action={`/tenets/${tenet.slug}/vote`}>
-          <input type="hidden" name="choice" />
-          <input type="hidden" name="reason" />
-          <div class={styles.voteGroup}>
-            {VOTE_CHOICES.map((vc) => (
-              <Vote.Trigger event="click" method="submit" choice={vc.value}>
-                <button type="submit" class={vc.css}>{vc.label}</button>
-              </Vote.Trigger>
-            ))}
-          </div>
-        </form>
-      </article>
-    )}
+    {canVote && <VoteButtons slug={tenet.slug} userVote={userVote} />}
+
+    <VoteProgress votes={tenet.votes} />
 
     <h2>Votes</h2>
     {tenet.votes.length === 0 ? (

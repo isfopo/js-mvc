@@ -3,12 +3,6 @@
   padding-left: 1rem;
 }
 
-.voteGroup {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
 .transitionGroup {
   display: flex;
   gap: 0.5rem;

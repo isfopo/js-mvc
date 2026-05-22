@@ -1,0 +1,43 @@
+.bar {
+  display: flex;
+  height: 0.75rem;
+  border-radius: var(--pico-border-radius);
+  overflow: hidden;
+  background: var(--pico-muted-border-color);
+  margin-bottom: 0.5rem;
+}
+
+.approve {
+  background: var(--pico-primary);
+  transition: width 0.3s ease;
+}
+
+.abstain {
+  background: var(--pico-muted-color);
+  transition: width 0.3s ease;
+}
+
+.block {
+  background: var(--pico-del-color);
+  transition: width 0.3s ease;
+}
+
+.legend {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
