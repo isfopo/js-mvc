@@ -8,10 +8,14 @@ import WellKnownController from "api/WellKnown/controller";
 import AuthController from "api/Auth/controller";
 
 import { initDatabase } from "infrastructure/QueryLoader";
+import { unflattenFormBodyMiddleware } from "infrastructure/middlewares/unflatten-form-body";
 
 import schemaSql from "db/init.sql?raw";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
+
+// Unflatten bracket-notation form body keys (e.g. options[0][title] → nested objects)
+app.use("*", unflattenFormBodyMiddleware());
 
 // Run DB schema initialization once on first request
 let initialized = false;

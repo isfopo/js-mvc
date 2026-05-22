@@ -2,6 +2,7 @@ import type { Context } from "hono";
 import { NotFoundError, ValidationError } from "infrastructure/errors/index";
 import type { GuardDescriptor } from "./GuardDescriptor";
 import type { IValidatable } from "./IValidatable";
+import { getParsedBody } from "infrastructure/middlewares/unflatten-form-body";
 
 /**
  * Execute a single guard against the current request context.
@@ -33,11 +34,17 @@ export async function executeGuard(guard: GuardDescriptor, c: Context): Promise<
       if (contentType.includes("application/json")) {
         body = await c.req.json<Record<string, unknown>>();
       } else {
-        // Form-encoded (from HTML <form> submissions)
-        const raw = await c.req.parseBody();
-        body = Object.fromEntries(
-          Object.entries(raw).map(([k, v]) => [k, v as unknown]),
-        );
+        // Use pre-unflattened body if the middleware ran, otherwise
+        // fall back to raw parseBody() (backwards-compatible).
+        const cached = getParsedBody(c);
+        if (cached) {
+          body = cached;
+        } else {
+          const raw = await c.req.parseBody();
+          body = Object.fromEntries(
+            Object.entries(raw).map(([k, v]) => [k, v as unknown]),
+          );
+        }
       }
 
       const instance = new guard.RequestClass(body);
