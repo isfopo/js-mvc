@@ -1,4 +1,7 @@
-import type { ValidationResult, IValidatable } from "infrastructure/validation/IValidatable";
+import type {
+  ValidationResult,
+  IValidatable,
+} from "infrastructure/validation/IValidatable";
 
 export interface OptionInput {
   title: string;
@@ -20,7 +23,8 @@ export class ProposeTenetRequest implements IValidatable {
     this.options = Array.isArray(raw)
       ? raw.map((o: Record<string, unknown>) => ({
           title: String(o.title ?? ""),
-          description: o.description != null ? String(o.description) : undefined,
+          description:
+            o.description != null ? String(o.description) : undefined,
           pros: o.pros != null ? String(o.pros) : undefined,
           cons: o.cons != null ? String(o.cons) : undefined,
         }))
@@ -29,7 +33,6 @@ export class ProposeTenetRequest implements IValidatable {
 
   validate(): ValidationResult {
     const errors: Record<string, string> = {};
-
     if (!this.title.trim()) errors.title = "Title is required";
     if (!this.context.trim()) errors.context = "Context is required";
     if (this.options.length === 0) {
