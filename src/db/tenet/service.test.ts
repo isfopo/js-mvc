@@ -5,12 +5,15 @@ import { votesRepo } from "db/vote/repo";
 import { usersRepo } from "db/user/repo";
 import { ProposeTenetRequest } from "views/pages/Tenets/requests/ProposeTenetRequest";
 import { VoteRequest } from "views/pages/Tenets/requests/VoteRequest";
-import { initDatabase } from "db/init";
+
 import { env } from "cloudflare:workers";
+import { initDatabase } from "infrastructure/QueryLoader";
+
+import schemaSql from "db/init.sql?raw";
 
 beforeAll(async () => {
   // Run migrations so tables exist
-  await initDatabase(env.DB);
+  await initDatabase(env.DB, schemaSql);
 
   // Seed a test user
   await usersRepo.upsertFromGithub(env.DB, {
@@ -54,7 +57,10 @@ describe("TenetsService", () => {
 
   it("transitions from draft to voting", async () => {
     const detail = await tenetService.transitionStatus(
-      env.DB, 1, "use-react", "voting",
+      env.DB,
+      1,
+      "use-react",
+      "voting",
     );
     expect(detail.status).toBe("voting");
   });
@@ -89,7 +95,10 @@ describe("TenetsService", () => {
 
   it("accepts a tenet", async () => {
     const detail = await tenetService.transitionStatus(
-      env.DB, 1, "use-react", "accepted",
+      env.DB,
+      1,
+      "use-react",
+      "accepted",
     );
     expect(detail.status).toBe("accepted");
   });
