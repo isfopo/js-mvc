@@ -1,8 +1,8 @@
 import { ServiceBase } from "infrastructure/ServiceBase";
 import { tenetsRepo } from "./repo";
-import { votesRepo } from "db/vote/repo";
+import { votesRepo } from "data/vote/repo";
 import type { TenetRow, TenetOptionRow, TenetStatus } from "./model";
-import type { VoteRow } from "db/vote/model";
+import type { VoteRow } from "data/vote/model";
 import type { ProposeTenetRequest } from "views/pages/Tenets/requests/ProposeTenetRequest";
 import type { VoteRequest } from "views/pages/Tenets/requests/VoteRequest";
 
@@ -103,7 +103,12 @@ class TenetsService extends ServiceBase {
 
     const tenet = await tenetsRepo.createWithOptions(
       db,
-      { title: input.title, slug, context: input.context, proposed_by_id: userId },
+      {
+        title: input.title,
+        slug,
+        context: input.context,
+        proposed_by_id: userId,
+      },
       input.options,
     );
 
@@ -121,7 +126,9 @@ class TenetsService extends ServiceBase {
     this.require(tenet.status === "voting", "Tenet is not in voting phase");
 
     await votesRepo.upsert(
-      db, tenet.id, userId,
+      db,
+      tenet.id,
+      userId,
       input.choice as "approve" | "abstain" | "block",
       input.reason || null,
     );
@@ -148,7 +155,11 @@ class TenetsService extends ServiceBase {
 
   // ── Private helpers ────────────────────────────
 
-  private canTransition(tenet: TenetRow, userId: number, to: TenetStatus): boolean {
+  private canTransition(
+    tenet: TenetRow,
+    userId: number,
+    to: TenetStatus,
+  ): boolean {
     const isProposer = tenet.proposed_by_id === userId;
     const transitions: Record<TenetStatus, TenetStatus[]> = {
       draft: ["voting"],

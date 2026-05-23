@@ -1,5 +1,5 @@
 import type { FC, JSXNode, PropsWithChildren } from "hono/jsx";
-import type { UserRow } from "db/user/model";
+import type { UserRow } from "data/user/model";
 
 interface LayoutProps extends PropsWithChildren {
   head?: JSXNode;
@@ -29,7 +29,10 @@ export const Layout: FC<LayoutProps> = ({
         {import.meta.env.DEV ? (
           <>
             <script type="module" src="/@vite/client"></script>
-            <script type="module" src="/src/infrastructure/client/main.ts"></script>
+            <script
+              type="module"
+              src="/src/infrastructure/client/main.ts"
+            ></script>
           </>
         ) : (
           <script type="module" src="/.generated/client/main.js"></script>
@@ -43,7 +46,9 @@ export const Layout: FC<LayoutProps> = ({
             <ul>
               <li>
                 <strong>
-                  <a href="/tenets" style="text-decoration: none;">Tenet</a>
+                  <a href="/tenets" style="text-decoration: none;">
+                    Tenet
+                  </a>
                 </strong>
               </li>
               {isHome && (

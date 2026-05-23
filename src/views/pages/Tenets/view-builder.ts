@@ -1,10 +1,7 @@
-import type { UserRow } from "db/user/model";
-import type { TenetDetail, TenetSummary } from "db/tenet/service";
-import type { TenetStatus } from "db/tenet/model";
-import type {
-  TenetListViewModel,
-  TenetDetailViewModel,
-} from "./view-model";
+import type { UserRow } from "data/user/model";
+import type { TenetDetail, TenetSummary } from "data/tenet/service";
+import type { TenetStatus } from "data/tenet/model";
+import type { TenetListViewModel, TenetDetailViewModel } from "./view-model";
 
 function toUserInfo(user: UserRow) {
   return {
@@ -20,11 +17,9 @@ export const viewBuilder = {
     return { tenets, currentUser: toUserInfo(currentUser) };
   },
 
-  show(
-    tenet: TenetDetail,
-    currentUser: UserRow,
-  ): TenetDetailViewModel {
-    const userVote = tenet.votes.find((v) => v.userId === currentUser.id) ?? null;
+  show(tenet: TenetDetail, currentUser: UserRow): TenetDetailViewModel {
+    const userVote =
+      tenet.votes.find((v) => v.userId === currentUser.id) ?? null;
     const canVote = tenet.status === "voting";
     const isProposer = tenet.proposedBy.id === currentUser.id;
 
@@ -41,13 +36,16 @@ export const viewBuilder = {
   },
 };
 
-const STATUS_FLOW: Record<TenetStatus, { to: TenetStatus[]; needsProposer: boolean }> = {
-  draft:        { to: ["voting"],              needsProposer: true },
-  voting:       { to: ["accepted", "rejected"], needsProposer: true },
-  accepted:     { to: ["implemented", "superseded"], needsProposer: false },
-  rejected:     { to: [],                       needsProposer: false },
-  implemented:  { to: ["superseded"],           needsProposer: false },
-  superseded:   { to: [],                       needsProposer: false },
+const STATUS_FLOW: Record<
+  TenetStatus,
+  { to: TenetStatus[]; needsProposer: boolean }
+> = {
+  draft: { to: ["voting"], needsProposer: true },
+  voting: { to: ["accepted", "rejected"], needsProposer: true },
+  accepted: { to: ["implemented", "superseded"], needsProposer: false },
+  rejected: { to: [], needsProposer: false },
+  implemented: { to: ["superseded"], needsProposer: false },
+  superseded: { to: [], needsProposer: false },
 };
 
 function allowedTransitionsFor(

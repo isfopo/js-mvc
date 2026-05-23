@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
 import { StatusBadge } from "views/components/StatusBadge";
 import { UserAvatar } from "views/components/UserAvatar";
-import type { TenetSummary } from "db/tenet/service";
+import type { TenetSummary } from "data/tenet/service";
 import styles from "./index.module.css";
 
 interface Props {
@@ -19,7 +19,10 @@ export const TenetCard: FC<Props> = ({ tenet }) => (
     </a>
     <footer>
       <div class={styles.footerMeta}>
-        <UserAvatar login={tenet.proposedBy.login} avatarUrl={tenet.proposedBy.avatarUrl} />
+        <UserAvatar
+          login={tenet.proposedBy.login}
+          avatarUrl={tenet.proposedBy.avatarUrl}
+        />
         {tenet.proposedBy.login}
       </div>
     </footer>

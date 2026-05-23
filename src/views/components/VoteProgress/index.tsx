@@ -5,7 +5,7 @@
  */
 
 import type { FC } from "hono/jsx";
-import type { VoteDetail } from "db/tenet/service";
+import type { VoteDetail } from "data/tenet/service";
 import styles from "./index.module.css";
 
 interface Props {
@@ -61,15 +61,24 @@ export const VoteProgress: FC<Props> = ({ votes }) => {
 
       <div class={styles.legend}>
         <span class={styles.count}>
-          <span class={styles.dot} style={{ backgroundColor: "var(--pico-primary)" }} />
+          <span
+            class={styles.dot}
+            style={{ backgroundColor: "var(--pico-primary)" }}
+          />
           Approve: {approveCount}
         </span>
         <span class={styles.count}>
-          <span class={styles.dot} style={{ backgroundColor: "var(--pico-muted-color)" }} />
+          <span
+            class={styles.dot}
+            style={{ backgroundColor: "var(--pico-muted-color)" }}
+          />
           Abstain: {abstainCount}
         </span>
         <span class={styles.count}>
-          <span class={styles.dot} style={{ backgroundColor: "var(--pico-del-color)" }} />
+          <span
+            class={styles.dot}
+            style={{ backgroundColor: "var(--pico-del-color)" }}
+          />
           Block: {blockCount}
         </span>
       </div>

@@ -7,7 +7,7 @@
  */
 
 import type { Context, MiddlewareHandler } from "hono";
-import type { UserRow } from "db/user/model";
+import type { UserRow } from "data/user/model";
 
 const SESSION_COOKIE = "tenet_session";
 const COOKIE_MAX_AGE = 604800; // 7 days
@@ -53,8 +53,7 @@ export function requireAuth(): MiddlewareHandler {
     };
 
     // Fetch user from D1
-    const user = await env.DB
-      .prepare("SELECT * FROM users WHERE id = ?")
+    const user = await env.DB.prepare("SELECT * FROM users WHERE id = ?")
       .bind(session.userId)
       .first<UserRow>();
 
