@@ -1,5 +1,5 @@
 import type { FC } from "hono/jsx";
-import type { StateDemoViewModel } from "views/pages/StateDemo/view-model";
+import type { StateDemoViewModel } from "views/routes/StateDemo/view-model";
 import { State } from "infrastructure/utils/State";
 import styles from "./index.module.css";
 

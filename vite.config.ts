@@ -13,7 +13,7 @@ export default defineConfig({
     alias: {
       // Top-level src/ directories — enables bare imports like "db/init"
       api: resolve(src, "api"),
-      db: resolve(src, "db"),
+      data: resolve(src, "data"),
       infrastructure: resolve(src, "infrastructure"),
       middlewares: resolve(src, "middlewares"),
       utils: resolve(src, "utils"),

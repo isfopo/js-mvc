@@ -3,14 +3,14 @@ import { Hono } from "hono";
 import HomeController from "views/routes/Home/controller";
 import ComponentsController from "views/routes/ComponentsDemo/controller";
 import TenetsController from "views/routes/Tenets/controller";
-import TenetsApiController from "api/Tenets/controller.api";
+import TenetsApiController from "views/routes/Tenets/controller.api";
 import WellKnownController from "views/routes/WellKnown/controller";
-import AuthController from "views/pages/Auth/controller";
+import AuthController from "views/routes/Auth/controller";
 
 import { initDatabase } from "infrastructure/QueryLoader";
 import { unflattenFormBodyMiddleware } from "infrastructure/middlewares/unflatten-form-body";
 
-import schemaSql from "db/init.sql?raw";
+import schemaSql from "data/init.sql?raw";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 

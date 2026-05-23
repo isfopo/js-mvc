@@ -1,5 +1,5 @@
 import type { FC } from "hono/jsx";
-import type { TenetFormViewModel } from "views/pages/Tenets/view-model";
+import type { TenetFormViewModel } from "views/routes/Tenets/view-model";
 import { Action } from "infrastructure/utils/Action";
 import styles from "./new.module.css";
 

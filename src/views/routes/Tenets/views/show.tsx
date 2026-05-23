@@ -1,5 +1,5 @@
 import type { FC } from "hono/jsx";
-import type { TenetDetailViewModel } from "views/pages/Tenets/view-model";
+import type { TenetDetailViewModel } from "views/routes/Tenets/view-model";
 import { Action } from "infrastructure/utils/Action";
 import { StatusBadge } from "views/components/StatusBadge";
 import { VoteButtons } from "views/components/VoteButtons";

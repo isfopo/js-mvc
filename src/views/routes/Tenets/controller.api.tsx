@@ -4,8 +4,8 @@ import { Exists, Validate } from "infrastructure/validation/decorators";
 import { requireAuth } from "middlewares/auth";
 import { tenetService } from "data/tenet/service";
 import { tenetsRepo } from "data/tenet/repo";
-import { ProposeTenetRequest } from "views/pages/Tenets/requests/ProposeTenetRequest";
-import { VoteRequest } from "views/pages/Tenets/requests/VoteRequest";
+import { ProposeTenetRequest } from "views/routes/Tenets/requests/ProposeTenetRequest";
+import { VoteRequest } from "views/routes/Tenets/requests/VoteRequest";
 import type { UserRow } from "data/user/model";
 import type { TenetRow } from "data/tenet/model";
 

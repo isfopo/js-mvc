@@ -1,1 +1,0 @@
-views/routes/Tenets/requests/ProposeTenetRequestviews/routes/Tenets/requests/VoteRequest
