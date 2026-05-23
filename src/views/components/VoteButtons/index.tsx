@@ -5,7 +5,7 @@
  */
 
 import type { FC } from "hono/jsx";
-import { Action } from "utils/Action";
+import { Action } from "infrastructure/utils/Action";
 
 const Vote = Action("vote");
 

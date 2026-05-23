@@ -3,8 +3,8 @@ import { tenetsRepo } from "./repo";
 import { votesRepo } from "data/vote/repo";
 import type { TenetRow, TenetOptionRow, TenetStatus } from "./model";
 import type { VoteRow } from "data/vote/model";
-import type { ProposeTenetRequest } from "views/pages/Tenets/requests/ProposeTenetRequest";
-import type { VoteRequest } from "views/pages/Tenets/requests/VoteRequest";
+import type { ProposeTenetRequest } from "views/routes/Tenets/requests/ProposeTenetRequest";
+import type { VoteRequest } from "views/routes/Tenets/requests/VoteRequest";
 
 // ── Shared DTOs (consumed by HTML ViewBuilders and API controllers) ──
 

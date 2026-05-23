@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import { Alert } from "views/components/Alert";
-import { Action } from "utils/Action";
+import { Action } from "infrastructure/utils/Action";
 
 const Confirm = Action("confirm");
 
@@ -8,7 +8,11 @@ export const View: FC = () => (
   <section>
     <nav>
       <ul>
-        <li><a href="/_demo/state"><strong>State() Demos</strong></a></li>
+        <li>
+          <a href="/_demo/state">
+            <strong>State() Demos</strong>
+          </a>
+        </li>
       </ul>
     </nav>
 
@@ -32,17 +36,23 @@ export const View: FC = () => (
 
     <h2>Interactive — Confirm Action</h2>
     <p>
-      The link below uses <code>Confirm.Trigger</code> without a Wrapper.
-      Data params (<code>message</code>) are passed directly to Trigger
-      and converted to <code>data-confirm-message</code>.
+      The link below uses <code>Confirm.Trigger</code> without a Wrapper. Data
+      params (<code>message</code>) are passed directly to Trigger and converted
+      to <code>data-confirm-message</code>.
     </p>
-    <Confirm.Trigger event="click" method="ask" message="Are you sure you want to proceed?">
-      <a href="/" role="button">Try confirm dialog</a>
+    <Confirm.Trigger
+      event="click"
+      method="ask"
+      message="Are you sure you want to proceed?"
+    >
+      <a href="/" role="button">
+        Try confirm dialog
+      </a>
     </Confirm.Trigger>
 
     <p>
-      Alerts above are dismissible via the <code>dismiss</code> handler.
-      Click the ✕ button on any alert to dismiss it.
+      Alerts above are dismissible via the <code>dismiss</code> handler. Click
+      the ✕ button on any alert to dismiss it.
     </p>
   </section>
 );

@@ -20,7 +20,7 @@
 
 import { Context, Env, Hono } from "hono";
 import { renderToString } from "hono/jsx/dom/server";
-import { Layout } from "views/pages/Shared/Layout";
+import { Layout } from "views/routes/Shared/Layout";
 import { handleError } from "./errors/index";
 import type { GuardDescriptor } from "./validation/GuardDescriptor";
 import { executeGuard } from "./validation/guard-executor";
@@ -50,8 +50,9 @@ function httpRoute(method: string, path: string) {
     _target: (this: This, ...args: any[]) => any,
     context: ClassMethodDecoratorContext<This>,
   ): void {
-    const routes: RouteDescriptor[] =
-      ((context.metadata as any)[ROUTES_KEY] as RouteDescriptor[]) ??= [];
+    const routes: RouteDescriptor[] = (((context.metadata as any)[
+      ROUTES_KEY
+    ] as RouteDescriptor[]) ??= []);
     routes.push({
       method: method as RouteDescriptor["method"],
       path,

@@ -3,8 +3,8 @@ import { tenetService } from "./service";
 import { tenetsRepo } from "./repo";
 import { votesRepo } from "data/vote/repo";
 import { usersRepo } from "data/user/repo";
-import { ProposeTenetRequest } from "views/pages/Tenets/requests/ProposeTenetRequest";
-import { VoteRequest } from "views/pages/Tenets/requests/VoteRequest";
+import { ProposeTenetRequest } from "views/routes/Tenets/requests/ProposeTenetRequest";
+import { VoteRequest } from "views/routes/Tenets/requests/VoteRequest";
 
 import { env } from "cloudflare:workers";
 import { initDatabase } from "infrastructure/QueryLoader";

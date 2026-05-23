@@ -1,6 +1,6 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
 import styles from "./index.module.css";
-import { Action } from "utils/Action";
+import { Action } from "infrastructure/utils/Action";
 
 export type AlertVariant = "info" | "success" | "warning" | "error";
 
@@ -20,7 +20,9 @@ export const Alert: FC<AlertProps> = ({ variant, header, children }) => (
       {children}
     </div>
     <Dismiss.Trigger event="click" method="hide">
-      <button class={styles.dismiss} aria-label="Dismiss">✕</button>
+      <button class={styles.dismiss} aria-label="Dismiss">
+        ✕
+      </button>
     </Dismiss.Trigger>
   </Dismiss>
 );
