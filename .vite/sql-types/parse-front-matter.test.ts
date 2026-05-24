@@ -134,4 +134,51 @@ result: Tenet
 
     expect(sql).toBe("SELECT * FROM tenets");
   });
+
+  it("throws on invalid params type (string instead of map)", () => {
+    const content = `---
+params: not_a_map
+---
+SELECT * FROM tenets`;
+
+    expect(() => parseFrontMatter(content, "test.sql")).toThrow(
+      'test.sql: front matter "params" must be a YAML map',
+    );
+  });
+
+  it("throws on invalid params type (array instead of map)", () => {
+    const content = `---
+params:
+  - slug
+  - id
+---
+SELECT * FROM tenets`;
+
+    expect(() => parseFrontMatter(content, "test.sql")).toThrow(
+      'test.sql: front matter "params" must be a YAML map',
+    );
+  });
+
+  it("throws on invalid param value type", () => {
+    const content = `---
+params:
+  slug: 42
+---
+SELECT * FROM tenets`;
+
+    expect(() => parseFrontMatter(content, "test.sql")).toThrow(
+      'test.sql: front matter param "slug" must be a type string',
+    );
+  });
+
+  it("throws on invalid result type (number instead of string)", () => {
+    const content = `---
+result: 42
+---
+SELECT * FROM tenets`;
+
+    expect(() => parseFrontMatter(content, "test.sql")).toThrow(
+      'test.sql: front matter "result" must be a string',
+    );
+  });
 });

@@ -6,7 +6,7 @@
  * or TablePlus for schema reference while editing .sql files.
  */
 
-import { execSync, execFileSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync, unlinkSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -18,9 +18,9 @@ export function generateLocalDb(
   migrationsDir: string,
   dbPath: string = "local.db",
 ): boolean {
-  // Check if sqlite3 is available
+  // Check if sqlite3 is available (cross-platform: try running --version)
   try {
-    execSync("which sqlite3", { stdio: "pipe" });
+    execFileSync("sqlite3", ["--version"], { stdio: "pipe" });
   } catch {
     console.warn("⚠ sqlite3 not found — skipping local.db generation");
     return false;
@@ -52,7 +52,10 @@ export function generateLocalDb(
 
     return true;
   } catch (e) {
-    console.warn("⚠ Could not generate local.db:", (e as Error).message);
+    const err = e as { message?: string; stderr?: Buffer };
+    const stderr = err.stderr?.toString().trim();
+    const detail = stderr ? `\n  sqlite3: ${stderr}` : "";
+    console.warn(`⚠ Could not generate local.db: ${err.message ?? e}${detail}`);
     return false;
   }
 }

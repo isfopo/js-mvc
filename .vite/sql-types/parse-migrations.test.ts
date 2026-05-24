@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterAll } from "vitest";
 import { parseMigrations } from "./parse-migrations";
 import { writeFile, mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
@@ -7,15 +7,22 @@ import { tmpdir } from "node:os";
 describe("parseMigrations", () => {
   const testDir = join(tmpdir(), "parse-migrations-test-" + Date.now());
 
+  // Clean up temp directory after all tests complete
+  afterAll(async () => {
+    await rm(testDir, { recursive: true, force: true });
+  });
+
   async function setup(files: Record<string, string>) {
+    // Clean directory before each test to ensure isolation
+    try {
+      await rm(testDir, { recursive: true, force: true });
+    } catch {
+      // May not exist yet — that's fine
+    }
     await mkdir(testDir, { recursive: true });
     for (const [name, content] of Object.entries(files)) {
       await writeFile(join(testDir, name), content, "utf-8");
     }
-  }
-
-  async function cleanup() {
-    await rm(testDir, { recursive: true, force: true });
   }
 
   it("parses simple CREATE TABLE", async () => {
@@ -30,7 +37,7 @@ describe("parseMigrations", () => {
     });
 
     const tables = await parseMigrations(testDir);
-    await cleanup();
+
 
     expect(tables).toHaveLength(1);
     expect(tables[0].name).toBe("users");
@@ -63,7 +70,7 @@ describe("parseMigrations", () => {
     });
 
     const tables = await parseMigrations(testDir);
-    await cleanup();
+
 
     expect(tables[0].columns[1].checkValues).toEqual([
       "draft",
@@ -88,7 +95,7 @@ describe("parseMigrations", () => {
     });
 
     const tables = await parseMigrations(testDir);
-    await cleanup();
+
 
     expect(tables).toHaveLength(1);
     expect(tables[0].columns).toHaveLength(7);
@@ -107,7 +114,7 @@ describe("parseMigrations", () => {
     });
 
     const tables = await parseMigrations(testDir);
-    await cleanup();
+
 
     // Should only have 3 columns, not the UNIQUE constraint
     expect(tables[0].columns).toHaveLength(3);
@@ -124,7 +131,7 @@ describe("parseMigrations", () => {
     });
 
     const tables = await parseMigrations(testDir);
-    await cleanup();
+
 
     expect(tables).toHaveLength(1);
     expect(tables[0].name).toBe("users");
@@ -140,7 +147,7 @@ describe("parseMigrations", () => {
     });
 
     const tables = await parseMigrations(testDir);
-    await cleanup();
+
 
     expect(tables).toHaveLength(1);
     expect(tables[0].name).toBe("users");
@@ -153,7 +160,7 @@ describe("parseMigrations", () => {
     });
 
     const tables = await parseMigrations(testDir);
-    await cleanup();
+
 
     expect(tables).toHaveLength(2);
     expect(tables[0].name).toBe("users");
@@ -167,7 +174,7 @@ describe("parseMigrations", () => {
     });
 
     const tables = await parseMigrations(testDir);
-    await cleanup();
+
 
     // Should only have the first definition
     expect(tables).toHaveLength(1);
@@ -187,7 +194,7 @@ describe("parseMigrations", () => {
     });
 
     const tables = await parseMigrations(testDir);
-    await cleanup();
+
 
     expect(tables).toHaveLength(1);
     expect(tables[0].columns).toHaveLength(2);

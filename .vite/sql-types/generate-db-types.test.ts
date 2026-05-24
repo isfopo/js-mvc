@@ -43,8 +43,13 @@ describe("singularize (via tableNameToTypeName)", () => {
     expect(tableNameToTypeName("wolves")).toBe("Wolf");
     expect(tableNameToTypeName("calves")).toBe("Calf");
     expect(tableNameToTypeName("shelves")).toBe("Shelf");
-    // Note: "knives" → "Knife", "lives" → "Life", "wives" → "Wife" require tableNameOverrides
-    // because they end in -fe not -f
+  });
+
+  it("handles -ives (knives, lives, wives)", () => {
+    // -ives → -ife (must be checked before general -ves rule)
+    expect(tableNameToTypeName("knives")).toBe("Knife");
+    expect(tableNameToTypeName("lives")).toBe("Life");
+    expect(tableNameToTypeName("wives")).toBe("Wife");
   });
 
   it("doesn't singularize words ending in ss/us/is", () => {

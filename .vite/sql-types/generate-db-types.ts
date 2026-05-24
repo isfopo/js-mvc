@@ -56,7 +56,13 @@ function singularize(word: string): string {
     return word.slice(0, -3) + "y";
   }
 
-  // -ves → -f (e.g., Wolves → Wolf, Knives → Knife)
+  // -ives → -ife (e.g., Knives → Knife, Lives → Life, Wives → Wife)
+  // Must be checked before the general -ves rule
+  if (word.endsWith("ives")) {
+    return word.slice(0, -4) + "ife";
+  }
+
+  // -ves → -f (e.g., Wolves → Wolf, Calves → Calf, Shelves → Shelf)
   if (word.endsWith("ves")) {
     return word.slice(0, -3) + "f";
   }

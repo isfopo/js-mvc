@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterAll } from "vitest";
 import { writeFile, mkdir, rm, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -10,7 +10,18 @@ describe("generateQueryBarrel", () => {
   const dbTypesPath = join(testDir, "db-types.d.ts");
   const modelPath = join(testDir, "model.ts");
 
+  // Clean up temp directory after all tests complete
+  afterAll(async () => {
+    await rm(testDir, { recursive: true, force: true });
+  });
+
   async function setup(files: Record<string, string>, model?: string) {
+    // Clean queries directory before each test to ensure isolation
+    try {
+      await rm(queriesDir, { recursive: true, force: true });
+    } catch {
+      // Parent directory may not exist yet — that's fine
+    }
     await mkdir(queriesDir, { recursive: true });
     for (const [name, content] of Object.entries(files)) {
       await writeFile(join(queriesDir, name), content, "utf-8");
@@ -21,14 +32,16 @@ describe("generateQueryBarrel", () => {
       `export interface Tenet { id: number; }\nexport interface User { id: number; }`,
       "utf-8",
     );
+    // Remove stale model.ts from previous tests
+    try {
+      await rm(modelPath, { force: true });
+    } catch {
+      // May not exist — that's fine
+    }
     // Create model.ts if provided
     if (model) {
       await writeFile(modelPath, model, "utf-8");
     }
-  }
-
-  async function cleanup() {
-    await rm(testDir, { recursive: true, force: true });
   }
 
   async function readGenerated() {
@@ -47,7 +60,6 @@ SELECT * FROM tenets WHERE slug = @slug`,
 
     await generateQueryBarrel(queriesDir, ["tenets", "users"], dbTypesPath, null);
     const content = await readGenerated();
-    await cleanup();
 
     expect(content).toContain('import type { Tenet } from "../db-types"');
     expect(content).toContain('import findBySlugRaw from "./findBySlug.sql?raw"');
@@ -69,7 +81,6 @@ SELECT * FROM tenets`,
 
     await generateQueryBarrel(queriesDir, ["tenets"], dbTypesPath, null);
     const content = await readGenerated();
-    await cleanup();
 
     expect(content).toContain("export interface QueryMap {");
     expect(content).toContain("findBySlug: {");
@@ -92,7 +103,7 @@ UPDATE tenets SET status = @status WHERE id = @id`,
 
     await generateQueryBarrel(queriesDir, ["tenets"], dbTypesPath, null);
     const content = await readGenerated();
-    await cleanup();
+
 
     expect(content).toContain("result: void;");
   });
@@ -104,7 +115,7 @@ UPDATE tenets SET status = @status WHERE id = @id`,
 
     await generateQueryBarrel(queriesDir, ["tenets"], dbTypesPath, null);
     const content = await readGenerated();
-    await cleanup();
+
 
     expect(content).toContain("simple: {");
     expect(content).toContain("params: {};");
@@ -132,7 +143,7 @@ UPDATE tenets SET status = @status WHERE id = @id`,
       modelPath,
     );
     const content = await readGenerated();
-    await cleanup();
+
 
     expect(content).toContain('import type { TenetStatus } from "../model"');
   });
@@ -144,7 +155,7 @@ UPDATE tenets SET status = @status WHERE id = @id`,
 
     await generateQueryBarrel(queriesDir, [], dbTypesPath, null);
     const content = await readGenerated();
-    await cleanup();
+
 
     expect(content).toContain("function stripFrontMatter(sql: string): string");
     expect(content).toContain("BOM");
@@ -163,7 +174,7 @@ SELECT * FROM tenets WHERE slug = @slug`,
 
     await generateQueryBarrel(queriesDir, ["tenets"], dbTypesPath, null);
     const content = await readGenerated();
-    await cleanup();
+
 
     expect(content).toContain("export const queries = {");
     expect(content).toContain("findBySlug: stripFrontMatter(findBySlugRaw),");
@@ -180,12 +191,18 @@ SELECT t.*, u.login AS proposer_login FROM tenets t JOIN users u ON u.id = t.pro
 
     await generateQueryBarrel(queriesDir, ["tenets"], dbTypesPath, null);
     const content = await readGenerated();
-    await cleanup();
+
 
     expect(content).toContain("result: Tenet & { proposer_login: string };");
   });
 
   it("skips empty directories", async () => {
+    // Clean the directory first to ensure it's truly empty
+    try {
+      await rm(queriesDir, { recursive: true, force: true });
+    } catch {
+      // May not exist — that's fine
+    }
     await mkdir(queriesDir, { recursive: true });
 
     // Should not throw or create files
@@ -200,7 +217,6 @@ SELECT t.*, u.login AS proposer_login FROM tenets t JOIN users u ON u.id = t.pro
       // Expected — file should not exist
     }
 
-    await cleanup();
     expect(fileExists).toBe(false);
   });
 });

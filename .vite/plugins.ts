@@ -116,17 +116,25 @@ async function findSqlFileGroups(root: string): Promise<Map<string, string[]>> {
 }
 
 /**
- * Hash all .sql files in a directory to detect changes.
+ * Recursively hash all .sql files under a directory to detect changes.
  * Excludes init.sql and .generated files to match findSqlFileGroups behavior.
  * Returns a SHA-256 hash of all file contents.
  */
 async function hashDirectory(dir: string): Promise<string> {
   const hash = createHash("sha256");
-  
-  try {
-    const files = (await readdir(dir, { withFileTypes: true }))
-      .filter((f) => 
-        f.isFile() && 
+
+  async function walk(currentDir: string): Promise<void> {
+    let entries: import("node:fs").Dirent[];
+    try {
+      entries = await readdir(currentDir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    // Collect and sort .sql files in this directory
+    const sqlFiles = entries
+      .filter((f) =>
+        f.isFile() &&
         f.name.endsWith(".sql") &&
         f.name !== "init.sql" &&
         !f.name.includes(".generated")
@@ -134,15 +142,24 @@ async function hashDirectory(dir: string): Promise<string> {
       .map((f) => f.name)
       .sort();
 
-    for (const file of files) {
-      const content = await readFile(join(dir, file), "utf-8");
+    for (const file of sqlFiles) {
+      const content = await readFile(join(currentDir, file), "utf-8");
       hash.update(content);
     }
-  } catch {
-    // Directory doesn't exist or can't be read
-    return "";
+
+    // Recurse into subdirectories (skip hidden dirs and node_modules)
+    for (const entry of entries) {
+      if (
+        entry.isDirectory() &&
+        !entry.name.startsWith(".") &&
+        entry.name !== "node_modules"
+      ) {
+        await walk(join(currentDir, entry.name));
+      }
+    }
   }
 
+  await walk(dir);
   return hash.digest("hex");
 }
 
@@ -225,8 +242,11 @@ async function runSqlTypeGeneration(
   const sqlFileGroups = await findSqlFileGroups(dataDir);
 
   for (const [queriesDir] of sqlFileGroups) {
-    // Check if this barrel needs regeneration
-    const barrelHash = await hashDirectory(queriesDir);
+    // Check if this barrel needs regeneration.
+    // Include migrationsHash so barrels regenerate when db-types.d.ts changes,
+    // even if the .sql query files themselves haven't changed.
+    const dirHash = await hashDirectory(queriesDir);
+    const barrelHash = `${dirHash}:${migrationsHash}`;
     const cachedHash = cache.barrelHashes.get(queriesDir);
     
     if (cachedHash === barrelHash) {
@@ -304,7 +324,10 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
       // has converted them to `export default "..."` modules.
       if (!id.endsWith(".sql")) return;
 
-      // Match: export default "...";
+      // Vite's ?raw loader (and the default asset handler) always produces
+      // a single-line `export default "<json-escaped-string>";` statement.
+      // The `s` flag allows `.` to match newlines in case the string itself
+      // contains escaped newline characters (\n).
       const match = code.match(/^export default (.+);$/s);
       if (!match) return;
 

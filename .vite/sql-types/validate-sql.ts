@@ -12,7 +12,14 @@ import pkg from "node-sql-parser";
 import type { SqlFrontMatter } from "./parse-front-matter";
 import { extractTypeReferences } from "./utils";
 
-const { Parser } = pkg;
+// CJS interop: node-sql-parser may export Parser as a named or default property
+const Parser = (pkg as any).Parser ?? pkg;
+if (typeof Parser !== "function") {
+  throw new Error(
+    "node-sql-parser: Parser constructor not found. " +
+    "Check that node-sql-parser is installed and up to date.",
+  );
+}
 const parser = new Parser();
 
 export interface ValidationResult {
@@ -29,14 +36,19 @@ export interface ValidationResult {
 /**
  * Extract @paramName placeholders from SQL.
  * Returns unique placeholder names in order of first appearance.
+ * Strips string literals first to avoid matching @param inside quoted strings.
  */
 function extractPlaceholders(sql: string): string[] {
+  // Remove single-quoted string literals to avoid false positives
+  // e.g., WHERE name = '@notAParam' should not extract "notAParam"
+  const stripped = sql.replace(/'(?:[^'\\]|\\.)*'/g, "''");
+
   const placeholders: string[] = [];
   const seen = new Set<string>();
   const regex = /@(\w+)/g;
   let match: RegExpExecArray | null;
 
-  while ((match = regex.exec(sql)) !== null) {
+  while ((match = regex.exec(stripped)) !== null) {
     const name = match[1];
     if (!seen.has(name)) {
       seen.add(name);

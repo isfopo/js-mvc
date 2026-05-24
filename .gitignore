@@ -30,6 +30,7 @@ worker-configuration.d.ts
 src/data/db-types.d.ts
 src/**/queries.generated.ts
 local.db
+local.sqbpro
 
 # build output (CSS + client JS)
 public/.generated/

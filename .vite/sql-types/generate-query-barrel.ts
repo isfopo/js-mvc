@@ -18,7 +18,7 @@ import { extractTypeReferences } from "./utils";
  * Bare table names get imported from db-types.d.ts.
  */
 function isBareTableName(result: string): boolean {
-  return /^[a-z_]\w*$/.test(result);
+  return /^[a-z][a-z0-9_]*$/.test(result);
 }
 
 /**
@@ -180,7 +180,7 @@ export async function generateQueryBarrel(
 
   for (const file of files) {
     const content = await readFile(join(queriesDir, file), "utf-8");
-    const { data, sql } = parseFrontMatter(content);
+    const { data, sql } = parseFrontMatter(content, `${file}`);
     const name = basename(file, ".sql");
     queryEntries.push({ name, data, sql });
   }
