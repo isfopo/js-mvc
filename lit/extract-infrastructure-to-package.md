@@ -111,9 +111,8 @@ Remove the hardcoded `import { Layout } from "views/routes/Shared/Layout"` and m
 ```ts
 import type { FC } from "hono/jsx";
 
-export type LayoutComponent = FC<{
-  user?: unknown;
-  currentPath: string;
+export type LayoutComponent = (...args: any[]) => any;
+
   children: any;
 }>;
 

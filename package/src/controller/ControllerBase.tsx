@@ -70,11 +70,11 @@ export const Patch = (path: string) => httpRoute("patch", path);
 
 /* ---------- Render config ---------- */
 
-export type LayoutComponent = FC<{
-  user?: unknown;
-  currentPath: string;
-  children: any;
-}>;
+/**
+ * A layout component provided by the project.
+ * The package doesn't know the props shape — the project defines it.
+ */
+export type LayoutComponent = (...args: any[]) => any;
 
 export type ErrorHandler<T extends Env> = (
   c: Context<T>,
