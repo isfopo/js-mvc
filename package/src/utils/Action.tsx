@@ -2,7 +2,7 @@
  * Action — server-side component factory for wiring up client-side handlers.
  *
  * Keeps handler names and method names in sync between the server
- * views (this file) and the client handlers (src/client/handlers/).
+ * views (this file) and the client handlers.
  *
  * Usage:
  *
@@ -27,24 +27,6 @@
  * converted to data-{handler}-{key} attributes on the child element.
  */
 
-import { JSX } from "hono/jsx";
-
-// ---------------------------------------------------------------------------
-// Handler/method registry
-// ---------------------------------------------------------------------------
-// Add a new entry here when you create a new client handler.
-// The key is the handler name (matches data-controller).
-// The value is a union of method names on that handler.
-// ---------------------------------------------------------------------------
-
-export interface HandlerActions {
-  dismiss: "hide";
-  confirm: "ask";
-  vote: "submit";
-  status: "transition";
-  addoption: "add";
-}
-
 // ---------------------------------------------------------------------------
 // Known DOM event names (for autocomplete — any string still works)
 // ---------------------------------------------------------------------------
@@ -68,11 +50,11 @@ export type KnownDOMEvent =
 // Component factory
 // ---------------------------------------------------------------------------
 
-type TriggerProps<E extends keyof HandlerActions> = {
+type TriggerProps<HA extends Record<string, string>, E extends keyof HA> = {
   /** DOM event to listen for */
   event: KnownDOMEvent | (string & {});
   /** Method name on the handler class */
-  method: HandlerActions[E];
+  method: HA[E];
   children?: any;
 } & Record<string, any>;
 
@@ -96,9 +78,12 @@ type WrapperProps = {
  * Use Trigger alone when the interactive element is the right scope
  * for the handler (e.g. confirm).
  */
-export function Action<E extends keyof HandlerActions>(name: E) {
+export function Action<
+  HA extends Record<string, string>,
+  E extends keyof HA
+>(name: E) {
   function Wrapper({ tag, children, ...rest }: WrapperProps) {
-    const Tag = (tag ?? "div") as keyof JSX.IntrinsicElements;
+    const Tag = (tag ?? "div") as string;
     return (
       <Tag data-controller={name} {...rest}>
         {children}
@@ -106,7 +91,7 @@ export function Action<E extends keyof HandlerActions>(name: E) {
     );
   }
 
-  function Trigger({ event, method, children, ...dataProps }: TriggerProps<E>) {
+  function Trigger({ event, method, children, ...dataProps }: TriggerProps<HA, E>) {
     // Attributes to inject into the child element
     const inject: Record<string, string> = {
       "data-controller": name,
@@ -122,10 +107,10 @@ export function Action<E extends keyof HandlerActions>(name: E) {
     if (
       children != null &&
       typeof children === "object" &&
-      "tag" in children &&
+      "props" in children &&
       !Array.isArray(children)
     ) {
-      const Tag = (children as any).tag as keyof JSX.IntrinsicElements;
+      const Tag = (children as any).tag as string;
       const childProps = (children as any).props || {};
       const childChildren = (children as any).children;
       return (

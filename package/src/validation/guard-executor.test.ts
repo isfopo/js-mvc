@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { executeGuard } from "./guard-executor";
-import { ValidationError } from "infrastructure/errors/index";
+import { ValidationError } from "../errors";
 import type { ValidateGuard } from "./GuardDescriptor";
 import type { IValidatable, ValidationResult } from "./IValidatable";
 

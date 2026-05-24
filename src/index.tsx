@@ -9,7 +9,7 @@ import AuthController from "views/routes/Auth/controller";
 
 import { initDatabase } from "data/init";
 import { seedDatabase } from "data/seed";
-import { unflattenFormBodyMiddleware } from "infrastructure/middlewares/unflatten-form-body";
+import { unflattenFormBodyMiddleware } from "js-mvc/middleware/unflatten-form-body";
 
 import schemaSql from "data/init.sql?raw";
 

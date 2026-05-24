@@ -1,18 +1,24 @@
 /**
- * RepositoryBase — abstract base for D1 repositories.
+ * RepositoryBase — abstract base for SQL repositories.
  *
  * Follows the same pattern as ControllerBase and BaseHandler.
  * Subclasses declare a table name and inherit generic CRUD.
  *
- * D1Database is injected via the constructor. Repos are created per-request
+ * Database is injected via the constructor. Repos are created per-request
  * using factory functions (e.g., `tenetsRepo(db)`) rather than shared singletons.
  *
  * Named parameters: SQL files can use @paramName syntax. The helpers
  * below translate @name → ? and map named args to positional order
- * at runtime, since D1 only supports positional binding.
+ * at runtime, since most SQL drivers only support positional binding.
  */
 
-export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
+import type { Database, DbResult } from "../types";
+
+export abstract class RepositoryBase<
+  T extends { id: number },
+  QM = {},
+  DB extends Database = Database
+> {
   /** Each repository declares its table name. */
   abstract readonly tableName: string;
 
@@ -20,13 +26,13 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
   protected readonly queries?: { [P in keyof QM]: string };
 
   /** The database connection for this repository instance. */
-  protected readonly db: D1Database;
+  protected readonly db: DB;
 
   /**
    * Subclasses inherit this constructor automatically — only override if you
    * need additional initialization logic beyond storing the db reference.
    */
-  constructor(db: D1Database) {
+  constructor(db: DB) {
     this.db = db;
   }
 
@@ -370,7 +376,7 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
   protected execute<K extends keyof QM>(
     name: K,
     ...args: QM[K] extends { params: infer P } ? ({} extends P ? [] : [P]) : []
-  ): Promise<D1Result> {
+  ): Promise<DbResult> {
     if (!this.queries) {
       throw new Error("queries property not defined on this repository");
     }

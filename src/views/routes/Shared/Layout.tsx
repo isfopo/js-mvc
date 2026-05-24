@@ -31,7 +31,7 @@ export const Layout: FC<LayoutProps> = ({
             <script type="module" src="/@vite/client"></script>
             <script
               type="module"
-              src="/src/infrastructure/client/main.ts"
+              src="/src/client-entry.ts"
             ></script>
           </>
         ) : (

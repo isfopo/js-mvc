@@ -3,15 +3,7 @@
  * Compiled to public/.generated/client/main.js and loaded by the server-rendered layout.
  */
 
-// Import each handler to trigger its side-effect registration with the dispatcher
-import "../../views/handlers/DismissHandler";
-import "../../views/handlers/ConfirmHandler";
-import "../../views/handlers/VoteHandler";
-import "../../views/handlers/StatusTransitionHandler";
-import "../../views/handlers/AddOptionHandler";
 import { start } from "./dispatcher";
-
-console.log("js-mvc client loaded");
 
 // --- DOM helpers ---
 

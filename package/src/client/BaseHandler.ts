@@ -4,7 +4,7 @@
  * Mirrors the server-side ControllerBase pattern. Subclasses declare
  * a static `handlerName` and implement `connect()`.
  *
- * Usage is via the Action component factory (src/utils/Action.tsx).
+ * Usage is via the Action component factory.
  * The handler name is bound once, and data params are passed as props:
  *
  *   const Confirm = Action("confirm");

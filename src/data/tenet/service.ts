@@ -1,4 +1,4 @@
-import { ServiceBase } from "infrastructure/ServiceBase";
+import { ServiceBase } from "js-mvc/service/ServiceBase";
 import { tenetsRepo } from "./repo";
 import { votesRepo } from "data/vote/repo";
 import type { TenetRow, TenetOptionRow, TenetStatus } from "./model";

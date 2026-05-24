@@ -1,4 +1,4 @@
-import { RepositoryBase } from "infrastructure/RepositoryBase";
+import { RepositoryBase } from "js-mvc/repository/RepositoryBase";
 import type { VoteRow, VoteChoice } from "./model";
 import { queries, type QueryMap } from "./queries/queries.generated";
 

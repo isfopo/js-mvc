@@ -1,0 +1,31 @@
+{
+  "name": "js-mvc",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./types": "./src/types.ts",
+    "./controller/ControllerBase": "./src/controller/ControllerBase.tsx",
+    "./repository/RepositoryBase": "./src/repository/RepositoryBase.ts",
+    "./service/ServiceBase": "./src/service/ServiceBase.ts",
+    "./errors": "./src/errors/index.tsx",
+    "./validation/decorators": "./src/validation/decorators.ts",
+    "./validation/IValidatable": "./src/validation/IValidatable.ts",
+    "./validation/guard-executor": "./src/validation/guard-executor.ts",
+    "./validation/GuardDescriptor": "./src/validation/GuardDescriptor.ts",
+    "./validation/unflatten-form-body": "./src/validation/unflatten-form-body.ts",
+    "./middleware/unflatten-form-body": "./src/middleware/unflatten-form-body.ts",
+    "./client/BaseHandler": "./src/client/BaseHandler.ts",
+    "./client/dispatcher": "./src/client/dispatcher.ts",
+    "./client/main": "./src/client/main.ts",
+    "./client/types": "./src/client/types.d.ts",
+    "./utils/Action": "./src/utils/Action.tsx",
+    "./utils/State": "./src/utils/State.tsx",
+    "./utils/State.types": "./src/utils/State.types.ts",
+    "./utils/State.scope": "./src/utils/State.scope.ts",
+    "./utils/State.css": "./src/utils/State.css.ts",
+    "./adapters/d1": "./src/adapters/d1.ts",
+    "./plugins": "./plugins/index.ts",
+    "./plugins/sql-types": "./plugins/sql-types/index.ts"
+  }
+}

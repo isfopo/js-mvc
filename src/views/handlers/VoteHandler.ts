@@ -4,8 +4,8 @@
  * For "block", prompts for a reason before submitting the form.
  */
 
-import { BaseHandler } from "infrastructure/client/BaseHandler";
-import { register } from "infrastructure/client/dispatcher";
+import { BaseHandler } from "js-mvc/client/BaseHandler";
+import { register } from "js-mvc/client/dispatcher";
 
 export class VoteHandler extends BaseHandler {
   static override readonly handlerName = "vote";

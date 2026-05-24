@@ -1,6 +1,6 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
 import styles from "./index.module.css";
-import { Action } from "infrastructure/utils/Action";
+import { Action } from "js-mvc/utils/Action";
 
 export type AlertVariant = "info" | "success" | "warning" | "error";
 

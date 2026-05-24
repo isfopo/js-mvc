@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import type { TenetDetailViewModel } from "views/routes/Tenets/view-model";
-import { Action } from "infrastructure/utils/Action";
+import { Action } from "js-mvc/utils/Action";
 import { StatusBadge } from "views/components/StatusBadge";
 import { VoteButtons } from "views/components/VoteButtons";
 import { VoteProgress } from "views/components/VoteProgress";

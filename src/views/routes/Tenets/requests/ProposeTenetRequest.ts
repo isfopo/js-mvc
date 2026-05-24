@@ -1,7 +1,7 @@
 import type {
   ValidationResult,
   IValidatable,
-} from "infrastructure/validation/IValidatable";
+} from "js-mvc/validation/IValidatable";
 
 export interface OptionInput {
   title: string;

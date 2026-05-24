@@ -1,15 +1,5 @@
-/**
- * Middleware that unflattens bracket-notation form body keys into nested objects.
- *
- * Stores the result on context as `c.set("parsedBody", ...)` so downstream
- * guards and handlers can reuse it without re-parsing.
- *
- * Register this middleware in src/index.tsx before controllers:
- *   app.use("*", unflattenFormBodyMiddleware());
- */
-
 import type { Context, MiddlewareHandler } from "hono";
-import { unflattenFormBody } from "infrastructure/validation/unflatten-form-body";
+import { unflattenFormBody } from "../validation/unflatten-form-body";
 
 const PARSED_BODY_KEY = "__parsedBody";
 

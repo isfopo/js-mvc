@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import type { StateDemoViewModel } from "views/routes/StateDemo/view-model";
-import { State } from "infrastructure/utils/State";
+import { State } from "js-mvc/utils/State";
 import styles from "./index.module.css";
 
 const Plan = State<"plan", "free" | "pro" | "enterprise">("plan");

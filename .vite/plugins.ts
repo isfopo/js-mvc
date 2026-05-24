@@ -4,12 +4,13 @@ import { resolve, dirname, join } from "path";
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
-import matter from "gray-matter";
-import { parseMigrations } from "./sql-types/parse-migrations";
-import { generateDbTypes } from "./sql-types/generate-db-types";
-import { generateQueryBarrel } from "./sql-types/generate-query-barrel";
-import { generateLocalDb } from "./sql-types/generate-local-db";
-import type { TableDef } from "./sql-types/parse-migrations";
+import {
+  parseMigrations,
+  generateDbTypes,
+  generateQueryBarrel,
+  generateLocalDb,
+} from "../package/plugins/sql-types/index.ts";
+import type { TableDef } from "../package/plugins/sql-types/index.ts";
 
 /**
  * Custom plugin to rebuild the global CSS bundle on file changes.
@@ -288,13 +289,14 @@ export interface SqlTypesPluginOptions {
 }
 
 /**
- * Vite plugin for SQL type generation.
+ * Vite plugin for SQL type generation (project-specific).
  *
  * - Parses migration SQL files and generates `src/data/db-types.d.ts`
  * - Generates `local.db` for external SQL browser tools
- * - Strips YAML front matter from `.sql` imports at build time
  * - Generates typed query barrels for each `queries/` directory
  * - Watches for changes in dev mode and regenerates automatically
+ *
+ * Note: YAML front matter stripping is handled by `sqlTransformPlugin` from js-mvc.
  */
 export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
   const { tableNameOverrides = {} } = options;
@@ -316,31 +318,6 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
         console.log("✓ SQL types generated");
       } catch (e) {
         console.error("✗ SQL type generation failed:", (e as Error).message);
-      }
-    },
-
-    transform(code, id) {
-      // Strip YAML front matter from .sql files after Vite's raw loader
-      // has converted them to `export default "..."` modules.
-      if (!id.endsWith(".sql")) return;
-
-      // Vite's ?raw loader (and the default asset handler) always produces
-      // a single-line `export default "<json-escaped-string>";` statement.
-      // The `s` flag allows `.` to match newlines in case the string itself
-      // contains escaped newline characters (\n).
-      const match = code.match(/^export default (.+);$/s);
-      if (!match) return;
-
-      try {
-        const content = JSON.parse(match[1]);
-        const { content: sql } = matter(content);
-        return {
-          code: `export default ${JSON.stringify(sql.trim())};`,
-          map: null,
-        };
-      } catch {
-        // Not a valid JSON string — leave as-is
-        return;
       }
     },
 

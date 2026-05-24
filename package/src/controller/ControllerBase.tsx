@@ -20,11 +20,10 @@
 
 import { Context, Env, Hono } from "hono";
 import { renderToString } from "hono/jsx/dom/server";
-import { Layout } from "views/routes/Shared/Layout";
-import { handleError } from "./errors/index";
-import type { GuardDescriptor } from "./validation/GuardDescriptor";
-import { executeGuard } from "./validation/guard-executor";
-import { GUARDS_KEY } from "./validation/decorators";
+import type { FC } from "hono/jsx";
+import type { GuardDescriptor } from "../validation/GuardDescriptor";
+import { executeGuard } from "../validation/guard-executor";
+import { GUARDS_KEY } from "../validation/decorators";
 
 /* ---------- Symbol.metadata polyfill ---------- */
 
@@ -69,14 +68,38 @@ export const Put = (path: string) => httpRoute("put", path);
 export const Delete = (path: string) => httpRoute("delete", path);
 export const Patch = (path: string) => httpRoute("patch", path);
 
+/* ---------- Render config ---------- */
+
+export type LayoutComponent = FC<{
+  user?: unknown;
+  currentPath: string;
+  children: any;
+}>;
+
+export type ErrorHandler<T extends Env> = (
+  c: Context<T>,
+  error: unknown,
+) => Response | Promise<Response>;
+
+export interface ControllerRenderConfig<T extends Env> {
+  layout: LayoutComponent;
+  handleError: ErrorHandler<T>;
+}
+
 /* ---------- Controller base class ---------- */
 
 export abstract class ControllerBase<T extends Env> {
   _app: Hono<T>;
   abstract base: string;
+  renderConfig?: ControllerRenderConfig<T>;
 
   constructor() {
     this._app = new Hono();
+  }
+
+  /** Set render config for this controller instance */
+  configureRendering(config: ControllerRenderConfig<T>): void {
+    this.renderConfig = config;
   }
 
   /** Register every collected route on the parent Hono application. */
@@ -96,6 +119,10 @@ export abstract class ControllerBase<T extends Env> {
       c.setRenderer((content: any) => {
         const user = (c as any).get("user");
         const doctype = "<!DOCTYPE html>";
+        const Layout = this.renderConfig?.layout;
+        if (!Layout) {
+          return c.html(doctype + renderToString(content));
+        }
         const body = renderToString(
           <Layout user={user} currentPath={c.req.path}>
             {content}
@@ -120,7 +147,11 @@ export abstract class ControllerBase<T extends Env> {
           }
           return (this as any)[route.handlerName](c);
         } catch (error: unknown) {
-          return handleError(c, error);
+          const errorHandler = this.renderConfig?.handleError;
+          if (errorHandler) {
+            return errorHandler(c, error);
+          }
+          throw error;
         }
       });
     }

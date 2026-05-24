@@ -1,8 +1,8 @@
 import type { Context } from "hono";
-import { NotFoundError, ValidationError } from "infrastructure/errors/index";
+import { NotFoundError, ValidationError } from "../errors";
 import type { GuardDescriptor } from "./GuardDescriptor";
 import type { IValidatable } from "./IValidatable";
-import { getParsedBody } from "infrastructure/middlewares/unflatten-form-body";
+import { getParsedBody } from "../middleware/unflatten-form-body";
 
 /**
  * Execute a single guard against the current request context.

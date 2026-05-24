@@ -1,6 +1,6 @@
 import type { FC } from "hono/jsx";
 import { Alert } from "views/components/Alert";
-import { Action } from "infrastructure/utils/Action";
+import { Action } from "js-mvc/utils/Action";
 
 const Confirm = Action("confirm");
 

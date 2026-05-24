@@ -1,6 +1,8 @@
 import { Context, Env } from "hono";
-import { Get, Post, ControllerBase } from "infrastructure/ControllerBase";
-import { Exists, Validate } from "infrastructure/validation/decorators";
+import { Get, Post, ControllerBase } from "js-mvc/controller/ControllerBase";
+import { Exists, Validate } from "js-mvc/validation/decorators";
+import { Layout } from "views/routes/Shared/Layout";
+import { handleError } from "error-handler";
 import { requireAuth } from "middlewares/auth";
 import { tenetService } from "data/tenet/service";
 import { tenetsRepo } from "data/tenet/repo";
@@ -18,6 +20,7 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
 
   constructor() {
     super();
+    this.configureRendering({ layout: Layout, handleError });
     this._app.use("*", requireAuth());
   }
 
