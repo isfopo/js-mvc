@@ -7,38 +7,34 @@ export interface VoteWithUserRow extends VoteRow {
   user_avatar: string | null;
 }
 
-export class VotesRepository extends RepositoryBase<VoteRow> {
+export class VotesRepository extends RepositoryBase<VoteRow, QueryMap> {
   override readonly tableName = "votes";
+  protected override readonly queries = queries;
 
-  async listForTenet(db: D1Database, tenetId: number): Promise<VoteWithUserRow[]> {
-    return this.queryAll<QueryMap, "listForTenet">(db, queries, "listForTenet", { tenetId });
+  constructor(db: D1Database) {
+    super(db);
   }
 
-  async getUserVote(
-    db: D1Database,
-    tenetId: number,
-    userId: number,
-  ): Promise<VoteRow | null> {
-    return this.queryOne<QueryMap, "getUserVote">(db, queries, "getUserVote", { tenetId, userId });
+  async listForTenet(tenetId: number): Promise<VoteWithUserRow[]> {
+    return this.queryAll("listForTenet", { tenetId });
   }
 
   async upsert(
-    db: D1Database,
     tenetId: number,
     userId: number,
     choice: VoteChoice,
     reason: string | null,
   ): Promise<void> {
-    const existing = await this.getUserVote(db, tenetId, userId);
+    const existing = await this.findOneBy({ tenet_id: tenetId, user_id: userId });
 
     if (existing) {
-      await this.execute<QueryMap, "updateVote">(db, queries, "updateVote", {
+      await this.execute("updateVote", {
         id: existing.id,
         choice,
         reason,
       });
     } else {
-      await this.execute<QueryMap, "insertVote">(db, queries, "insertVote", {
+      await this.execute("insertVote", {
         tenetId,
         userId,
         choice,
@@ -48,4 +44,5 @@ export class VotesRepository extends RepositoryBase<VoteRow> {
   }
 }
 
-export const votesRepo = new VotesRepository();
+/** Factory function to create a VotesRepository with a database connection. */
+export const votesRepo = (db: D1Database) => new VotesRepository(db);

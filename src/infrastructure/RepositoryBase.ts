@@ -10,9 +10,19 @@
  * at runtime, since D1 only supports positional binding.
  */
 
-export abstract class RepositoryBase<T extends { id: number }> {
+export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
   /** Each repository declares its table name. */
   abstract readonly tableName: string;
+
+  /** Optional query map for type-safe SQL queries. Override in subclasses that use .sql files. */
+  protected readonly queries?: { [P in keyof QM]: string };
+
+  /** The database connection for this repository instance. */
+  protected readonly db: D1Database;
+
+  constructor(db: D1Database) {
+    this.db = db;
+  }
 
   // ── Static utilities ──────────────────────────────
 
@@ -83,8 +93,8 @@ export abstract class RepositoryBase<T extends { id: number }> {
   // ── Generic CRUD ──────────────────────────────────
 
   /** Find a single row by primary key. */
-  async findById(db: D1Database, id: number): Promise<T | null> {
-    const row = await db
+  async findById(id: number): Promise<T | null> {
+    const row = await this.db
       .prepare(`SELECT * FROM ${this.tableName} WHERE id = ?`)
       .bind(id)
       .first<T>();
@@ -97,10 +107,7 @@ export abstract class RepositoryBase<T extends { id: number }> {
    * @security `orderBy` is validated against a whitelist of safe patterns
    * (column names, commas, ASC/DESC). Never pass user input directly.
    */
-  async findAll(
-    db: D1Database,
-    options?: { orderBy?: string; limit?: number },
-  ): Promise<T[]> {
+  async findAll(options?: { orderBy?: string; limit?: number }): Promise<T[]> {
     let sql = `SELECT * FROM ${this.tableName}`;
     const params: unknown[] = [];
     if (options?.orderBy) {
@@ -111,7 +118,7 @@ export abstract class RepositoryBase<T extends { id: number }> {
       sql += ` LIMIT ?`;
       params.push(options.limit);
     }
-    const { results } = await db
+    const { results } = await this.db
       .prepare(sql)
       .bind(...params)
       .all<T>();
@@ -119,8 +126,8 @@ export abstract class RepositoryBase<T extends { id: number }> {
   }
 
   /** Delete a row by primary key. Returns true if a row was deleted. */
-  async delete(db: D1Database, id: number): Promise<boolean> {
-    const { meta } = await db
+  async delete(id: number): Promise<boolean> {
+    const { meta } = await this.db
       .prepare(`DELETE FROM ${this.tableName} WHERE id = ?`)
       .bind(id)
       .run();
@@ -128,8 +135,8 @@ export abstract class RepositoryBase<T extends { id: number }> {
   }
 
   /** Count all rows in the table. */
-  async count(db: D1Database): Promise<number> {
-    const row = await db
+  async count(): Promise<number> {
+    const row = await this.db
       .prepare(`SELECT COUNT(*) AS count FROM ${this.tableName}`)
       .first<{ count: number }>();
     return row?.count ?? 0;
@@ -139,61 +146,158 @@ export abstract class RepositoryBase<T extends { id: number }> {
    * Generic create — builds INSERT from an object's keys.
    * Relies on the DB for defaults (auto-increment id, datetime, etc.).
    */
-  async create(db: D1Database, data: Partial<T>): Promise<T> {
+  async create(data: Partial<T>): Promise<T> {
     const keys = Object.keys(data as Record<string, unknown>);
     const values = keys.map((k) => (data as Record<string, unknown>)[k]);
     const cols = keys.join(", ");
     const placeholders = keys.map(() => "?").join(", ");
 
-    const { meta } = await db
+    const { meta } = await this.db
       .prepare(
         `INSERT INTO ${this.tableName} (${cols}) VALUES (${placeholders})`,
       )
       .bind(...values)
       .run();
 
-    return (await this.findById(db, Number(meta.last_row_id)))!;
+    return (await this.findById(Number(meta.last_row_id)))!;
   }
 
   /**
    * Generic update — builds SET from an object's keys.
    * Returns the updated row, or null if the row didn't exist.
    */
-  async update(
-    db: D1Database,
-    id: number,
-    data: Partial<T>,
-  ): Promise<T | null> {
+  async update(id: number, data: Partial<T>): Promise<T | null> {
     const keys = Object.keys(data as Record<string, unknown>);
     const values = keys.map((k) => (data as Record<string, unknown>)[k]);
     const setClause = keys.map((k) => `${k} = ?`).join(", ");
 
-    await db
+    await this.db
       .prepare(`UPDATE ${this.tableName} SET ${setClause} WHERE id = ?`)
       .bind(...values, id)
       .run();
 
-    return this.findById(db, id);
+    return this.findById(id);
+  }
+
+  // ── Dynamic finders ────────────────────────────────
+
+  /**
+   * Find one row matching the given criteria.
+   * Criteria keys are constrained to columns of T.
+   *
+   * @throws Error if criteria is empty (prevents accidental full-table scans).
+   *
+   * @example
+   *   await repo.findOneBy({ slug: "my-tenet" });
+   *   await repo.findOneBy({ tenet_id: 1, user_id: 2 });
+   */
+  async findOneBy(criteria: Partial<T>): Promise<T | null> {
+    const { where, values } = this._buildWhere(criteria);
+    return this.db
+      .prepare(`SELECT * FROM ${this.tableName} WHERE ${where} LIMIT 1`)
+      .bind(...values)
+      .first<T>();
+  }
+
+  /**
+   * Find all rows matching the given criteria.
+   * Criteria keys are constrained to columns of T.
+   *
+   * @throws Error if criteria is empty (prevents accidental full-table scans).
+   *
+   * @example
+   *   await repo.findAllBy({ status: "voting" });
+   *   await repo.findAllBy({ proposed_by_id: userId });
+   */
+  async findAllBy(criteria: Partial<T>): Promise<T[]> {
+    const { where, values } = this._buildWhere(criteria);
+    const { results } = await this.db
+      .prepare(`SELECT * FROM ${this.tableName} WHERE ${where}`)
+      .bind(...values)
+      .all<T>();
+    return results;
+  }
+
+  /**
+   * Check if any row matches the given criteria.
+   *
+   * @throws Error if criteria is empty.
+   *
+   * @example
+   *   const exists = await repo.existsBy({ slug: "my-tenet" });
+   */
+  async existsBy(criteria: Partial<T>): Promise<boolean> {
+    const { where, values } = this._buildWhere(criteria);
+    const row = await this.db
+      .prepare(`SELECT 1 AS found FROM ${this.tableName} WHERE ${where} LIMIT 1`)
+      .bind(...values)
+      .first<{ found: number }>();
+    return row?.found === 1;
+  }
+
+  /**
+   * Delete all rows matching the given criteria.
+   * Returns the number of rows deleted.
+   *
+   * @throws Error if criteria is empty (prevents accidental full-table deletes).
+   *
+   * @example
+   *   await repo.deleteBy({ status: "draft" });
+   */
+  async deleteBy(criteria: Partial<T>): Promise<number> {
+    const { where, values } = this._buildWhere(criteria);
+    const { meta } = await this.db
+      .prepare(`DELETE FROM ${this.tableName} WHERE ${where}`)
+      .bind(...values)
+      .run();
+    return meta.changes ?? 0;
+  }
+
+  /**
+   * Build a WHERE clause and positional values from a criteria object.
+   * Validates that keys are safe SQL identifiers and criteria is non-empty.
+   */
+  private _buildWhere(criteria: Partial<T>): { where: string; values: unknown[] } {
+    const entries = Object.entries(criteria as Record<string, unknown>);
+    if (entries.length === 0) {
+      throw new Error(
+        "Empty criteria is not allowed. Use findAll() for unfiltered queries.",
+      );
+    }
+
+    // Validate keys are safe SQL identifiers (alphanumeric + underscore)
+    const safeKey = /^\w+$/;
+    for (const [key] of entries) {
+      if (!safeKey.test(key)) {
+        throw new Error(`Unsafe column name in criteria: "${key}"`);
+      }
+    }
+
+    const where = entries.map(([key]) => `${key} = ?`).join(" AND ");
+    const values = entries.map(([, value]) => value);
+
+    return { where, values };
   }
 
   // ── Typed query helpers (for use with generated QueryMap) ──
 
   /**
    * Type-safe SELECT returning at most one row.
-   * Result and param types are inferred from the QueryMap generic.
+   * Result and param types are inferred from the class-level QueryMap generic.
    *
-   * Usage: `this.queryOne<QueryMap, "findBySlug">(db, queries, "findBySlug", { slug })`
+   * Usage: `this.queryOne("findBySlug", { slug })`
    */
-  protected queryOne<QM, K extends keyof QM>(
-    db: D1Database,
-    queries: { [P in keyof QM]: string },
+  protected queryOne<K extends keyof QM>(
     name: K,
     ...args: QM[K] extends { params: infer P } ? ({} extends P ? [] : [P]) : []
   ): Promise<(QM[K] extends { result: infer R } ? R : unknown) | null> {
-    const sql = queries[name];
+    if (!this.queries) {
+      throw new Error("queries property not defined on this repository");
+    }
+    const sql = this.queries[name];
     const params = (args as unknown[])[0] as Record<string, unknown> | undefined;
     const [resolved, values] = this._resolveParams(sql, params ? [params] : []);
-    return db
+    return this.db
       .prepare(resolved)
       .bind(...values)
       .first<QM[K] extends { result: infer R } ? R : unknown>();
@@ -201,20 +305,21 @@ export abstract class RepositoryBase<T extends { id: number }> {
 
   /**
    * Type-safe SELECT returning multiple rows.
-   * Result and param types are inferred from the QueryMap generic.
+   * Result and param types are inferred from the class-level QueryMap generic.
    *
-   * Usage: `this.queryAll<QueryMap, "listWithProposer">(db, queries, "listWithProposer")`
+   * Usage: `this.queryAll("listWithProposer")`
    */
-  protected queryAll<QM, K extends keyof QM>(
-    db: D1Database,
-    queries: { [P in keyof QM]: string },
+  protected queryAll<K extends keyof QM>(
     name: K,
     ...args: QM[K] extends { params: infer P } ? ({} extends P ? [] : [P]) : []
   ): Promise<(QM[K] extends { result: infer R } ? R : unknown)[]> {
-    const sql = queries[name];
+    if (!this.queries) {
+      throw new Error("queries property not defined on this repository");
+    }
+    const sql = this.queries[name];
     const params = (args as unknown[])[0] as Record<string, unknown> | undefined;
     const [resolved, values] = this._resolveParams(sql, params ? [params] : []);
-    return db
+    return this.db
       .prepare(resolved)
       .bind(...values)
       .all<QM[K] extends { result: infer R } ? R : unknown>()
@@ -223,20 +328,21 @@ export abstract class RepositoryBase<T extends { id: number }> {
 
   /**
    * Type-safe INSERT/UPDATE/DELETE.
-   * Param types are inferred from the QueryMap generic.
+   * Param types are inferred from the class-level QueryMap generic.
    *
-   * Usage: `this.execute<QueryMap, "updateStatus">(db, queries, "updateStatus", { id, status })`
+   * Usage: `this.execute("updateStatus", { id, status })`
    */
-  protected execute<QM, K extends keyof QM>(
-    db: D1Database,
-    queries: { [P in keyof QM]: string },
+  protected execute<K extends keyof QM>(
     name: K,
     ...args: QM[K] extends { params: infer P } ? ({} extends P ? [] : [P]) : []
   ): Promise<D1Result> {
-    const sql = queries[name];
+    if (!this.queries) {
+      throw new Error("queries property not defined on this repository");
+    }
+    const sql = this.queries[name];
     const params = (args as unknown[])[0] as Record<string, unknown> | undefined;
     const [resolved, values] = this._resolveParams(sql, params ? [params] : []);
-    return db
+    return this.db
       .prepare(resolved)
       .bind(...values)
       .run();

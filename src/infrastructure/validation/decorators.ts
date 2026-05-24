@@ -35,7 +35,7 @@ function appendGuard(
  * @param load Async function receiving the Context, returning the entity or null
  *
  * @example
- *   @Exists("tenet", (c) => tenetsRepo.findBySlug(c.env.DB, c.req.param("slug")))
+ *   @Exists("tenet", (c) => tenetsRepo(c.env.DB).findOneBy({ slug: c.req.param("slug")! }))
  *   // → c.get("tenet") is available in the handler
  */
 export function Exists(key: string, load: (c: Context) => Promise<unknown>) {

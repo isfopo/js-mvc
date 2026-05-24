@@ -3,40 +3,27 @@ import { queries, type QueryMap } from "./queries/queries.generated";
 import type { Tenet } from "data/db-types";
 import type { TenetStatus } from "./model";
 
-export class TenetsRepository extends RepositoryBase<Tenet> {
+export class TenetsRepository extends RepositoryBase<Tenet, QueryMap> {
   override readonly tableName = "tenets";
+  protected override readonly queries = queries;
 
-  async findBySlug(db: D1Database, slug: string) {
-    return this.queryOne<QueryMap, "findBySlug">(db, queries, "findBySlug", {
-      slug,
-    });
+  constructor(db: D1Database) {
+    super(db);
   }
 
-  async getOptions(db: D1Database, tenetId: number) {
-    return this.queryAll<QueryMap, "getOptions">(db, queries, "getOptions", {
-      tenetId,
-    });
+  async getOptions(tenetId: number) {
+    return this.queryAll("getOptions", { tenetId });
   }
 
-  async listWithProposer(db: D1Database) {
-    return this.queryAll<QueryMap, "listWithProposer">(
-      db,
-      queries,
-      "listWithProposer",
-    );
+  async listWithProposer() {
+    return this.queryAll("listWithProposer");
   }
 
-  async getWithProposer(db: D1Database, slug: string) {
-    return this.queryOne<QueryMap, "getWithProposer">(
-      db,
-      queries,
-      "getWithProposer",
-      { slug },
-    );
+  async getWithProposer(slug: string) {
+    return this.queryOne("getWithProposer", { slug });
   }
 
   async createWithOptions(
-    db: D1Database,
     tenet: {
       title: string;
       slug: string;
@@ -50,40 +37,27 @@ export class TenetsRepository extends RepositoryBase<Tenet> {
       cons?: string;
     }[],
   ) {
-    const row = await this.create(db, tenet as Partial<Tenet>);
+    const row = await this.create(tenet as Partial<Tenet>);
 
     for (let i = 0; i < options.length; i++) {
       const opt = options[i];
-      await this.execute<QueryMap, "insertOption">(
-        db,
-        queries,
-        "insertOption",
-        {
-          tenetId: row.id,
-          title: opt.title,
-          description: opt.description ?? null,
-          pros: opt.pros ?? null,
-          cons: opt.cons ?? null,
-          sortOrder: i,
-        },
-      );
+      await this.execute("insertOption", {
+        tenetId: row.id,
+        title: opt.title,
+        description: opt.description ?? null,
+        pros: opt.pros ?? null,
+        cons: opt.cons ?? null,
+        sortOrder: i,
+      });
     }
 
     return row;
   }
 
-  async updateStatus(
-    db: D1Database,
-    id: number,
-    status: TenetStatus,
-  ): Promise<void> {
-    await this.execute<QueryMap, "updateStatus">(
-      db,
-      queries,
-      "updateStatus",
-      { id, status },
-    );
+  async updateStatus(id: number, status: TenetStatus): Promise<void> {
+    await this.execute("updateStatus", { id, status });
   }
 }
 
-export const tenetsRepo = new TenetsRepository();
+/** Factory function to create a TenetsRepository with a database connection. */
+export const tenetsRepo = (db: D1Database) => new TenetsRepository(db);

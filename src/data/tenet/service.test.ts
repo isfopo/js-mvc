@@ -14,7 +14,7 @@ beforeAll(async () => {
   await initDatabase(env.DB, schemaSql);
 
   // Seed a test user
-  await usersRepo.upsertFromGithub(env.DB, {
+  await usersRepo(env.DB).upsertFromGithub({
     id: 1,
     login: "testuser",
     avatar_url: null,
@@ -79,7 +79,7 @@ describe("TenetsService", () => {
 
   it("rejects transition by non-proposer", async () => {
     // Create a second user
-    await usersRepo.upsertFromGithub(env.DB, {
+    await usersRepo(env.DB).upsertFromGithub({
       id: 2,
       login: "other",
       avatar_url: null,
