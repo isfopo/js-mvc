@@ -26,6 +26,12 @@ wrangler.jsonc
 # auto-generated from local wrangler.jsonc
 worker-configuration.d.ts
 
+# auto-generated SQL types (regenerated on every build)
+src/data/db-types.d.ts
+src/**/queries.generated.ts
+local.db
+local.sqbpro
+
 # build output (CSS + client JS)
 public/.generated/
 

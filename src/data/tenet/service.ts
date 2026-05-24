@@ -63,7 +63,8 @@ export interface TenetListResult {
 
 class TenetsService extends ServiceBase {
   async list(db: D1Database): Promise<TenetListResult> {
-    const rows = await tenetsRepo.listWithProposer(db);
+    const repo = tenetsRepo(db);
+    const rows = await repo.listWithProposer();
     return {
       tenets: rows.map((r) => ({
         id: r.id,
@@ -82,13 +83,16 @@ class TenetsService extends ServiceBase {
   }
 
   async getBySlug(db: D1Database, slug: string): Promise<TenetDetail> {
-    const row = await tenetsRepo.getWithProposer(db, slug);
+    const tenets = tenetsRepo(db);
+    const votes = votesRepo(db);
+
+    const row = await tenets.getWithProposer(slug);
     if (!row) this.notFound("Tenet not found");
 
-    const options = await tenetsRepo.getOptions(db, row.id);
-    const votes = await votesRepo.listForTenet(db, row.id);
+    const options = await tenets.getOptions(row.id);
+    const voteRows = await votes.listForTenet(row.id);
 
-    return this.toDetail(row, options, votes);
+    return this.toDetail(row, options, voteRows);
   }
 
   async propose(
@@ -101,8 +105,7 @@ class TenetsService extends ServiceBase {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
-    const tenet = await tenetsRepo.createWithOptions(
-      db,
+    const tenet = await tenetsRepo(db).createWithOptions(
       {
         title: input.title,
         slug,
@@ -121,12 +124,11 @@ class TenetsService extends ServiceBase {
     slug: string,
     input: VoteRequest,
   ): Promise<TenetDetail> {
-    const tenet = await tenetsRepo.findBySlug(db, slug);
+    const tenet = await tenetsRepo(db).findOneBy({ slug });
     if (!tenet) this.notFound("Tenet not found");
     this.require(tenet.status === "voting", "Tenet is not in voting phase");
 
-    await votesRepo.upsert(
-      db,
+    await votesRepo(db).upsert(
       tenet.id,
       userId,
       input.choice as "approve" | "abstain" | "block",
@@ -142,14 +144,14 @@ class TenetsService extends ServiceBase {
     slug: string,
     newStatus: TenetStatus,
   ): Promise<TenetDetail> {
-    const tenet = await tenetsRepo.findBySlug(db, slug);
+    const tenet = await tenetsRepo(db).findOneBy({ slug });
     if (!tenet) this.notFound("Tenet not found");
     this.require(
       this.canTransition(tenet, userId, newStatus),
       "This transition is not allowed",
     );
 
-    await tenetsRepo.updateStatus(db, tenet.id, newStatus);
+    await tenetsRepo(db).updateStatus(tenet.id, newStatus);
     return this.getBySlug(db, slug);
   }
 

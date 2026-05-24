@@ -1,12 +1,7 @@
-export type VoteChoice = "approve" | "abstain" | "block";
+import type { Vote } from "data/db-types";
+
+/** Choice union type derived from the generated schema. */
+export type VoteChoice = Vote["choice"];
 
 /** Row type for the `votes` D1 table. */
-export interface VoteRow {
-  id: number;
-  tenet_id: number;
-  user_id: number;
-  choice: VoteChoice;
-  reason: string | null;
-  created_at: string;
-  updated_at: string;
-}
+export type VoteRow = Vote;

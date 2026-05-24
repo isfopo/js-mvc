@@ -5,16 +5,16 @@ import { ProposeTenetRequest } from "views/routes/Tenets/requests/ProposeTenetRe
 import { VoteRequest } from "views/routes/Tenets/requests/VoteRequest";
 
 import { env } from "cloudflare:workers";
-import { initDatabase } from "infrastructure/QueryLoader";
+import { initDatabase } from "../init";
 
-import schemaSql from "db/init.sql?raw";
+import schemaSql from "data/init.sql?raw";
 
 beforeAll(async () => {
   // Run migrations so tables exist
   await initDatabase(env.DB, schemaSql);
 
   // Seed a test user
-  await usersRepo.upsertFromGithub(env.DB, {
+  await usersRepo(env.DB).upsertFromGithub({
     id: 1,
     login: "testuser",
     avatar_url: null,
@@ -79,7 +79,7 @@ describe("TenetsService", () => {
 
   it("rejects transition by non-proposer", async () => {
     // Create a second user
-    await usersRepo.upsertFromGithub(env.DB, {
+    await usersRepo(env.DB).upsertFromGithub({
       id: 2,
       login: "other",
       avatar_url: null,

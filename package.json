@@ -10,7 +10,9 @@
     "test:run": "vitest run",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "build:css": "tsx scripts/build-css.ts",
-    "build:client": "tsx scripts/build-client.ts"
+    "build:client": "tsx scripts/build-client.ts",
+    "seed": "wrangler d1 execute tenet-db --file=migrations/002_seed_data.sql --local",
+    "seed:remote": "wrangler d1 execute tenet-db --file=migrations/002_seed_data.sql --remote"
   },
   "dependencies": {
     "hono": "^4.12.16"
@@ -21,6 +23,8 @@
     "@types/clean-css": "^4.2.11",
     "@types/node": "^25.6.0",
     "clean-css": "^5.3.3",
+    "gray-matter": "^4.0.3",
+    "node-sql-parser": "^5.4.0",
     "purgecss": "^8.0.0",
     "tsx": "^4.21.0",
     "typescript-plugin-css-modules": "^5.2.0",

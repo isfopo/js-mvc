@@ -48,10 +48,9 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
 
   @Get("/:slug")
   @Exists("tenet", (c) =>
-    tenetsRepo.findBySlug(
-      (c.env as CloudflareBindings).DB,
-      c.req.param("slug")!,
-    ),
+    tenetsRepo((c.env as CloudflareBindings).DB).findOneBy({
+      slug: c.req.param("slug")!,
+    }),
   )
   async show(c: Context) {
     const user = c.get("user") as unknown as UserRow;
@@ -65,10 +64,9 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
 
   @Post("/:slug/vote")
   @Exists("tenet", (c) =>
-    tenetsRepo.findBySlug(
-      (c.env as CloudflareBindings).DB,
-      c.req.param("slug")!,
-    ),
+    tenetsRepo((c.env as CloudflareBindings).DB).findOneBy({
+      slug: c.req.param("slug")!,
+    }),
   )
   @Validate(VoteRequest)
   async vote(c: Context) {
@@ -86,10 +84,9 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
 
   @Post("/:slug/status")
   @Exists("tenet", (c) =>
-    tenetsRepo.findBySlug(
-      (c.env as CloudflareBindings).DB,
-      c.req.param("slug")!,
-    ),
+    tenetsRepo((c.env as CloudflareBindings).DB).findOneBy({
+      slug: c.req.param("slug")!,
+    }),
   )
   async transition(c: Context) {
     const user = c.get("user") as unknown as UserRow;
