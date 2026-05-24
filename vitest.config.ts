@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
 import { defineConfig } from "vitest/config";
-import { sqlTypesPlugin } from "./.vite/plugins";
+import { createSqlTypesPlugin } from "./.vite/plugins";
 import { sqlTransformPlugin } from "./package/plugins/index.ts";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -28,7 +28,7 @@ export default defineConfig({
   },
   plugins: [
     sqlTransformPlugin(),
-    sqlTypesPlugin(),
+    createSqlTypesPlugin(),
     cloudflareTest({
       wrangler: { configPath: "./wrangler.jsonc" },
       miniflare: {

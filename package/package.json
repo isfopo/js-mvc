@@ -26,6 +26,8 @@
     "./utils/State.css": "./src/utils/State.css.ts",
     "./adapters/d1": "./src/adapters/d1.ts",
     "./plugins": "./plugins/index.ts",
-    "./plugins/sql-types": "./plugins/sql-types/index.ts"
+    "./plugins/sql-types": "./plugins/sql-types/index.ts",
+    "./plugins/css-builder-plugin": "./plugins/css-builder-plugin.ts",
+    "./plugins/sql-types-plugin": "./plugins/sql-types-plugin.ts"
   }
 }
