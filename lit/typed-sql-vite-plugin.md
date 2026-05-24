@@ -391,6 +391,12 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
     this.db = db;
   }
 
+  // ── Static utilities ──
+  static resolveNamedParams(sql: string, params: Record<string, unknown>): [string, unknown[]] { /* ... */ }
+  static isPlainObject(v: unknown): v is Record<string, unknown> { /* ... */ }
+  static validateOrderBy(orderBy: string): void { /* ... */ }
+  static validateColumnName(key: string): void { /* ... */ }
+
   // ── Generic CRUD (inherited by all repos) ──
   async findById(id: number): Promise<T | null> { /* ... */ }
   async findAll(options?: { orderBy?: string; limit?: number }): Promise<T[]> { /* ... */ }
@@ -400,6 +406,7 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
   async count(): Promise<number> { /* ... */ }
 
   // ── Dynamic finders (for simple lookups without .sql files) ──
+  // Handles null values correctly using IS NULL (since `col = NULL` is always false in SQL)
   async findOneBy(criteria: Partial<T>): Promise<T | null> { /* ... */ }
   async findAllBy(criteria: Partial<T>): Promise<T[]> { /* ... */ }
   async existsBy(criteria: Partial<T>): Promise<boolean> { /* ... */ }
@@ -422,6 +429,17 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
   ): Promise<D1Result> { /* ... */ }
 }
 ```
+
+### Security Features
+
+`RepositoryBase` includes built-in validation to prevent SQL injection:
+
+| Method | Validates | Example |
+|---|---|---|
+| `validateColumnName()` | Column names in `create`, `update`, dynamic finders | Rejects `"123abc"`, allows `"slug"` |
+| `validateOrderBy()` | ORDER BY clauses in `findAll()` | Rejects SQL keywords, allows `col ASC, col2 DESC` |
+| `_buildWhere()` | Null handling in dynamic finders | Uses `IS NULL` instead of `= NULL` |
+| Empty criteria check | Dynamic finders | Throws on `{}` to prevent full-table operations |
 
 ### Refactored `TenetsRepository`
 
@@ -500,6 +518,8 @@ export const tenetsRepo = (db: D1Database) => new TenetsRepository(db);
 | Model types: hand-written, can drift from schema | Model types: generated from migrations, always in sync |
 | Singleton repos shared across requests | Factory functions create per-request instances |
 | Simple lookups required `.sql` files | Dynamic finders (`findOneBy`, `findAllBy`) for simple lookups |
+| No SQL injection protection for dynamic queries | `validateColumnName()` and `validateOrderBy()` prevent injection |
+| `col = NULL` silently returned no results | `IS NULL` used correctly for null criteria |
 
 ---
 
@@ -529,7 +549,7 @@ export const tenetsRepo = (db: D1Database) => new TenetsRepository(db);
 
 ### Phase 4: Typed Repository Helpers (Low effort)
 
-1. Add `typedOne`, `typedAll`, `typedExec` to `RepositoryBase`
+1. Add `queryOne`, `queryAll`, `execute` to `RepositoryBase`
 2. Migrate one repository (e.g., `TenetsRepository`) to validate the DX
 3. Migrate remaining repositories
 4. Remove `loadQueries` and `QueryLoader.ts` (no longer needed)

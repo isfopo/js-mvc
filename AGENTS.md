@@ -42,7 +42,7 @@ The CSS build is **automatic** with full HMR support:
 - **Views** (`src/pages/*/views/`): Top-level page components using `FC` from `hono/jsx` with typed ViewModel.
 - **Components** (`src/components/`): Reusable UI pieces. Use `Action()` for client-side handler wiring.
 - **Services** (`src/services/`): Business logic layer shared between HTML and API controllers. Extend `ServiceBase`.
-- **Repositories** (`src/data/*/repo.ts`): Data access layer. Extend `RepositoryBase<T, QueryMap>`. D1Database is injected via constructor; repos are created per-request using factory functions (e.g., `tenetsRepo(db)`). Inherit generic CRUD (`findById`, `findAll`, `create`, `update`, `delete`, `count`) and dynamic finders (`findOneBy`, `findAllBy`, `existsBy`, `deleteBy`). Complex queries use `.sql` files with YAML front matter and typed `queryOne`/`queryAll`/`execute` methods.
+- **Repositories** (`src/data/*/repo.ts`): Data access layer. Extend `RepositoryBase<T, QueryMap>`. D1Database is injected via constructor; repos are created per-request using factory functions (e.g., `tenetsRepo(db)`). Inherit generic CRUD (`findById`, `findAll`, `create`, `update`, `delete`, `count`) and dynamic finders (`findOneBy`, `findAllBy`, `existsBy`, `deleteBy`). Complex queries use `.sql` files with YAML front matter and typed `queryOne`/`queryAll`/`execute` methods. See **Repository Security** below for validation details.
 - **Models** (`src/data/models/`): Row types matching D1 table columns.
 - **Requests** (`src/data/requests/`): IValidatable form objects with `validate()` method.
 - **Infrastructure** (`src/infrastructure/`): Framework base classes (ControllerBase, RepositoryBase, ServiceBase), validation decorators, auth middleware.
@@ -91,6 +91,62 @@ class TenetsController extends ControllerBase {
     // ...
   }
 }
+```
+
+## Repository Security
+
+`RepositoryBase` includes built-in validation to prevent SQL injection:
+
+### Column Name Validation
+
+All methods that build SQL from object keys (`create`, `update`, `findOneBy`, `findAllBy`, `existsBy`, `deleteBy`) validate column names using `validateColumnName()`:
+
+```ts
+// Safe — valid column names
+await repo.findOneBy({ slug: "my-tenet" });
+await repo.create({ title: "New Tenet", status: "draft" });
+
+// Unsafe — throws Error: Unsafe column name: "123abc"
+await repo.findOneBy({ "123abc": "value" } as any);
+```
+
+Column names must match `/^[a-zA-Z_]\w*$/` (start with letter/underscore, then alphanumeric/underscore).
+
+### ORDER BY Validation
+
+`findAll({ orderBy })` validates the ORDER BY clause using `validateOrderBy()`:
+
+```ts
+// Safe — valid ORDER BY
+await repo.findAll({ orderBy: "created_at DESC" });
+await repo.findAll({ orderBy: "status, title ASC" });
+
+// Unsafe — throws Error: Unsafe ORDER BY clause
+await repo.findAll({ orderBy: "id; DROP TABLE users" });
+```
+
+Only allows column names, commas, spaces, and ASC/DESC keywords. SQL keywords like UNION, SELECT, DROP are rejected.
+
+### Null Handling in Dynamic Finders
+
+Dynamic finders handle null values correctly using `IS NULL` (since `col = NULL` is always false in SQL):
+
+```ts
+// Finds users where avatar_url IS NULL
+await usersRepo(db).findOneBy({ avatar_url: null });
+
+// Generates: WHERE avatar_url IS NULL AND login = ?
+await usersRepo(db).findOneBy({ avatar_url: null, login: "alice" });
+```
+
+### Empty Criteria Protection
+
+Dynamic finders throw on empty criteria to prevent accidental full-table operations:
+
+```ts
+// Throws: Empty criteria is not allowed. Use findAll() for unfiltered queries.
+await repo.findOneBy({});
+await repo.deleteBy({});
 ```
 
 ## Client-Side Handlers — Use `Action()` Always
