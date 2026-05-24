@@ -176,57 +176,15 @@ export abstract class RepositoryBase<T extends { id: number }> {
     return this.findById(db, id);
   }
 
-  // ── Helpers for subclasses ────────────────────────
-
-  /** Run a SELECT query returning multiple rows. Supports @named params or positional. */
-  protected queryAll<TResult>(
-    db: D1Database,
-    sql: string,
-    ...params: unknown[]
-  ): Promise<TResult[]> {
-    const [resolved, values] = this._resolveParams(sql, params);
-    return db
-      .prepare(resolved)
-      .bind(...values)
-      .all<TResult>()
-      .then((r) => r.results);
-  }
-
-  /** Run a SELECT query returning at most one row. Supports @named params or positional. */
-  protected queryOne<TResult>(
-    db: D1Database,
-    sql: string,
-    ...params: unknown[]
-  ): Promise<TResult | null> {
-    const [resolved, values] = this._resolveParams(sql, params);
-    return db
-      .prepare(resolved)
-      .bind(...values)
-      .first<TResult>();
-  }
-
-  /** Run an INSERT/UPDATE/DELETE. Supports @named params or positional. */
-  protected execute(
-    db: D1Database,
-    sql: string,
-    ...params: unknown[]
-  ): Promise<D1Result> {
-    const [resolved, values] = this._resolveParams(sql, params);
-    return db
-      .prepare(resolved)
-      .bind(...values)
-      .run();
-  }
-
   // ── Typed query helpers (for use with generated QueryMap) ──
 
   /**
    * Type-safe SELECT returning at most one row.
    * Result and param types are inferred from the QueryMap generic.
    *
-   * Usage: `this.typedOne<QueryMap, "findBySlug">(db, queries, "findBySlug", { slug })`
+   * Usage: `this.queryOne<QueryMap, "findBySlug">(db, queries, "findBySlug", { slug })`
    */
-  protected typedOne<QM, K extends keyof QM>(
+  protected queryOne<QM, K extends keyof QM>(
     db: D1Database,
     queries: { [P in keyof QM]: string },
     name: K,
@@ -234,16 +192,20 @@ export abstract class RepositoryBase<T extends { id: number }> {
   ): Promise<(QM[K] extends { result: infer R } ? R : unknown) | null> {
     const sql = queries[name];
     const params = (args as unknown[])[0] as Record<string, unknown> | undefined;
-    return params ? this.queryOne(db, sql, params) : this.queryOne(db, sql);
+    const [resolved, values] = this._resolveParams(sql, params ? [params] : []);
+    return db
+      .prepare(resolved)
+      .bind(...values)
+      .first<QM[K] extends { result: infer R } ? R : unknown>();
   }
 
   /**
    * Type-safe SELECT returning multiple rows.
    * Result and param types are inferred from the QueryMap generic.
    *
-   * Usage: `this.typedAll<QueryMap, "listWithProposer">(db, queries, "listWithProposer")`
+   * Usage: `this.queryAll<QueryMap, "listWithProposer">(db, queries, "listWithProposer")`
    */
-  protected typedAll<QM, K extends keyof QM>(
+  protected queryAll<QM, K extends keyof QM>(
     db: D1Database,
     queries: { [P in keyof QM]: string },
     name: K,
@@ -251,16 +213,21 @@ export abstract class RepositoryBase<T extends { id: number }> {
   ): Promise<(QM[K] extends { result: infer R } ? R : unknown)[]> {
     const sql = queries[name];
     const params = (args as unknown[])[0] as Record<string, unknown> | undefined;
-    return params ? this.queryAll(db, sql, params) : this.queryAll(db, sql);
+    const [resolved, values] = this._resolveParams(sql, params ? [params] : []);
+    return db
+      .prepare(resolved)
+      .bind(...values)
+      .all<QM[K] extends { result: infer R } ? R : unknown>()
+      .then((r) => r.results);
   }
 
   /**
    * Type-safe INSERT/UPDATE/DELETE.
    * Param types are inferred from the QueryMap generic.
    *
-   * Usage: `this.typedExec<QueryMap, "updateStatus">(db, queries, "updateStatus", { id, status })`
+   * Usage: `this.execute<QueryMap, "updateStatus">(db, queries, "updateStatus", { id, status })`
    */
-  protected typedExec<QM, K extends keyof QM>(
+  protected execute<QM, K extends keyof QM>(
     db: D1Database,
     queries: { [P in keyof QM]: string },
     name: K,
@@ -268,7 +235,11 @@ export abstract class RepositoryBase<T extends { id: number }> {
   ): Promise<D1Result> {
     const sql = queries[name];
     const params = (args as unknown[])[0] as Record<string, unknown> | undefined;
-    return params ? this.execute(db, sql, params) : this.execute(db, sql);
+    const [resolved, values] = this._resolveParams(sql, params ? [params] : []);
+    return db
+      .prepare(resolved)
+      .bind(...values)
+      .run();
   }
 
   /**

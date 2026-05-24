@@ -7,19 +7,19 @@ export class TenetsRepository extends RepositoryBase<Tenet> {
   override readonly tableName = "tenets";
 
   async findBySlug(db: D1Database, slug: string) {
-    return this.typedOne<QueryMap, "findBySlug">(db, queries, "findBySlug", {
+    return this.queryOne<QueryMap, "findBySlug">(db, queries, "findBySlug", {
       slug,
     });
   }
 
   async getOptions(db: D1Database, tenetId: number) {
-    return this.typedAll<QueryMap, "getOptions">(db, queries, "getOptions", {
+    return this.queryAll<QueryMap, "getOptions">(db, queries, "getOptions", {
       tenetId,
     });
   }
 
   async listWithProposer(db: D1Database) {
-    return this.typedAll<QueryMap, "listWithProposer">(
+    return this.queryAll<QueryMap, "listWithProposer">(
       db,
       queries,
       "listWithProposer",
@@ -27,7 +27,7 @@ export class TenetsRepository extends RepositoryBase<Tenet> {
   }
 
   async getWithProposer(db: D1Database, slug: string) {
-    return this.typedOne<QueryMap, "getWithProposer">(
+    return this.queryOne<QueryMap, "getWithProposer">(
       db,
       queries,
       "getWithProposer",
@@ -54,7 +54,7 @@ export class TenetsRepository extends RepositoryBase<Tenet> {
 
     for (let i = 0; i < options.length; i++) {
       const opt = options[i];
-      await this.typedExec<QueryMap, "insertOption">(
+      await this.execute<QueryMap, "insertOption">(
         db,
         queries,
         "insertOption",
@@ -77,7 +77,7 @@ export class TenetsRepository extends RepositoryBase<Tenet> {
     id: number,
     status: TenetStatus,
   ): Promise<void> {
-    await this.typedExec<QueryMap, "updateStatus">(
+    await this.execute<QueryMap, "updateStatus">(
       db,
       queries,
       "updateStatus",

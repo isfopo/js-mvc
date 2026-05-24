@@ -1,5 +1,6 @@
 import { RepositoryBase } from "infrastructure/RepositoryBase";
 import type { VoteRow, VoteChoice } from "./model";
+import { queries, type QueryMap } from "./queries/queries.generated";
 
 export interface VoteWithUserRow extends VoteRow {
   user_login: string;
@@ -10,15 +11,7 @@ export class VotesRepository extends RepositoryBase<VoteRow> {
   override readonly tableName = "votes";
 
   async listForTenet(db: D1Database, tenetId: number): Promise<VoteWithUserRow[]> {
-    return this.queryAll<VoteWithUserRow>(
-      db,
-      `SELECT v.*, u.login AS user_login, u.avatar_url AS user_avatar
-       FROM votes v
-       JOIN users u ON u.id = v.user_id
-       WHERE v.tenet_id = ?
-       ORDER BY v.created_at`,
-      tenetId,
-    );
+    return this.queryAll<QueryMap, "listForTenet">(db, queries, "listForTenet", { tenetId });
   }
 
   async getUserVote(
@@ -26,11 +19,7 @@ export class VotesRepository extends RepositoryBase<VoteRow> {
     tenetId: number,
     userId: number,
   ): Promise<VoteRow | null> {
-    return this.queryOne<VoteRow>(
-      db,
-      "SELECT * FROM votes WHERE tenet_id = ? AND user_id = ?",
-      tenetId, userId,
-    );
+    return this.queryOne<QueryMap, "getUserVote">(db, queries, "getUserVote", { tenetId, userId });
   }
 
   async upsert(
@@ -43,19 +32,18 @@ export class VotesRepository extends RepositoryBase<VoteRow> {
     const existing = await this.getUserVote(db, tenetId, userId);
 
     if (existing) {
-      await this.execute(
-        db,
-        `UPDATE votes SET choice = ?, reason = ?, updated_at = datetime('now')
-         WHERE id = ?`,
-        choice, reason, existing.id,
-      );
+      await this.execute<QueryMap, "updateVote">(db, queries, "updateVote", {
+        id: existing.id,
+        choice,
+        reason,
+      });
     } else {
-      await this.execute(
-        db,
-        `INSERT INTO votes (tenet_id, user_id, choice, reason)
-         VALUES (?, ?, ?, ?)`,
-        tenetId, userId, choice, reason,
-      );
+      await this.execute<QueryMap, "insertVote">(db, queries, "insertVote", {
+        tenetId,
+        userId,
+        choice,
+        reason,
+      });
     }
   }
 }

@@ -1,16 +1,13 @@
 import { RepositoryBase } from "infrastructure/RepositoryBase";
 import type { UserRow } from "./model";
+import { queries, type QueryMap } from "./queries/queries.generated";
 
 export class UsersRepository extends RepositoryBase<UserRow> {
   override readonly tableName = "users";
 
   /** Look up a user by their GitHub ID. */
   async findByGithubId(db: D1Database, githubId: number): Promise<UserRow | null> {
-    return this.queryOne<UserRow>(
-      db,
-      "SELECT * FROM users WHERE github_id = ?",
-      githubId,
-    );
+    return this.queryOne<QueryMap, "findByGithubId">(db, queries, "findByGithubId", { githubId });
   }
 
   /**
@@ -29,14 +26,12 @@ export class UsersRepository extends RepositoryBase<UserRow> {
     const existing = await this.findByGithubId(db, githubUser.id);
 
     if (existing) {
-      await db
-        .prepare(
-          `UPDATE users
-             SET login = ?, avatar_url = ?, name = ?, last_login_at = datetime('now')
-             WHERE id = ?`,
-        )
-        .bind(githubUser.login, githubUser.avatar_url, githubUser.name, existing.id)
-        .run();
+      await this.execute<QueryMap, "updateFromGithub">(db, queries, "updateFromGithub", {
+        id: existing.id,
+        login: githubUser.login,
+        avatarUrl: githubUser.avatar_url,
+        name: githubUser.name,
+      });
       return (await this.findById(db, existing.id))!;
     }
 
