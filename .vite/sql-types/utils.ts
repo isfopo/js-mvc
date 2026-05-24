@@ -2,7 +2,7 @@
  * Shared utilities for SQL type generation.
  */
 
-/** Primitive TypeScript types that don't need imports. */
+/** Primitive TypeScript types and built-in utility types that don't need imports. */
 export const PRIMITIVE_TYPES = new Set([
   "string",
   "number",
@@ -14,6 +14,25 @@ export const PRIMITIVE_TYPES = new Set([
   "unknown",
   "never",
   "object",
+  // Common TypeScript utility types
+  "Record",
+  "Partial",
+  "Required",
+  "Readonly",
+  "Pick",
+  "Omit",
+  "Exclude",
+  "Extract",
+  "NonNullable",
+  "ReturnType",
+  "InstanceType",
+  "Array",
+  "Promise",
+  "Map",
+  "Set",
+  "Date",
+  "RegExp",
+  "Error",
 ]);
 
 /**
