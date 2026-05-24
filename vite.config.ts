@@ -2,8 +2,11 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { defineConfig } from "vite";
-import { createCssBuilderPlugin, createSqlTypesPlugin } from "./.vite/plugins";
-import { sqlTransformPlugin } from "./package/plugins/index.ts";
+import {
+  cssBuilderPlugin,
+  sqlTransformPlugin,
+  sqlTypesPlugin,
+} from "./package/plugins/index.ts";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -23,7 +26,17 @@ export default defineConfig({
       views: resolve(src, "views"),
     },
   },
-  plugins: [sqlTransformPlugin(), createSqlTypesPlugin(), createCssBuilderPlugin(), cloudflare({ inspectorPort: 9229 })],
+  plugins: [
+    sqlTransformPlugin(),
+    sqlTypesPlugin({
+      tableNameOverrides: {
+        // Add overrides here, e.g.:
+        people: "Person",
+      },
+    }),
+    cssBuilderPlugin(),
+    cloudflare({ inspectorPort: 9229 }),
+  ],
   esbuild: {
     // esnext preserves decorator syntax at runtime which workerd does not
     // support yet; es2022 forces esbuild to transpile the Stage 3

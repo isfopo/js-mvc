@@ -8,8 +8,8 @@ import {
   generateDbTypes,
   generateQueryBarrel,
   generateLocalDb,
-} from "./sql-types/index.ts";
-import type { TableDef } from "./sql-types/index.ts";
+  type TableDef,
+} from "./sql-types";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -212,7 +212,10 @@ function resolvePaths(
     dbTypesPath: toAbsolute(options.dbTypesPath, "src/data/db-types.d.ts"),
     localDbPath: toAbsolute(options.localDbPath, "local.db"),
     modelFileName: options.modelFileName ?? "model.ts",
-    sqlExcludePatterns: options.sqlExcludePatterns ?? [".generated", "init.sql"],
+    sqlExcludePatterns: options.sqlExcludePatterns ?? [
+      ".generated",
+      "init.sql",
+    ],
   };
 }
 
@@ -336,7 +339,10 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
       console.log("🗄️  Generating SQL types...");
       clearCache();
       try {
-        await runSqlTypeGeneration(resolvedPaths, options.tableNameOverrides ?? {});
+        await runSqlTypeGeneration(
+          resolvedPaths,
+          options.tableNameOverrides ?? {},
+        );
         console.log("✓ SQL types generated");
       } catch (e) {
         console.error("✗ SQL type generation failed:", (e as Error).message);
@@ -362,7 +368,10 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
           try {
             await regenerate();
           } catch (e) {
-            console.error("✗ SQL type generation failed:", (e as Error).message);
+            console.error(
+              "✗ SQL type generation failed:",
+              (e as Error).message,
+            );
           }
         }, DEBOUNCE_MS);
       };
@@ -378,7 +387,10 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
             `\n🗄️  Migration changed: ${file.split("/").pop()}, regenerating types...`,
           );
           debouncedRegenerate(file, async () => {
-            await runSqlTypeGeneration(resolvedPaths, options.tableNameOverrides ?? {});
+            await runSqlTypeGeneration(
+              resolvedPaths,
+              options.tableNameOverrides ?? {},
+            );
             console.log("✓ SQL types regenerated\n");
           });
         }
