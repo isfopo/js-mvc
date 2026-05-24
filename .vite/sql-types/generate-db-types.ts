@@ -39,7 +39,11 @@ export function tableNameToTypeName(
 
 /**
  * Simple singularization for English words.
- * Handles common patterns: -s, -es, -ies
+ * Handles common patterns: -s, -es, -ies, -ves, -oes, -sses
+ * 
+ * Limitations:
+ * - Irregular plurals (mice, geese, children, people) require tableNameOverrides
+ * - Latin/Greek roots (data → datum, criteria → criterion) require tableNameOverrides
  */
 function singularize(word: string): string {
   // Don't singularize if already singular-looking (ends with 'ss', 'us', 'is')
@@ -52,6 +56,16 @@ function singularize(word: string): string {
     return word.slice(0, -3) + "y";
   }
 
+  // -ves → -f (e.g., Wolves → Wolf, Knives → Knife)
+  if (word.endsWith("ves")) {
+    return word.slice(0, -3) + "f";
+  }
+
+  // -sses → -ss (e.g., Addresses → Address, Classes → Class)
+  if (word.endsWith("sses")) {
+    return word.slice(0, -2);
+  }
+
   // -ses, -xes, -zes, -ches, -shes → remove 'es'
   if (
     word.endsWith("ses") ||
@@ -60,6 +74,11 @@ function singularize(word: string): string {
     word.endsWith("ches") ||
     word.endsWith("shes")
   ) {
+    return word.slice(0, -2);
+  }
+
+  // -oes → -o (e.g., Potatoes → Potato, Tomatoes → Tomato)
+  if (word.endsWith("oes")) {
     return word.slice(0, -2);
   }
 

@@ -10,6 +10,7 @@ import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative, dirname, basename } from "node:path";
 import { parseFrontMatter, type SqlFrontMatter } from "./parse-front-matter";
 import { tableNameToTypeName } from "./generate-db-types";
+import { validateSql } from "./validate-sql";
 
 /** Primitive TypeScript types that don't need imports. */
 const PRIMITIVE_TYPES = new Set([
@@ -155,8 +156,18 @@ function generateBarrel(
   // Build runtime code
   const helper = `/** Strip YAML front matter from SQL files at runtime. */
 function stripFrontMatter(sql: string): string {
-  const match = sql.match(/^---\\n[\\s\\S]*?\\n---\\n([\\s\\S]*)$/);
-  return match ? match[1].trim() : sql.trim();
+  // Handle BOM, leading whitespace, and different line endings (\\n or \\r\\n)
+  const cleaned = sql.replace(/^\\ufeff/, "").trimStart();
+  
+  // Match front matter with flexible line endings
+  const match = cleaned.match(/^---[\\r\\n]+[\\s\\S]*?[\\r\\n]+---[\\r\\n]+([\\s\\S]*)$/);
+  
+  if (!match) {
+    // No front matter or malformed — return as-is
+    return cleaned.trim();
+  }
+  
+  return match[1].trim();
 }`;
 
   const queryNames = queryEntries.map((e) => e.name);
@@ -194,13 +205,51 @@ export async function generateQueryBarrel(
 
   if (files.length === 0) return;
 
-  const queryEntries: { name: string; data: SqlFrontMatter }[] = [];
+  const queryEntries: { name: string; data: SqlFrontMatter; sql: string }[] = [];
 
   for (const file of files) {
     const content = await readFile(join(queriesDir, file), "utf-8");
-    const { data } = parseFrontMatter(content);
+    const { data, sql } = parseFrontMatter(content);
     const name = basename(file, ".sql");
-    queryEntries.push({ name, data });
+    queryEntries.push({ name, data, sql });
+  }
+
+  // Collect known types for validation
+  const knownTypes = new Set<string>();
+  
+  // Add table types (PascalCase)
+  for (const tableName of tableNames) {
+    knownTypes.add(tableNameToTypeName(tableName, overrides));
+  }
+  
+  // Add model types (if model.ts exists)
+  if (modelPath) {
+    try {
+      const modelContent = await readFile(modelPath, "utf-8");
+      // Extract exported type/interface names
+      const typeRegex = /export\s+(?:type|interface)\s+(\w+)/g;
+      let match: RegExpExecArray | null;
+      while ((match = typeRegex.exec(modelContent)) !== null) {
+        knownTypes.add(match[1]);
+      }
+    } catch {
+      // Model file doesn't exist or can't be read — skip
+    }
+  }
+
+  // Validate each SQL file
+  for (const { name, data, sql } of queryEntries) {
+    const validation = validateSql(sql, data, knownTypes);
+    
+    if (!validation.valid) {
+      for (const error of validation.errors) {
+        console.error(`✗ ${name}.sql: ${error}`);
+      }
+    }
+    
+    for (const warning of validation.warnings) {
+      console.warn(`⚠ ${name}.sql: ${warning}`);
+    }
   }
 
   const queryNames = queryEntries.map((e) => e.name);
