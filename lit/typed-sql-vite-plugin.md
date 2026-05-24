@@ -195,6 +195,49 @@ export interface Database {
 
 The CHECK constraint extraction means generated `status` and `choice` columns are already typed as string unions — no need for hand-written `TenetStatus` or `VoteChoice` types (though they can be kept as aliases).
 
+### Table Name Overrides
+
+By default, the plugin converts table names to PascalCase singular form (e.g., `tenets` → `Tenet`, `user_profiles` → `UserProfile`). For irregular plurals or custom naming preferences, you can override this behavior:
+
+```ts
+// vite.config.ts
+import { sqlTypesPlugin } from "./.vite/plugins";
+
+export default defineConfig({
+  plugins: [
+    sqlTypesPlugin({
+      tableNameOverrides: {
+        "people": "Person",
+        "children": "Child",
+        "data": "Datum",
+        "user_profiles": "UserProfile", // override automatic conversion
+      },
+    }),
+  ],
+});
+```
+
+With this configuration, a table named `people` will generate `export interface Person` instead of the default `People`.
+
+### Custom Query Directory Name
+
+By default, the plugin searches for directories named `queries` under `src/data/`. If your project uses a different directory name for SQL files, you can customize this:
+
+```ts
+// vite.config.ts
+import { sqlTypesPlugin } from "./.vite/plugins";
+
+export default defineConfig({
+  plugins: [
+    sqlTypesPlugin({
+      queriesDirName: "sql", // will search for directories named "sql" instead of "queries"
+    }),
+  ],
+});
+```
+
+With this configuration, the plugin will look for `src/data/tenet/sql/*.sql` instead of `src/data/tenet/queries/*.sql`.
+
 ---
 
 ## 3. Vite Plugin Architecture
@@ -231,20 +274,37 @@ import { parseMigrations } from "./sql-types/parse-migrations";
 import { generateDbTypes } from "./sql-types/generate-db-types";
 import { generateQueryBarrel } from "./sql-types/generate-query-barrel";
 
-export function sqlTypesPlugin(): Plugin {
+export interface SqlTypesPluginOptions {
+  /**
+   * Override automatic table name to type name conversions.
+   * Map of table names (as they appear in the database) to desired TypeScript type names.
+   * 
+   * @example
+   * {
+   *   "people": "Person",
+   *   "children": "Child",
+   *   "user_profiles": "UserProfile"
+   * }
+   */
+  tableNameOverrides?: Record<string, string>;
+}
+
+export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
+  const { tableNameOverrides = {} } = options;
+  
   return {
     name: "sql-types",
 
     async buildStart() {
       // 1. Parse all migration files -> generate db-types.d.ts
       const dbTypes = await parseMigrations("migrations/");
-      await generateDbTypes(dbTypes, "src/data/db-types.d.ts");
+      await generateDbTypes(dbTypes, "src/data/db-types.d.ts", tableNameOverrides);
 
       // 2. Scan all .sql query files -> generate typed barrels per directory
       const sqlFiles = await glob("src/**/queries/*.sql");
       const byDir = groupByDir(sqlFiles);
       for (const [dir, files] of Object.entries(byDir)) {
-        await generateQueryBarrel(dir, files);
+        await generateQueryBarrel(dir, files, tableNameOverrides);
       }
     },
 
@@ -261,12 +321,12 @@ export function sqlTypesPlugin(): Plugin {
       server.watcher.on("change", async (file) => {
         if (file.includes("migrations/")) {
           const dbTypes = await parseMigrations("migrations/");
-          await generateDbTypes(dbTypes, "src/data/db-types.d.ts");
+          await generateDbTypes(dbTypes, "src/data/db-types.d.ts", tableNameOverrides);
         }
         if (file.endsWith(".sql") && file.includes("/queries/")) {
           const dir = path.dirname(file);
           const files = await glob(`${dir}/*.sql`);
-          await generateQueryBarrel(dir, files);
+          await generateQueryBarrel(dir, files, tableNameOverrides);
         }
       });
     },

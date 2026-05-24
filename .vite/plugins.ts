@@ -1,6 +1,14 @@
 import type { Plugin, ViteDevServer } from "vite";
 import { execSync } from "child_process";
-import { resolve, dirname } from "path";
+import { resolve, dirname, join } from "path";
+import { existsSync } from "node:fs";
+import { readdir } from "node:fs/promises";
+import matter from "gray-matter";
+import { parseMigrations } from "./sql-types/parse-migrations";
+import { generateDbTypes } from "./sql-types/generate-db-types";
+import { generateQueryBarrel } from "./sql-types/generate-query-barrel";
+import { generateLocalDb } from "./sql-types/generate-local-db";
+import type { TableDef } from "./sql-types/parse-migrations";
 
 /**
  * Custom plugin to rebuild the global CSS bundle on file changes.
@@ -50,6 +58,197 @@ export function cssBuilderPlugin(): Plugin {
             } finally {
               isBuilding = false;
             }
+          }
+        }
+      });
+    },
+  };
+}
+
+/**
+ * Recursively find all directories with the specified name under a root path.
+ */
+async function findQueriesDirs(root: string, dirName: string = "queries"): Promise<string[]> {
+  const results: string[] = [];
+
+  async function walk(dir: string): Promise<void> {
+    let entries: import("node:fs").Dirent[];
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const fullPath = join(dir, entry.name);
+      if (entry.name === dirName) {
+        results.push(fullPath);
+      } else if (!entry.name.startsWith(".") && entry.name !== "node_modules") {
+        await walk(fullPath);
+      }
+    }
+  }
+
+  await walk(root);
+  return results;
+}
+
+/**
+ * Run the full SQL type generation pipeline:
+ * 1. Parse migrations → generate db-types.d.ts
+ * 2. Generate local.db for external SQL tools
+ * 3. Scan queries/ directories → generate typed barrels
+ */
+async function runSqlTypeGeneration(
+  projectRoot: string,
+  overrides: Record<string, string> = {},
+  queriesDirName: string = "queries",
+): Promise<TableDef[]> {
+  const migrationsDir = resolve(projectRoot, "migrations");
+  const srcDir = resolve(projectRoot, "src");
+  const dataDir = resolve(srcDir, "data");
+  const dbTypesPath = resolve(dataDir, "db-types.d.ts");
+
+  // 1. Parse migrations and generate db-types.d.ts
+  const tables = await parseMigrations(migrationsDir);
+  await generateDbTypes(tables, dbTypesPath, overrides);
+
+  // 2. Generate local.db
+  generateLocalDb(migrationsDir, resolve(projectRoot, "local.db"));
+
+  // 3. Find all queries/ directories and generate barrels
+  const tableNames = tables.map((t) => t.name);
+  const queriesDirs = await findQueriesDirs(dataDir, queriesDirName);
+
+  for (const queriesDir of queriesDirs) {
+    // Look for a model.ts in the parent directory of queries/
+    const parentDir = dirname(queriesDir);
+    const modelPath = join(parentDir, "model.ts");
+    const modelFile = existsSync(modelPath) ? modelPath : null;
+
+    await generateQueryBarrel(queriesDir, tableNames, dbTypesPath, modelFile, overrides);
+  }
+
+  return tables;
+}
+
+export interface SqlTypesPluginOptions {
+  /**
+   * Override automatic table name to type name conversions.
+   * Map of table names (as they appear in the database) to desired TypeScript type names.
+   * 
+   * @example
+   * {
+   *   "people": "Person",
+   *   "children": "Child",
+   *   "user_profiles": "UserProfile"
+   * }
+   */
+  tableNameOverrides?: Record<string, string>;
+  
+  /**
+   * Name of directories containing SQL query files.
+   * The plugin will recursively search for directories with this name under src/data/.
+   * 
+   * @default "queries"
+   * 
+   * @example
+   * "sql" // will search for directories named "sql" instead of "queries"
+   */
+  queriesDirName?: string;
+}
+
+/**
+ * Vite plugin for SQL type generation.
+ *
+ * - Parses migration SQL files and generates `src/data/db-types.d.ts`
+ * - Generates `local.db` for external SQL browser tools
+ * - Strips YAML front matter from `.sql` imports at build time
+ * - Generates typed query barrels for each `queries/` directory
+ * - Watches for changes in dev mode and regenerates automatically
+ */
+export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
+  const { tableNameOverrides = {}, queriesDirName = "queries" } = options;
+  let projectRoot: string;
+
+  return {
+    name: "sql-types",
+
+    configResolved(config) {
+      projectRoot = config.root;
+    },
+
+    async buildStart() {
+      console.log("🗄️  Generating SQL types...");
+      try {
+        await runSqlTypeGeneration(projectRoot, tableNameOverrides, queriesDirName);
+        console.log("✓ SQL types generated");
+      } catch (e) {
+        console.error("✗ SQL type generation failed:", (e as Error).message);
+      }
+    },
+
+    transform(code, id) {
+      // Strip YAML front matter from .sql files after Vite's raw loader
+      // has converted them to `export default "..."` modules.
+      if (!id.includes(".sql")) return;
+
+      // Match: export default "...";
+      const match = code.match(/^export default (.+);$/s);
+      if (!match) return;
+
+      try {
+        const content = JSON.parse(match[1]);
+        const { content: sql } = matter(content);
+        return {
+          code: `export default ${JSON.stringify(sql.trim())};`,
+          map: null,
+        };
+      } catch {
+        // Not a valid JSON string — leave as-is
+        return;
+      }
+    },
+
+    configureServer(server) {
+      const migrationsDir = resolve(projectRoot, "migrations");
+      const dataDir = resolve(projectRoot, "src", "data");
+
+      server.watcher.add(migrationsDir);
+      server.watcher.add(dataDir);
+
+      server.watcher.on("change", async (file: string) => {
+        // Regenerate on migration changes
+        if (file.includes("/migrations/") && file.endsWith(".sql")) {
+          console.log(`\n🗄️  Migration changed: ${file.split("/").pop()}, regenerating types...`);
+          try {
+            await runSqlTypeGeneration(projectRoot, tableNameOverrides, queriesDirName);
+            console.log("✓ SQL types regenerated\n");
+          } catch (e) {
+            console.error("✗ SQL type generation failed:", (e as Error).message);
+          }
+        }
+
+        // Regenerate barrel on query file changes
+        if (
+          file.includes(`/${queriesDirName}/`) &&
+          file.endsWith(".sql") &&
+          !file.includes("queries.generated")
+        ) {
+          console.log(`\n🗄️  Query changed: ${file.split("/").pop()}, regenerating barrel...`);
+          try {
+            const tables = await parseMigrations(resolve(projectRoot, "migrations"));
+            const tableNames = tables.map((t) => t.name);
+            const dbTypesPath = resolve(projectRoot, "src", "data", "db-types.d.ts");
+            const queriesDir = dirname(file);
+            const parentDir = dirname(queriesDir);
+            const modelPath = join(parentDir, "model.ts");
+            const modelFile = existsSync(modelPath) ? modelPath : null;
+
+            await generateQueryBarrel(queriesDir, tableNames, dbTypesPath, modelFile, tableNameOverrides);
+            console.log("✓ Query barrel regenerated\n");
+          } catch (e) {
+            console.error("✗ Query barrel generation failed:", (e as Error).message);
           }
         }
       });

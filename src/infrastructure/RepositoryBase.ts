@@ -10,38 +10,45 @@
  * at runtime, since D1 only supports positional binding.
  */
 
-/**
- * Replace @paramName placeholders with ? and return the positional
- * values array. Handles repeated params (same name → same position).
- */
-function resolveNamedParams(
-  sql: string,
-  params: Record<string, unknown>,
-): [string, unknown[]] {
-  const paramOrder: string[] = [];
-  const seen = new Set<string>();
-
-  // Collect params in order of first appearance
-  sql.replace(/@(\w+)/g, (_, name: string) => {
-    if (!seen.has(name)) {
-      seen.add(name);
-      paramOrder.push(name);
-    }
-    return "";
-  });
-
-  // Replace @name with ?
-  const resolved = sql.replace(/@(\w+)/g, "?");
-
-  // Build positional array
-  const values = paramOrder.map((name) => params[name]);
-
-  return [resolved, values];
-}
-
 export abstract class RepositoryBase<T extends { id: number }> {
   /** Each repository declares its table name. */
   abstract readonly tableName: string;
+
+  // ── Static utilities ──────────────────────────────
+
+  /**
+   * Replace @paramName placeholders with ? and return the positional
+   * values array. Handles repeated params (same name → same position).
+   */
+  static resolveNamedParams(
+    sql: string,
+    params: Record<string, unknown>,
+  ): [string, unknown[]] {
+    const paramOrder: string[] = [];
+    const seen = new Set<string>();
+
+    // Collect params in order of first appearance
+    sql.replace(/@(\w+)/g, (_, name: string) => {
+      if (!seen.has(name)) {
+        seen.add(name);
+        paramOrder.push(name);
+      }
+      return "";
+    });
+
+    // Replace @name with ?
+    const resolved = sql.replace(/@(\w+)/g, "?");
+
+    // Build positional array
+    const values = paramOrder.map((name) => params[name]);
+
+    return [resolved, values];
+  }
+
+  /** Check if value is a plain object (not null, array, or primitive). */
+  static isPlainObject(v: unknown): v is Record<string, unknown> {
+    return typeof v === "object" && v !== null && !Array.isArray(v);
+  }
 
   // ── Generic CRUD ──────────────────────────────────
 
@@ -66,7 +73,10 @@ export abstract class RepositoryBase<T extends { id: number }> {
       sql += ` LIMIT ?`;
       params.push(options.limit);
     }
-    const { results } = await db.prepare(sql).bind(...params).all<T>();
+    const { results } = await db
+      .prepare(sql)
+      .bind(...params)
+      .all<T>();
     return results;
   }
 
@@ -111,7 +121,11 @@ export abstract class RepositoryBase<T extends { id: number }> {
    * Generic update — builds SET from an object's keys.
    * Returns the updated row, or null if the row didn't exist.
    */
-  async update(db: D1Database, id: number, data: Partial<T>): Promise<T | null> {
+  async update(
+    db: D1Database,
+    id: number,
+    data: Partial<T>,
+  ): Promise<T | null> {
     const keys = Object.keys(data as Record<string, unknown>);
     const values = keys.map((k) => (data as Record<string, unknown>)[k]);
     const setClause = keys.map((k) => `${k} = ?`).join(", ");
@@ -147,7 +161,10 @@ export abstract class RepositoryBase<T extends { id: number }> {
     ...params: unknown[]
   ): Promise<TResult | null> {
     const [resolved, values] = this._resolveParams(sql, params);
-    return db.prepare(resolved).bind(...values).first<TResult>();
+    return db
+      .prepare(resolved)
+      .bind(...values)
+      .first<TResult>();
   }
 
   /** Run an INSERT/UPDATE/DELETE. Supports @named params or positional. */
@@ -157,28 +174,77 @@ export abstract class RepositoryBase<T extends { id: number }> {
     ...params: unknown[]
   ): Promise<D1Result> {
     const [resolved, values] = this._resolveParams(sql, params);
-    return db.prepare(resolved).bind(...values).run();
+    return db
+      .prepare(resolved)
+      .bind(...values)
+      .run();
+  }
+
+  // ── Typed query helpers (for use with generated QueryMap) ──
+
+  /**
+   * Type-safe SELECT returning at most one row.
+   * Result and param types are inferred from the QueryMap generic.
+   *
+   * Usage: `this.typedOne<QueryMap, "findBySlug">(db, queries, "findBySlug", { slug })`
+   */
+  protected typedOne<QM, K extends keyof QM>(
+    db: D1Database,
+    queries: { [P in keyof QM]: string },
+    name: K,
+    ...args: QM[K] extends { params: infer P } ? ({} extends P ? [] : [P]) : []
+  ): Promise<(QM[K] extends { result: infer R } ? R : unknown) | null> {
+    const sql = queries[name];
+    const params = (args as unknown[])[0] as Record<string, unknown> | undefined;
+    return params ? this.queryOne(db, sql, params) : this.queryOne(db, sql);
+  }
+
+  /**
+   * Type-safe SELECT returning multiple rows.
+   * Result and param types are inferred from the QueryMap generic.
+   *
+   * Usage: `this.typedAll<QueryMap, "listWithProposer">(db, queries, "listWithProposer")`
+   */
+  protected typedAll<QM, K extends keyof QM>(
+    db: D1Database,
+    queries: { [P in keyof QM]: string },
+    name: K,
+    ...args: QM[K] extends { params: infer P } ? ({} extends P ? [] : [P]) : []
+  ): Promise<(QM[K] extends { result: infer R } ? R : unknown)[]> {
+    const sql = queries[name];
+    const params = (args as unknown[])[0] as Record<string, unknown> | undefined;
+    return params ? this.queryAll(db, sql, params) : this.queryAll(db, sql);
+  }
+
+  /**
+   * Type-safe INSERT/UPDATE/DELETE.
+   * Param types are inferred from the QueryMap generic.
+   *
+   * Usage: `this.typedExec<QueryMap, "updateStatus">(db, queries, "updateStatus", { id, status })`
+   */
+  protected typedExec<QM, K extends keyof QM>(
+    db: D1Database,
+    queries: { [P in keyof QM]: string },
+    name: K,
+    ...args: QM[K] extends { params: infer P } ? ({} extends P ? [] : [P]) : []
+  ): Promise<D1Result> {
+    const sql = queries[name];
+    const params = (args as unknown[])[0] as Record<string, unknown> | undefined;
+    return params ? this.execute(db, sql, params) : this.execute(db, sql);
   }
 
   /**
    * Resolve params: if SQL uses @named syntax and a single plain-object
    * arg is passed, translate to positional. Otherwise pass through as-is.
    */
-  private _resolveParams(
-    sql: string,
-    params: unknown[],
-  ): [string, unknown[]] {
+  private _resolveParams(sql: string, params: unknown[]): [string, unknown[]] {
     const hasNamed = /@\w+/.test(sql);
-    const isNamedCall = hasNamed && params.length === 1 && isPlainObject(params[0]);
+    const isNamedCall =
+      hasNamed && params.length === 1 && RepositoryBase.isPlainObject(params[0]);
 
     if (isNamedCall) {
-      return resolveNamedParams(sql, params[0] as Record<string, unknown>);
+      return RepositoryBase.resolveNamedParams(sql, params[0] as Record<string, unknown>);
     }
     return [sql, params];
   }
-}
-
-/** Check if value is a plain object (not null, array, or primitive). */
-function isPlainObject(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
 }

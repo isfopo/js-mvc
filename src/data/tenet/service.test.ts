@@ -7,7 +7,7 @@ import { VoteRequest } from "views/routes/Tenets/requests/VoteRequest";
 import { env } from "cloudflare:workers";
 import { initDatabase } from "infrastructure/QueryLoader";
 
-import schemaSql from "db/init.sql?raw";
+import schemaSql from "data/init.sql?raw";
 
 beforeAll(async () => {
   // Run migrations so tables exist

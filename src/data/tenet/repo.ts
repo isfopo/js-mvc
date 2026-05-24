@@ -1,49 +1,38 @@
 import { RepositoryBase } from "infrastructure/RepositoryBase";
-import { loadQueries } from "infrastructure/QueryLoader";
-import type { TenetRow, TenetOptionRow, TenetStatus } from "./model";
-import type { VoteRow } from "data/vote/model";
+import { queries, type QueryMap } from "./queries/queries.generated";
+import type { Tenet } from "data/db-types";
+import type { TenetStatus } from "./model";
 
-// Keep this in sync with the .sql files in ./queries/
-type TenetQuery =
-  | "findBySlug"
-  | "getOptions"
-  | "getWithProposer"
-  | "insertOption"
-  | "listWithProposer"
-  | "updateStatus";
-
-// Preload all SQL queries at module initialization
-const queries = await loadQueries<TenetQuery>(
-  import.meta.glob("./queries/*.sql", { query: "raw", import: "default" }),
-);
-
-export class TenetsRepository extends RepositoryBase<TenetRow> {
+export class TenetsRepository extends RepositoryBase<Tenet> {
   override readonly tableName = "tenets";
 
-  async findBySlug(db: D1Database, slug: string): Promise<TenetRow | null> {
-    return this.queryOne<TenetRow>(db, queries.findBySlug, { slug });
+  async findBySlug(db: D1Database, slug: string) {
+    return this.typedOne<QueryMap, "findBySlug">(db, queries, "findBySlug", {
+      slug,
+    });
   }
 
-  async getOptions(db: D1Database, tenetId: number): Promise<TenetOptionRow[]> {
-    return this.queryAll<TenetOptionRow>(db, queries.getOptions, { tenetId });
+  async getOptions(db: D1Database, tenetId: number) {
+    return this.typedAll<QueryMap, "getOptions">(db, queries, "getOptions", {
+      tenetId,
+    });
   }
 
-  async listWithProposer(
-    db: D1Database,
-  ): Promise<
-    (TenetRow & { proposer_login: string; proposer_avatar: string | null })[]
-  > {
-    return this.queryAll(db, queries.listWithProposer);
+  async listWithProposer(db: D1Database) {
+    return this.typedAll<QueryMap, "listWithProposer">(
+      db,
+      queries,
+      "listWithProposer",
+    );
   }
 
-  async getWithProposer(
-    db: D1Database,
-    slug: string,
-  ): Promise<
-    | (TenetRow & { proposer_login: string; proposer_avatar: string | null })
-    | null
-  > {
-    return this.queryOne(db, queries.getWithProposer, { slug });
+  async getWithProposer(db: D1Database, slug: string) {
+    return this.typedOne<QueryMap, "getWithProposer">(
+      db,
+      queries,
+      "getWithProposer",
+      { slug },
+    );
   }
 
   async createWithOptions(
@@ -60,19 +49,24 @@ export class TenetsRepository extends RepositoryBase<TenetRow> {
       pros?: string;
       cons?: string;
     }[],
-  ): Promise<TenetRow> {
-    const row = await this.create(db, tenet as Partial<TenetRow>);
+  ) {
+    const row = await this.create(db, tenet as Partial<Tenet>);
 
     for (let i = 0; i < options.length; i++) {
       const opt = options[i];
-      await this.execute(db, queries.insertOption, {
-        tenetId: row.id,
-        title: opt.title,
-        description: opt.description ?? null,
-        pros: opt.pros ?? null,
-        cons: opt.cons ?? null,
-        sortOrder: i,
-      });
+      await this.typedExec<QueryMap, "insertOption">(
+        db,
+        queries,
+        "insertOption",
+        {
+          tenetId: row.id,
+          title: opt.title,
+          description: opt.description ?? null,
+          pros: opt.pros ?? null,
+          cons: opt.cons ?? null,
+          sortOrder: i,
+        },
+      );
     }
 
     return row;
@@ -83,7 +77,12 @@ export class TenetsRepository extends RepositoryBase<TenetRow> {
     id: number,
     status: TenetStatus,
   ): Promise<void> {
-    await this.execute(db, queries.updateStatus, { id, status });
+    await this.typedExec<QueryMap, "updateStatus">(
+      db,
+      queries,
+      "updateStatus",
+      { id, status },
+    );
   }
 }
 
