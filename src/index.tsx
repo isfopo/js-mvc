@@ -7,7 +7,7 @@ import TenetsApiController from "views/routes/Tenets/controller.api";
 import WellKnownController from "views/routes/WellKnown/controller";
 import AuthController from "views/routes/Auth/controller";
 
-import { initDatabase } from "infrastructure/QueryLoader";
+import { initDatabase } from "data/init";
 import { seedDatabase } from "data/seed";
 import { unflattenFormBodyMiddleware } from "infrastructure/middlewares/unflatten-form-body";
 

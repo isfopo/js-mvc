@@ -5,7 +5,7 @@ import { ProposeTenetRequest } from "views/routes/Tenets/requests/ProposeTenetRe
 import { VoteRequest } from "views/routes/Tenets/requests/VoteRequest";
 
 import { env } from "cloudflare:workers";
-import { initDatabase } from "infrastructure/QueryLoader";
+import { initDatabase } from "../init";
 
 import schemaSql from "data/init.sql?raw";
 

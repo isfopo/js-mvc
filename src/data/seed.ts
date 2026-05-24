@@ -8,7 +8,7 @@
  * existing rows are silently skipped.
  */
 
-import { initDatabase } from "infrastructure/QueryLoader";
+import { initDatabase } from "./init";
 import seedSql from "../../migrations/002_seed_data.sql?raw";
 
 /**

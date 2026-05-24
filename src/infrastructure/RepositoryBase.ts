@@ -68,7 +68,7 @@ export abstract class RepositoryBase<T extends { id: number }> {
     }
     // Reject SQL keywords that could be used for injection
     const dangerous = /\b(UNION|SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|EXEC|EXECUTE|INTO|FROM|WHERE|HAVING|GROUP|ORDER|LIMIT|OFFSET|JOIN|LEFT|RIGHT|INNER|OUTER|CROSS|ON|AS|SET|VALUES)\b/i;
-    // Allow ORDER and ASC/DESC but reject everything else
+    // Allow ASC/DESC but reject other SQL keywords
     const stripped = orderBy
       .replace(/\bASC\b/gi, "")
       .replace(/\bDESC\b/gi, "");
