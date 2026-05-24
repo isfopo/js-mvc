@@ -110,11 +110,29 @@ async function runSqlTypeGeneration(
   const dbTypesPath = resolve(dataDir, "db-types.d.ts");
 
   // 1. Parse migrations and generate db-types.d.ts
-  const tables = await parseMigrations(migrationsDir);
-  await generateDbTypes(tables, dbTypesPath, overrides);
+  let tables: TableDef[];
+  try {
+    tables = await parseMigrations(migrationsDir);
+  } catch (e) {
+    throw new Error(
+      `Failed to parse migrations in ${migrationsDir}: ${(e as Error).message}`
+    );
+  }
+
+  try {
+    await generateDbTypes(tables, dbTypesPath, overrides);
+  } catch (e) {
+    throw new Error(
+      `Failed to generate ${dbTypesPath}: ${(e as Error).message}`
+    );
+  }
 
   // 2. Generate local.db
-  generateLocalDb(migrationsDir, resolve(projectRoot, "local.db"));
+  try {
+    generateLocalDb(migrationsDir, resolve(projectRoot, "local.db"));
+  } catch (e) {
+    console.warn(`⚠ Failed to generate local.db: ${(e as Error).message}`);
+  }
 
   // 3. Find all queries/ directories and generate barrels
   const tableNames = tables.map((t) => t.name);
@@ -126,7 +144,13 @@ async function runSqlTypeGeneration(
     const modelPath = join(parentDir, "model.ts");
     const modelFile = existsSync(modelPath) ? modelPath : null;
 
-    await generateQueryBarrel(queriesDir, tableNames, dbTypesPath, modelFile, overrides);
+    try {
+      await generateQueryBarrel(queriesDir, tableNames, dbTypesPath, modelFile, overrides);
+    } catch (e) {
+      throw new Error(
+        `Failed to generate barrel for ${queriesDir}: ${(e as Error).message}`
+      );
+    }
   }
 
   return tables;
@@ -173,6 +197,7 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
 
   return {
     name: "sql-types",
+    enforce: "pre",
 
     configResolved(config) {
       projectRoot = config.root;
