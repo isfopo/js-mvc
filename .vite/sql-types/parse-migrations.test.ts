@@ -38,7 +38,6 @@ describe("parseMigrations", () => {
 
     const tables = await parseMigrations(testDir);
 
-
     expect(tables).toHaveLength(1);
     expect(tables[0].name).toBe("users");
     expect(tables[0].columns).toHaveLength(3);
@@ -71,7 +70,6 @@ describe("parseMigrations", () => {
 
     const tables = await parseMigrations(testDir);
 
-
     expect(tables[0].columns[1].checkValues).toEqual([
       "draft",
       "voting",
@@ -96,7 +94,6 @@ describe("parseMigrations", () => {
 
     const tables = await parseMigrations(testDir);
 
-
     expect(tables).toHaveLength(1);
     expect(tables[0].columns).toHaveLength(7);
   });
@@ -115,7 +112,6 @@ describe("parseMigrations", () => {
 
     const tables = await parseMigrations(testDir);
 
-
     // Should only have 3 columns, not the UNIQUE constraint
     expect(tables[0].columns).toHaveLength(3);
   });
@@ -132,7 +128,6 @@ describe("parseMigrations", () => {
 
     const tables = await parseMigrations(testDir);
 
-
     expect(tables).toHaveLength(1);
     expect(tables[0].name).toBe("users");
   });
@@ -148,7 +143,6 @@ describe("parseMigrations", () => {
 
     const tables = await parseMigrations(testDir);
 
-
     expect(tables).toHaveLength(1);
     expect(tables[0].name).toBe("users");
   });
@@ -160,7 +154,6 @@ describe("parseMigrations", () => {
     });
 
     const tables = await parseMigrations(testDir);
-
 
     expect(tables).toHaveLength(2);
     expect(tables[0].name).toBe("users");
@@ -174,7 +167,6 @@ describe("parseMigrations", () => {
     });
 
     const tables = await parseMigrations(testDir);
-
 
     // Should only have the first definition
     expect(tables).toHaveLength(1);
@@ -194,7 +186,6 @@ describe("parseMigrations", () => {
     });
 
     const tables = await parseMigrations(testDir);
-
 
     expect(tables).toHaveLength(1);
     expect(tables[0].columns).toHaveLength(2);

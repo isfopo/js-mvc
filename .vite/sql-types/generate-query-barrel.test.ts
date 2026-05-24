@@ -104,7 +104,6 @@ UPDATE tenets SET status = @status WHERE id = @id`,
     await generateQueryBarrel(queriesDir, ["tenets"], dbTypesPath, null);
     const content = await readGenerated();
 
-
     expect(content).toContain("result: void;");
   });
 
@@ -115,7 +114,6 @@ UPDATE tenets SET status = @status WHERE id = @id`,
 
     await generateQueryBarrel(queriesDir, ["tenets"], dbTypesPath, null);
     const content = await readGenerated();
-
 
     expect(content).toContain("simple: {");
     expect(content).toContain("params: {};");
@@ -144,7 +142,6 @@ UPDATE tenets SET status = @status WHERE id = @id`,
     );
     const content = await readGenerated();
 
-
     expect(content).toContain('import type { TenetStatus } from "../model"');
   });
 
@@ -155,7 +152,6 @@ UPDATE tenets SET status = @status WHERE id = @id`,
 
     await generateQueryBarrel(queriesDir, [], dbTypesPath, null);
     const content = await readGenerated();
-
 
     expect(content).toContain("function stripFrontMatter(sql: string): string");
     expect(content).toContain("BOM");
@@ -175,7 +171,6 @@ SELECT * FROM tenets WHERE slug = @slug`,
     await generateQueryBarrel(queriesDir, ["tenets"], dbTypesPath, null);
     const content = await readGenerated();
 
-
     expect(content).toContain("export const queries = {");
     expect(content).toContain("findBySlug: stripFrontMatter(findBySlugRaw),");
     expect(content).toContain("} as const;");
@@ -191,7 +186,6 @@ SELECT t.*, u.login AS proposer_login FROM tenets t JOIN users u ON u.id = t.pro
 
     await generateQueryBarrel(queriesDir, ["tenets"], dbTypesPath, null);
     const content = await readGenerated();
-
 
     expect(content).toContain("result: Tenet & { proposer_login: string };");
   });
