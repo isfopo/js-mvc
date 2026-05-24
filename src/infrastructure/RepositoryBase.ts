@@ -3,7 +3,9 @@
  *
  * Follows the same pattern as ControllerBase and BaseHandler.
  * Subclasses declare a table name and inherit generic CRUD.
- * D1Database is passed per-call (repos are stateless singletons).
+ *
+ * D1Database is injected via the constructor. Repos are created per-request
+ * using factory functions (e.g., `tenetsRepo(db)`) rather than shared singletons.
  *
  * Named parameters: SQL files can use @paramName syntax. The helpers
  * below translate @name → ? and map named args to positional order
@@ -193,10 +195,11 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
    */
   async findOneBy(criteria: Partial<T>): Promise<T | null> {
     const { where, values } = this._buildWhere(criteria);
-    return this.db
+    const row = await this.db
       .prepare(`SELECT * FROM ${this.tableName} WHERE ${where} LIMIT 1`)
       .bind(...values)
       .first<T>();
+    return row ?? null;
   }
 
   /**
@@ -265,8 +268,9 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
       );
     }
 
-    // Validate keys are safe SQL identifiers (alphanumeric + underscore)
-    const safeKey = /^\w+$/;
+    // Validate keys are safe SQL identifiers (must start with letter/underscore,
+    // then alphanumeric/underscore). Prevents digit-leading names like "123abc".
+    const safeKey = /^[a-zA-Z_]\w*$/;
     for (const [key] of entries) {
       if (!safeKey.test(key)) {
         throw new Error(`Unsafe column name in criteria: "${key}"`);

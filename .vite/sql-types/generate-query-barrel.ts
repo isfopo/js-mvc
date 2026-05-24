@@ -150,8 +150,9 @@ function stripFrontMatter(sql: string): string {
     .join("\n");
   const queriesConst = `export const queries = {\n${entries}\n} as const;`;
 
-  // Order: header, type imports, sql imports, QueryMap interface, helper, queries const
-  return `${header}${typeImports.join("\n")}\n\n${sqlImports}\n\n${queryMapInterface}\n\n${helper}\n\n${queriesConst}\n`;
+  // Order: header, type imports (if any), sql imports, QueryMap interface, helper, queries const
+  const typeImportsBlock = typeImports.length > 0 ? `${typeImports.join("\n")}\n\n` : "";
+  return `${header}${typeImportsBlock}${sqlImports}\n\n${queryMapInterface}\n\n${helper}\n\n${queriesConst}\n`;
 }
 
 /**

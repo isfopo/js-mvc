@@ -42,7 +42,7 @@ The CSS build is **automatic** with full HMR support:
 - **Views** (`src/pages/*/views/`): Top-level page components using `FC` from `hono/jsx` with typed ViewModel.
 - **Components** (`src/components/`): Reusable UI pieces. Use `Action()` for client-side handler wiring.
 - **Services** (`src/services/`): Business logic layer shared between HTML and API controllers. Extend `ServiceBase`.
-- **Repositories** (`src/data/repos/`): Data access layer. Extend `RepositoryBase<T>`. Use `db.prepare(sql).bind(params).all<T>()`.
+- **Repositories** (`src/data/*/repo.ts`): Data access layer. Extend `RepositoryBase<T, QueryMap>`. D1Database is injected via constructor; repos are created per-request using factory functions (e.g., `tenetsRepo(db)`). Inherit generic CRUD (`findById`, `findAll`, `create`, `update`, `delete`, `count`) and dynamic finders (`findOneBy`, `findAllBy`, `existsBy`, `deleteBy`). Complex queries use `.sql` files with YAML front matter and typed `queryOne`/`queryAll`/`execute` methods.
 - **Models** (`src/data/models/`): Row types matching D1 table columns.
 - **Requests** (`src/data/requests/`): IValidatable form objects with `validate()` method.
 - **Infrastructure** (`src/infrastructure/`): Framework base classes (ControllerBase, RepositoryBase, ServiceBase), validation decorators, auth middleware.
@@ -78,7 +78,7 @@ import { ProposeTenetRequest } from "../../data/requests/ProposeTenetRequest";
 
 class TenetsController extends ControllerBase {
   @Get("/:slug")
-  @Exists("tenet", (c) => tenetsRepo.findBySlug(c.env.DB, c.req.param("slug")!))
+  @Exists("tenet", (c) => tenetsRepo(c.env.DB).findOneBy({ slug: c.req.param("slug")! }))
   async show(c: Context) {
     const tenet = c.get("tenet"); // loaded by @Exists, throws 404 if missing
     // ...
