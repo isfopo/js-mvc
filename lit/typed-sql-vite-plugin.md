@@ -219,25 +219,6 @@ export default defineConfig({
 
 With this configuration, a table named `people` will generate `export interface Person` instead of the default `People`.
 
-### Custom Query Directory Name
-
-By default, the plugin searches for directories named `queries` under `src/data/`. If your project uses a different directory name for SQL files, you can customize this:
-
-```ts
-// vite.config.ts
-import { sqlTypesPlugin } from "./.vite/plugins";
-
-export default defineConfig({
-  plugins: [
-    sqlTypesPlugin({
-      queriesDirName: "sql", // will search for directories named "sql" instead of "queries"
-    }),
-  ],
-});
-```
-
-With this configuration, the plugin will look for `src/data/tenet/sql/*.sql` instead of `src/data/tenet/queries/*.sql`.
-
 ---
 
 ## 3. Vite Plugin Architecture
@@ -301,7 +282,7 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
       await generateDbTypes(dbTypes, "src/data/db-types.d.ts", tableNameOverrides);
 
       // 2. Scan all .sql query files -> generate typed barrels per directory
-      const sqlFiles = await glob("src/**/queries/*.sql");
+      const sqlFiles = await glob("src/data/**/*.sql");
       const byDir = groupByDir(sqlFiles);
       for (const [dir, files] of Object.entries(byDir)) {
         await generateQueryBarrel(dir, files, tableNameOverrides);
@@ -316,14 +297,14 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
 
     configureServer(server) {
       server.watcher.add("migrations/");
-      server.watcher.add("src/**/queries/*.sql");
+      server.watcher.add("src/data/**/*.sql");
 
       server.watcher.on("change", async (file) => {
         if (file.includes("migrations/")) {
           const dbTypes = await parseMigrations("migrations/");
           await generateDbTypes(dbTypes, "src/data/db-types.d.ts", tableNameOverrides);
         }
-        if (file.endsWith(".sql") {
+        if (file.endsWith(".sql")) {
           const dir = path.dirname(file);
           const files = await glob(`${dir}/*.sql`);
           await generateQueryBarrel(dir, files, tableNameOverrides);
@@ -338,7 +319,7 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
 
 ## 4. Generated Output
 
-For each `queries/` directory, the plugin generates two files:
+For each directory containing `.sql` files, the plugin generates two files:
 
 ### `queries.generated.ts` — The typed query map
 

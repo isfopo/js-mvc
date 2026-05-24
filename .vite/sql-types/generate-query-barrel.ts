@@ -11,37 +11,7 @@ import { join, relative, dirname, basename } from "node:path";
 import { parseFrontMatter, type SqlFrontMatter } from "./parse-front-matter";
 import { tableNameToTypeName } from "./generate-db-types";
 import { validateSql } from "./validate-sql";
-
-/** Primitive TypeScript types that don't need imports. */
-const PRIMITIVE_TYPES = new Set([
-  "string",
-  "number",
-  "boolean",
-  "null",
-  "undefined",
-  "void",
-  "any",
-  "unknown",
-  "never",
-  "object",
-]);
-
-/**
- * Extract non-primitive type identifiers from a type expression string.
- * Looks for identifiers starting with an uppercase letter.
- */
-function extractTypeReferences(typeExpr: string): string[] {
-  const refs = new Set<string>();
-  // Match identifiers that start with uppercase (type names)
-  const identRegex = /\b([A-Z]\w*)\b/g;
-  let match: RegExpExecArray | null;
-  while ((match = identRegex.exec(typeExpr)) !== null) {
-    if (!PRIMITIVE_TYPES.has(match[1])) {
-      refs.add(match[1]);
-    }
-  }
-  return [...refs];
-}
+import { extractTypeReferences } from "./utils";
 
 /**
  * Check if a result type string is a bare table name (no spaces, no special chars).
@@ -180,7 +150,8 @@ function stripFrontMatter(sql: string): string {
     .join("\n");
   const queriesConst = `export const queries = {\n${entries}\n} as const;`;
 
-  return `${header}${typeImports.join("\n")}\n\n${queryMapInterface}\n\n${helper}\n\n${sqlImports}\n\n${queriesConst}\n`;
+  // Order: header, type imports, sql imports, QueryMap interface, helper, queries const
+  return `${header}${typeImports.join("\n")}\n\n${sqlImports}\n\n${queryMapInterface}\n\n${helper}\n\n${queriesConst}\n`;
 }
 
 /**

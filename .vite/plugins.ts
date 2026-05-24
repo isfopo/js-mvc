@@ -116,7 +116,8 @@ async function findSqlFileGroups(root: string): Promise<Map<string, string[]>> {
 }
 
 /**
- * Hash all files in a directory to detect changes.
+ * Hash all .sql files in a directory to detect changes.
+ * Excludes init.sql and .generated files to match findSqlFileGroups behavior.
  * Returns a SHA-256 hash of all file contents.
  */
 async function hashDirectory(dir: string): Promise<string> {
@@ -124,7 +125,12 @@ async function hashDirectory(dir: string): Promise<string> {
   
   try {
     const files = (await readdir(dir, { withFileTypes: true }))
-      .filter((f) => f.isFile() && f.name.endsWith(".sql"))
+      .filter((f) => 
+        f.isFile() && 
+        f.name.endsWith(".sql") &&
+        f.name !== "init.sql" &&
+        !f.name.includes(".generated")
+      )
       .map((f) => f.name)
       .sort();
 
@@ -154,6 +160,16 @@ const cache: GenerationCache = {
   tables: [],
   barrelHashes: new Map(),
 };
+
+/**
+ * Clear the generation cache. Called at the start of each build
+ * to ensure stale entries from deleted directories are removed.
+ */
+function clearCache(): void {
+  cache.migrationsHash = "";
+  cache.tables = [];
+  cache.barrelHashes.clear();
+}
 
 /**
  * Run the full SQL type generation pipeline:
@@ -274,6 +290,7 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
 
     async buildStart() {
       console.log("🗄️  Generating SQL types...");
+      clearCache();
       try {
         await runSqlTypeGeneration(projectRoot, tableNameOverrides);
         console.log("✓ SQL types generated");
@@ -285,7 +302,7 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
     transform(code, id) {
       // Strip YAML front matter from .sql files after Vite's raw loader
       // has converted them to `export default "..."` modules.
-      if (!id.includes(".sql")) return;
+      if (!id.endsWith(".sql")) return;
 
       // Match: export default "...";
       const match = code.match(/^export default (.+);$/s);

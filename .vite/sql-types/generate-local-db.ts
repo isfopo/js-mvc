@@ -6,7 +6,7 @@
  * or TablePlus for schema reference while editing .sql files.
  */
 
-import { execSync } from "node:child_process";
+import { execSync, execFileSync } from "node:child_process";
 import { existsSync, unlinkSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -44,8 +44,8 @@ export function generateLocalDb(
       .map((f) => readFileSync(join(migrationsDir, f), "utf-8"))
       .join("\n");
 
-    // Pipe the combined SQL into sqlite3
-    execSync(`sqlite3 "${dbPath}"`, {
+    // Pipe the combined SQL into sqlite3 (use execFileSync to avoid shell injection)
+    execFileSync("sqlite3", [dbPath], {
       input: allSql,
       stdio: ["pipe", "pipe", "pipe"],
     });

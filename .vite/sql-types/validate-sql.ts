@@ -10,23 +10,10 @@
 
 import pkg from "node-sql-parser";
 import type { SqlFrontMatter } from "./parse-front-matter";
+import { extractTypeReferences } from "./utils";
 
 const { Parser } = pkg;
 const parser = new Parser();
-
-/** Primitive TypeScript types that don't need imports. */
-const PRIMITIVE_TYPES = new Set([
-  "string",
-  "number",
-  "boolean",
-  "null",
-  "undefined",
-  "void",
-  "any",
-  "unknown",
-  "never",
-  "object",
-]);
 
 export interface ValidationResult {
   /** Whether the SQL is syntactically valid */
@@ -37,24 +24,6 @@ export interface ValidationResult {
   warnings: string[];
   /** Extracted @paramName placeholders from the SQL */
   placeholders: string[];
-}
-
-/**
- * Extract non-primitive type identifiers from a type expression string.
- * Looks for identifiers starting with an uppercase letter.
- */
-function extractTypeReferences(typeExpr: string): string[] {
-  const refs = new Set<string>();
-  const identRegex = /\b([A-Z]\w*)\b/g;
-  let match: RegExpExecArray | null;
-
-  while ((match = identRegex.exec(typeExpr)) !== null) {
-    if (!PRIMITIVE_TYPES.has(match[1])) {
-      refs.add(match[1]);
-    }
-  }
-
-  return [...refs];
 }
 
 /**
