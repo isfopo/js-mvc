@@ -2,8 +2,11 @@
  * Generate a local SQLite database from migration files.
  *
  * Creates `local.db` in the project root by running all migration SQL
- * files through sqlite3. This file can be opened in DB Browser for SQLite
- * or TablePlus for schema reference while editing .sql files.
+ * files through sqlite3. This includes seed data (002_seed_data.sql),
+ * so the database will contain sample rows for development.
+ *
+ * This file can be opened in DB Browser for SQLite or TablePlus for
+ * schema reference while editing .sql files.
  */
 
 import { execFileSync } from "node:child_process";

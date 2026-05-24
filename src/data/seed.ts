@@ -9,6 +9,8 @@
  */
 
 import { initDatabase } from "./init";
+// Relative path: goes up from src/data/ to project root, then into migrations/
+// If this file moves, update this path accordingly.
 import seedSql from "../../migrations/002_seed_data.sql?raw";
 
 /**
