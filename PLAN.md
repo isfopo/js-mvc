@@ -171,10 +171,15 @@ src/
       user.ts               # UserRow type
       tenet.ts              # TenetRow, TenetOptionRow types
       vote.ts               # VoteRow type
-    repos/
-      tenets.ts             # TenetsRepository extends RepositoryBase
-      votes.ts              # VotesRepository extends RepositoryBase
-      users.ts              # UsersRepository extends RepositoryBase
+    tenet/
+      repo.ts               # TenetsRepository extends RepositoryBase
+      queries/
+        *.sql               # SQL files with YAML front matter
+        queries.generated.ts # Auto-generated typed query barrel
+    vote/
+      repo.ts               # VotesRepository extends RepositoryBase
+    user/
+      repo.ts               # UsersRepository extends RepositoryBase
     requests/
       ProposeTenetRequest.ts   # implements IValidatable — validates create input
       VoteRequest.ts           # implements IValidatable — validates vote input
@@ -183,8 +188,7 @@ src/
     TenetsService.ts         # TenetService extends ServiceBase — business logic shared by HTML + API controllers
 
   infrastructure/
-    db/
-      RepositoryBase.ts     # Abstract base with generic CRUD
+    RepositoryBase.ts       # Abstract base with generic CRUD, dynamic finders, typed query helpers
     services/
       ServiceBase.ts        # Abstract base with error/validation helpers
     validation/
@@ -391,163 +395,143 @@ These models are imported by repositories (for query return types) and view-buil
 
 ## 9. Repository Layer Pattern
 
-### Base class (`infrastructure/db/RepositoryBase.ts`)
+### Base class (`infrastructure/RepositoryBase.ts`)
 
-Follows the same pattern as `ControllerBase` and `BaseHandler` — abstract base with concrete subclasses. Instances are stateless (DB is passed per-call, since Workers are concurrent).
+Follows the same pattern as `ControllerBase` and `BaseHandler` — abstract base with concrete subclasses. D1Database is injected via constructor; repos are created per-request using factory functions.
 
 ```typescript
-// src/infrastructure/db/RepositoryBase.ts
+// src/infrastructure/RepositoryBase.ts
 
-export abstract class RepositoryBase<T extends { id: number }> {
+export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
   /** Each repo declares its table name. */
   abstract readonly tableName: string;
 
+  /** Optional query map for type-safe SQL queries. Override in subclasses that use .sql files. */
+  protected readonly queries?: { [P in keyof QM]: string };
+
+  /** The database connection for this repository instance. */
+  protected readonly db: D1Database;
+
+  constructor(db: D1Database) {
+    this.db = db;
+  }
+
+  // ── Static utilities ──
+  static resolveNamedParams(sql: string, params: Record<string, unknown>): [string, unknown[]] { /* ... */ }
+  static isPlainObject(v: unknown): v is Record<string, unknown> { /* ... */ }
+  static validateOrderBy(orderBy: string): void { /* ... */ }
+  static validateColumnName(key: string): void { /* ... */ }
+
   // ── Generic CRUD ──────────────────────────────────
 
-  async findById(db: D1Database, id: number): Promise<T | null> {
-    return db
-      .prepare(`SELECT * FROM ${this.tableName} WHERE id = ?`)
-      .bind(id)
-      .first<T>() ?? null;
-  }
+  async findById(id: number): Promise<T | null> { /* ... */ }
+  async findAll(options?: { orderBy?: string; limit?: number }): Promise<T[]> { /* ... */ }
+  async create(data: Partial<T>): Promise<T> { /* ... */ }
+  async update(id: number, data: Partial<T>): Promise<T | null> { /* ... */ }
+  async delete(id: number): Promise<boolean> { /* ... */ }
+  async count(): Promise<number> { /* ... */ }
 
-  async findAll(db: D1Database, options?: {
-    orderBy?: string;
-    limit?: number;
-  }): Promise<T[]> {
-    let sql = `SELECT * FROM ${this.tableName}`;
-    const params: unknown[] = [];
-    if (options?.orderBy) sql += ` ORDER BY ${options.orderBy}`;
-    if (options?.limit) { sql += ` LIMIT ?`; params.push(options.limit); }
-    const { results } = await db.prepare(sql).bind(...params).all<T>();
-    return results;
-  }
+  // ── Dynamic finders (for simple lookups without .sql files) ──
+  // Handles null values correctly using IS NULL (since `col = NULL` is always false in SQL)
+  async findOneBy(criteria: Partial<T>): Promise<T | null> { /* ... */ }
+  async findAllBy(criteria: Partial<T>): Promise<T[]> { /* ... */ }
+  async existsBy(criteria: Partial<T>): Promise<boolean> { /* ... */ }
+  async deleteBy(criteria: Partial<T>): Promise<number> { /* ... */ }
 
-  async delete(db: D1Database, id: number): Promise<boolean> {
-    const { meta } = await db
-      .prepare(`DELETE FROM ${this.tableName} WHERE id = ?`)
-      .bind(id)
-      .run();
-    return (meta.changes ?? 0) > 0;
-  }
+  // ── Typed query helpers (for complex queries from .sql files) ──
+  protected queryOne<K extends keyof QM>(
+    name: K,
+    ...args: QM[K] extends { params: infer P } ? ({} extends P ? [] : [P]) : []
+  ): Promise<(QM[K] extends { result: infer R } ? R : unknown) | null> { /* ... */ }
 
-  async count(db: D1Database): Promise<number> {
-    const row = await db
-      .prepare(`SELECT COUNT(*) AS count FROM ${this.tableName}`)
-      .first<{ count: number }>();
-    return row?.count ?? 0;
-  }
+  protected queryAll<K extends keyof QM>(
+    name: K,
+    ...args: QM[K] extends { params: infer P } ? ({} extends P ? [] : [P]) : []
+  ): Promise<(QM[K] extends { result: infer R } ? R : unknown)[]> { /* ... */ }
 
-  /** Generic create — builds INSERT from an object's keys. */
-  async create(db: D1Database, data: Partial<T>): Promise<T> {
-    const keys = Object.keys(data as Record<string, unknown>);
-    const values = keys.map(k => (data as Record<string, unknown>)[k]);
-    const cols = keys.join(", ");
-    const placeholders = keys.map(() => "?").join(", ");
-
-    const { meta } = await db
-      .prepare(`INSERT INTO ${this.tableName} (${cols}) VALUES (${placeholders})`)
-      .bind(...values)
-      .run();
-
-    return (await this.findById(db, Number(meta.last_row_id)))!;
-  }
-
-  /** Generic update — builds SET from an object's keys. */
-  async update(db: D1Database, id: number, data: Partial<T>): Promise<T | null> {
-    const keys = Object.keys(data as Record<string, unknown>);
-    const values = keys.map(k => (data as Record<string, unknown>)[k]);
-    const setClause = keys.map(k => `${k} = ?`).join(", ");
-
-    await db
-      .prepare(`UPDATE ${this.tableName} SET ${setClause} WHERE id = ?`)
-      .bind(...values, id)
-      .run();
-
-    return this.findById(db, id);
-  }
-
-  // ── Helpers for subclasses ────────────────────────
-
-  protected queryAll<TResult>(
-    db: D1Database,
-    sql: string,
-    ...params: unknown[]
-  ): Promise<TResult[]> {
-    return db
-      .prepare(sql)
-      .bind(...params)
-      .all<TResult>()
-      .then(r => r.results);
-  }
-
-  protected queryOne<TResult>(
-    db: D1Database,
-    sql: string,
-    ...params: unknown[]
-  ): Promise<TResult | null> {
-    return db
-      .prepare(sql)
-      .bind(...params)
-      .first<TResult>();
-  }
-
-  protected execute(
-    db: D1Database,
-    sql: string,
-    ...params: unknown[]
-  ): Promise<D1Result> {
-    return db.prepare(sql).bind(...params).run();
-  }
+  protected execute<K extends keyof QM>(
+    name: K,
+    ...args: QM[K] extends { params: infer P } ? ({} extends P ? [] : [P]) : []
+  ): Promise<D1Result> { /* ... */ }
 }
 ```
 
-### Concrete example (`data/repos/tenets.ts`)
+### Security Features
+
+`RepositoryBase` includes built-in validation to prevent SQL injection:
+
+| Method | Validates | Example |
+|---|---|---|
+| `validateColumnName()` | Column names in `create`, `update`, dynamic finders | Rejects `"123abc"`, allows `"slug"` |
+| `validateOrderBy()` | ORDER BY clauses in `findAll()` | Rejects SQL keywords, allows `col ASC, col2 DESC` |
+| `_buildWhere()` | Null handling in dynamic finders | Uses `IS NULL` instead of `= NULL` |
+| Empty criteria check | Dynamic finders | Throws on `{}` to prevent full-table operations |
+
+### Concrete example (`data/tenet/repo.ts`)
 
 ```typescript
-// src/data/repos/tenets.ts
+// src/data/tenet/repo.ts
 
-import { RepositoryBase } from "../../infrastructure/db/RepositoryBase";
-import type { TenetRow, TenetOptionRow } from "../models/tenet";
+import { RepositoryBase } from "infrastructure/RepositoryBase";
+import { queries, type QueryMap } from "./queries/queries.generated";
+import type { Tenet } from "data/db-types";
+import type { TenetStatus } from "./model";
 
-export class TenetsRepository extends RepositoryBase<TenetRow> {
+export class TenetsRepository extends RepositoryBase<Tenet, QueryMap> {
   override readonly tableName = "tenets";
+  protected override readonly queries = queries;
 
-  async findBySlug(db: D1Database, slug: string): Promise<TenetRow | null> {
-    return this.queryOne<TenetRow>(
-      db, "SELECT * FROM tenets WHERE slug = ?", slug
-    );
+  // Required: base class has explicit constructor, subclasses must call super()
+  constructor(db: D1Database) {
+    super(db);
   }
 
-  async getOptions(db: D1Database, tenetId: number): Promise<TenetOptionRow[]> {
-    return this.queryAll<TenetOptionRow>(
-      db, "SELECT * FROM tenet_options WHERE tenet_id = ? ORDER BY sort_order", tenetId
-    );
+  // Simple lookups use dynamic finders (no .sql file needed)
+  // e.g., tenetsRepo(db).findOneBy({ slug: "my-tenet" })
+
+  // Complex queries use typed helpers from .sql files
+  async getOptions(tenetId: number) {
+    return this.queryAll("getOptions", { tenetId });
+    // Return type: TenetOption[] — inferred from QueryMap
+  }
+
+  async listWithProposer() {
+    return this.queryAll("listWithProposer");
+    // Return type: (Tenet & { proposer_login: string; proposer_avatar: string | null })[]
+  }
+
+  async getWithProposer(slug: string) {
+    return this.queryOne("getWithProposer", { slug });
   }
 
   async createWithOptions(
-    db: D1Database,
     tenet: { title: string; slug: string; context: string; proposed_by_id: number },
-    options: { title: string; description?: string; pros?: string; cons?: string }[]
-  ): Promise<TenetRow> {
-    const row = await this.create(db, tenet as Partial<TenetRow>);
+    options: { title: string; description?: string; pros?: string; cons?: string }[],
+  ) {
+    const row = await this.create(tenet as Partial<Tenet>);
 
     for (let i = 0; i < options.length; i++) {
       const opt = options[i];
-      await this.execute(db,
-        `INSERT INTO tenet_options (tenet_id, title, description, pros, cons, sort_order)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        row.id, opt.title, opt.description ?? null,
-        opt.pros ?? null, opt.cons ?? null, i
-      );
+      await this.execute("insertOption", {
+        tenetId: row.id,
+        title: opt.title,
+        description: opt.description ?? null,
+        pros: opt.pros ?? null,
+        cons: opt.cons ?? null,
+        sortOrder: i,
+      });
     }
 
     return row;
   }
+
+  async updateStatus(id: number, status: TenetStatus): Promise<void> {
+    await this.execute("updateStatus", { id, status });
+  }
 }
 
-// Singleton export — matches pattern from controllers and handlers
-export const tenetsRepo = new TenetsRepository();
+// Factory function — repos are created per-request with db injection
+export const tenetsRepo = (db: D1Database) => new TenetsRepository(db);
 ```
 
 ### Usage in a ViewBuilder
@@ -555,16 +539,16 @@ export const tenetsRepo = new TenetsRepository();
 ```typescript
 // pages/Tenets/view-builder.ts
 
-import { tenetsRepo } from "../../data/repos/tenets";
-import { votesRepo } from "../../data/repos/votes";
+import { tenetsRepo } from "../../data/tenet/repo";
+import { votesRepo } from "../../data/vote/repo";
 
 export const viewBuilder = {
   async show(env: Env, slug: string, currentUserId?: number) {
-    const tenet = await tenetsRepo.findBySlug(env.DB, slug);
+    const tenet = await tenetsRepo(env.DB).findOneBy({ slug });
     if (!tenet) throw new NotFoundError("Tenet not found");
 
-    const options = await tenetsRepo.getOptions(env.DB, tenet.id);
-    const votes = await votesRepo.listWithUsers(env.DB, tenet.id);
+    const options = await tenetsRepo(env.DB).getOptions(tenet.id);
+    const votes = await votesRepo(env.DB).listWithUsers(tenet.id);
     const userVote = votes.find(v => v.user_id === currentUserId) ?? null;
 
     return {
@@ -578,7 +562,7 @@ export const viewBuilder = {
 };
 ```
 
-Note: `create` and `update` on the base class use dynamic SQL via `Object.keys()`. This works for simple cases but has caveats (column order from objects isn't guaranteed, serialization of non-string types). For complex operations, subclasses should use the protected helpers (`queryAll`, `queryOne`, `execute`) directly.
+Note: `create` and `update` on the base class use dynamic SQL via `Object.keys()`. Column names are validated using `validateColumnName()` to prevent SQL injection. For complex operations, subclasses should use the protected helpers (`queryAll`, `queryOne`, `execute`) directly.
 
 ---
 
@@ -638,10 +622,9 @@ export abstract class ServiceBase {
 
 ```typescript
 import { ServiceBase } from "../infrastructure/services/ServiceBase";
-import { tenetsRepo } from "../data/repos/tenets";
-import { votesRepo } from "../data/repos/votes";
-import type { TenetRow, TenetOptionRow, TenetStatus } from "../data/models/tenet";
-import type { VoteRow } from "../data/models/vote";
+import { tenetsRepo } from "../data/tenet/repo";
+import { votesRepo } from "../data/vote/repo";
+import type { Tenet, TenetOption, Vote } from "../data/db-types";
 import type { UserInfo } from "../pages/Tenets/view-model";
 
 // ── Input DTOs ───────────────────────────────────
@@ -693,11 +676,11 @@ export interface VoteDetail {
 
 class TenetsService extends ServiceBase {
   async getBySlug(db: D1Database, slug: string): Promise<TenetDetail> {
-    const tenet = await tenetsRepo.findBySlug(db, slug);
+    const tenet = await tenetsRepo(db).findOneBy({ slug });
     if (!tenet) this.notFound("Tenet not found");
 
-    const options = await tenetsRepo.getOptions(db, tenet.id);
-    const votes = await votesRepo.listWithUsers(db, tenet.id);
+    const options = await tenetsRepo(db).getOptions(tenet.id);
+    const votes = await votesRepo(db).listWithUsers(tenet.id);
 
     return this.toDetail(tenet, options, votes);
   }
@@ -716,8 +699,7 @@ class TenetsService extends ServiceBase {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
-    const tenet = await tenetsRepo.createWithOptions(
-      db,
+    const tenet = await tenetsRepo(db).createWithOptions(
       {
         title: input.title,
         slug,
@@ -736,7 +718,7 @@ class TenetsService extends ServiceBase {
     slug: string,
     input: VoteInput,
   ): Promise<TenetDetail> {
-    const tenet = await tenetsRepo.findBySlug(db, slug);
+    const tenet = await tenetsRepo(db).findOneBy({ slug });
     if (!tenet) this.notFound("Tenet not found");
     this.require(tenet.status === "voting", "Tenet is not in voting phase");
     this.require(
@@ -744,7 +726,7 @@ class TenetsService extends ServiceBase {
       "Blocking requires a reason",
     );
 
-    await votesRepo.upsert(db, tenet.id, userId, input.choice, input.reason ?? null);
+    await votesRepo(db).upsert(tenet.id, userId, input.choice, input.reason ?? null);
 
     return this.getBySlug(db, slug);
   }
@@ -755,21 +737,21 @@ class TenetsService extends ServiceBase {
     slug: string,
     newStatus: TenetStatus,
   ): Promise<TenetDetail> {
-    const tenet = await tenetsRepo.findBySlug(db, slug);
+    const tenet = await tenetsRepo(db).findOneBy({ slug });
     if (!tenet) this.notFound("Tenet not found");
     this.require(
       this.canTransition(tenet, userId, newStatus),
       "This transition is not allowed",
     );
 
-    await tenetsRepo.updateStatus(db, tenet.id, newStatus);
+    await tenetsRepo(db).updateStatus(tenet.id, newStatus);
 
     return this.getBySlug(db, slug);
   }
 
   // ── Private helpers ────────────────────────────
 
-  private canTransition(tenet: TenetRow, userId: number, to: TenetStatus): boolean {
+  private canTransition(tenet: Tenet, userId: number, to: TenetStatus): boolean {
     const isProposer = tenet.proposed_by_id === userId;
     const transitions: Record<TenetStatus, TenetStatus[]> = {
       draft: ["voting"],
@@ -784,9 +766,9 @@ class TenetsService extends ServiceBase {
   }
 
   private toDetail(
-    tenet: TenetRow,
-    options: TenetOptionRow[],
-    votes: VoteRow[],
+    tenet: Tenet,
+    options: TenetOption[],
+    votes: Vote[],
   ): TenetDetail {
     return {
       id: tenet.id,
@@ -1143,17 +1125,17 @@ class TenetsController extends ControllerBase {
   override base = "tenets";
 
   @Get("/:slug")
-  @Exists("tenet", (c) => tenetsRepo.findBySlug(c.env.DB, c.req.param("slug")))
+  @Exists("tenet", (c) => tenetsRepo(c.env.DB).findOneBy({ slug: c.req.param("slug")! }))
   async show(c: Context) {
-    const tenet = c.get("tenet") as TenetRow;
+    const tenet = c.get("tenet") as Tenet;
     return c.render(<TenetView {...viewBuilder.show(tenet)} />);
   }
 
   @Post("/:slug/vote")
-  @Exists("tenet", (c) => tenetsRepo.findBySlug(c.env.DB, c.req.param("slug")))
+  @Exists("tenet", (c) => tenetsRepo(c.env.DB).findOneBy({ slug: c.req.param("slug")! }))
   @Validate(VoteRequest)
   async vote(c: Context) {
-    const tenet = c.get("tenet") as TenetRow;
+    const tenet = c.get("tenet") as Tenet;
     const input = c.get("validated") as VoteRequest;
     await tenetService.vote(c.env.DB, c.get("user").id, tenet.slug, input);
     return c.redirect(`/tenets/${tenet.slug}`);
@@ -1175,10 +1157,10 @@ class TenetsApiController extends ControllerBase {
   }
 
   @Post("/:slug/vote")
-  @Exists("tenet", (c) => tenetsRepo.findBySlug(c.env.DB, c.req.param("slug")))
+  @Exists("tenet", (c) => tenetsRepo(c.env.DB).findOneBy({ slug: c.req.param("slug")! }))
   @Validate(VoteRequest)
   async vote(c: Context) {
-    const tenet = c.get("tenet") as TenetRow;
+    const tenet = c.get("tenet") as Tenet;
     const input = c.get("validated") as VoteRequest;
     await tenetService.vote(c.env.DB, c.get("user").id, tenet.slug, input);
     return c.json({ success: true });
@@ -1317,6 +1299,7 @@ interface CloudflareBindings extends Cloudflare.Env {
 | `src/index.tsx` | Update root route (currently redirects to `/home`) |
 | `src/services/TenetsService.ts` | New file: business logic shared by HTML + API |
 | `src/infrastructure/services/ServiceBase.ts` | New file: abstract base class |
+| `src/infrastructure/RepositoryBase.ts` | Update: add dynamic finders, typed query helpers, security validation |
 | `src/infrastructure/validation/IValidatable.ts` | New file: interface + types |
 | `src/infrastructure/validation/GuardDescriptor.ts` | New file: guard types |
 | `src/infrastructure/validation/decorators.ts` | New file: @Exists, @Authorize, @Validate |
@@ -1335,8 +1318,8 @@ interface CloudflareBindings extends Cloudflare.Env {
 - Update `wrangler.jsonc` and regenerate types
 - Write and apply migration `001_create_tables.sql`
 - Implement `data/models/` (user.ts, tenet.ts, vote.ts)
-- Implement `data/repos/users.ts` (UsersRepository)
-- Implement `infrastructure/db/RepositoryBase.ts` (abstract base class)
+- Implement `data/user/repo.ts` (UsersRepository)
+- Update `infrastructure/RepositoryBase.ts` (add dynamic finders, typed query helpers, security validation)
 - Implement `infrastructure/services/ServiceBase.ts` (abstract base class)
 - Implement `infrastructure/validation/IValidatable.ts` (interface + types)
 - Implement `infrastructure/validation/GuardDescriptor.ts` (guard types)
@@ -1351,8 +1334,8 @@ interface CloudflareBindings extends Cloudflare.Env {
 
 ### Milestone 2 — Tenet CRUD
 
-- Implement `data/repos/tenets.ts` (TenetsRepository)
-- Implement `data/repos/votes.ts` (VotesRepository)
+- Implement `data/tenet/repo.ts` (TenetsRepository)
+- Implement `data/vote/repo.ts` (VotesRepository)
 - Implement `data/requests/ProposeTenetRequest.ts` (IValidatable form request)
 - Implement `data/requests/VoteRequest.ts` (IValidatable form request)
 - Implement `services/TenetsService.ts` (business logic — validation, authz, orchestration)
@@ -1373,7 +1356,7 @@ interface CloudflareBindings extends Cloudflare.Env {
 > **Gate:** All tests must pass before proceeding to Milestone 4. This ensures the data access layer and UI rendering are verified before building interactive features on top of them.
 
 - Add CSS module shim to vitest setup (`vitest.setup.ts`)
-- Write repository integration tests (`data/repos/tenets.test.ts`, `data/repos/votes.test.ts`, `data/repos/users.test.ts`)
+- Write repository integration tests (`data/tenet/repo.test.ts`, `data/vote/repo.test.ts`, `data/user/repo.test.ts`)
   - CRUD operations, joins, filters, ordering, edge cases (nulls, duplicates, FK violations)
 - Write view/component render tests
   - `pages/Tenets/views/index.test.tsx` — empty state, populated list, status badges
@@ -1470,13 +1453,13 @@ it("rejects empty title", () => {
 Data access layer against real D1 via the Workers pool.
 
 ```typescript
-// src/data/repos/tenets.test.ts
+// src/data/tenet/repo.test.ts
 import { env } from "cloudflare:workers";
-import { tenetsRepo } from "./tenets";
+import { tenetsRepo } from "./repo";
 
 it("creates and finds by slug", async () => {
-  await tenetsRepo.createWithOptions(env.DB, { ... }, []);
-  const found = await tenetsRepo.findBySlug(env.DB, "test-slug");
+  await tenetsRepo(env.DB).createWithOptions({ ... }, []);
+  const found = await tenetsRepo(env.DB).findOneBy({ slug: "test-slug" });
   expect(found).not.toBeNull();
 });
 ```
@@ -1588,7 +1571,7 @@ npm run test:run  # Single run (CI)
 |---|---|---|---|
 | Request validation | `ProposeTenetRequest.test.ts`, `VoteRequest.test.ts` | ✅ 10 tests | 1 (done) |
 | Service | `TenetsService.test.ts` | ✅ 8 tests | 2 (done) |
-| Repository | `tenets.test.ts`, `votes.test.ts`, `users.test.ts` | ⬜ Milestone 3 | 3 |
+| Repository | `tenet/repo.test.ts`, `vote/repo.test.ts`, `user/repo.test.ts` | ⬜ Milestone 3 | 3 |
 | View rendering | `index.test.tsx`, `show.test.tsx`, `new.test.tsx` | ⬜ Milestone 3 | 3 |
 | Component rendering | `TenetCard`, `StatusBadge`, `UserAvatar` | ⬜ Milestone 3 | 3 |
 | Controller HTTP | — | ⬜ Deferred | — |
