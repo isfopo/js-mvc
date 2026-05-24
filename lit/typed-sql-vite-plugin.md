@@ -323,7 +323,7 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
           const dbTypes = await parseMigrations("migrations/");
           await generateDbTypes(dbTypes, "src/data/db-types.d.ts", tableNameOverrides);
         }
-        if (file.endsWith(".sql") && file.includes("/queries/")) {
+        if (file.endsWith(".sql") {
           const dir = path.dirname(file);
           const files = await glob(`${dir}/*.sql`);
           await generateQueryBarrel(dir, files, tableNameOverrides);

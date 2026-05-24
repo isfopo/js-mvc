@@ -67,10 +67,13 @@ export function cssBuilderPlugin(): Plugin {
 }
 
 /**
- * Recursively find all directories with the specified name under a root path.
+ * Recursively find all .sql files under a root path and group them
+ * by their parent directory. Excludes generated files and init.sql.
+ *
+ * Returns a Map of directory path → sorted .sql file names.
  */
-async function findQueriesDirs(root: string, dirName: string = "queries"): Promise<string[]> {
-  const results: string[] = [];
+async function findSqlFileGroups(root: string): Promise<Map<string, string[]>> {
+  const groups = new Map<string, string[]>();
 
   async function walk(dir: string): Promise<void> {
     let entries: import("node:fs").Dirent[];
@@ -80,18 +83,36 @@ async function findQueriesDirs(root: string, dirName: string = "queries"): Promi
       return;
     }
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
       const fullPath = join(dir, entry.name);
-      if (entry.name === dirName) {
-        results.push(fullPath);
-      } else if (!entry.name.startsWith(".") && entry.name !== "node_modules") {
-        await walk(fullPath);
+      if (entry.isDirectory()) {
+        if (!entry.name.startsWith(".") && entry.name !== "node_modules") {
+          await walk(fullPath);
+        }
+      } else if (
+        entry.isFile() &&
+        entry.name.endsWith(".sql") &&
+        entry.name !== "init.sql" &&
+        !entry.name.includes(".generated")
+      ) {
+        const parent = dir;
+        const existing = groups.get(parent);
+        if (existing) {
+          existing.push(entry.name);
+        } else {
+          groups.set(parent, [entry.name]);
+        }
       }
     }
   }
 
   await walk(root);
-  return results;
+
+  // Sort file names within each group for deterministic output
+  for (const [, files] of groups) {
+    files.sort();
+  }
+
+  return groups;
 }
 
 /**
@@ -143,7 +164,6 @@ const cache: GenerationCache = {
 async function runSqlTypeGeneration(
   projectRoot: string,
   overrides: Record<string, string> = {},
-  queriesDirName: string = "queries",
 ): Promise<TableDef[]> {
   const migrationsDir = resolve(projectRoot, "migrations");
   const srcDir = resolve(projectRoot, "src");
@@ -184,11 +204,11 @@ async function runSqlTypeGeneration(
     }
   }
 
-  // 3. Find all queries/ directories and generate barrels (with caching)
+  // 3. Find all .sql files and generate barrels per directory (with caching)
   const tableNames = tables.map((t) => t.name);
-  const queriesDirs = await findQueriesDirs(dataDir, queriesDirName);
+  const sqlFileGroups = await findSqlFileGroups(dataDir);
 
-  for (const queriesDir of queriesDirs) {
+  for (const [queriesDir] of sqlFileGroups) {
     // Check if this barrel needs regeneration
     const barrelHash = await hashDirectory(queriesDir);
     const cachedHash = cache.barrelHashes.get(queriesDir);
@@ -198,7 +218,7 @@ async function runSqlTypeGeneration(
       continue;
     }
 
-    // Look for a model.ts in the parent directory of queries/
+    // Look for a model.ts in the parent directory of the .sql files
     const parentDir = dirname(queriesDir);
     const modelPath = join(parentDir, "model.ts");
     const modelFile = existsSync(modelPath) ? modelPath : null;
@@ -229,17 +249,6 @@ export interface SqlTypesPluginOptions {
    * }
    */
   tableNameOverrides?: Record<string, string>;
-  
-  /**
-   * Name of directories containing SQL query files.
-   * The plugin will recursively search for directories with this name under src/data/.
-   * 
-   * @default "queries"
-   * 
-   * @example
-   * "sql" // will search for directories named "sql" instead of "queries"
-   */
-  queriesDirName?: string;
 }
 
 /**
@@ -252,7 +261,7 @@ export interface SqlTypesPluginOptions {
  * - Watches for changes in dev mode and regenerates automatically
  */
 export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
-  const { tableNameOverrides = {}, queriesDirName = "queries" } = options;
+  const { tableNameOverrides = {} } = options;
   let projectRoot: string;
 
   return {
@@ -266,7 +275,7 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
     async buildStart() {
       console.log("🗄️  Generating SQL types...");
       try {
-        await runSqlTypeGeneration(projectRoot, tableNameOverrides, queriesDirName);
+        await runSqlTypeGeneration(projectRoot, tableNameOverrides);
         console.log("✓ SQL types generated");
       } catch (e) {
         console.error("✗ SQL type generation failed:", (e as Error).message);
@@ -325,16 +334,17 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
         if (file.includes("/migrations/") && file.endsWith(".sql")) {
           console.log(`\n🗄️  Migration changed: ${file.split("/").pop()}, regenerating types...`);
           debouncedRegenerate(file, async () => {
-            await runSqlTypeGeneration(projectRoot, tableNameOverrides, queriesDirName);
+            await runSqlTypeGeneration(projectRoot, tableNameOverrides);
             console.log("✓ SQL types regenerated\n");
           });
         }
 
         // Regenerate barrel on query file changes
         if (
-          file.includes(`/${queriesDirName}/`) &&
+          file.startsWith(dataDir) &&
           file.endsWith(".sql") &&
-          !file.includes("queries.generated")
+          !file.includes(".generated") &&
+          !file.endsWith("init.sql")
         ) {
           console.log(`\n🗄️  Query changed: ${file.split("/").pop()}, regenerating barrel...`);
           debouncedRegenerate(file, async () => {
