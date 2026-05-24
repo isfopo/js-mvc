@@ -150,6 +150,9 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
    */
   async create(data: Partial<T>): Promise<T> {
     const keys = Object.keys(data as Record<string, unknown>);
+    for (const key of keys) {
+      RepositoryBase.validateColumnName(key);
+    }
     const values = keys.map((k) => (data as Record<string, unknown>)[k]);
     const cols = keys.join(", ");
     const placeholders = keys.map(() => "?").join(", ");
@@ -170,6 +173,9 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
    */
   async update(id: number, data: Partial<T>): Promise<T | null> {
     const keys = Object.keys(data as Record<string, unknown>);
+    for (const key of keys) {
+      RepositoryBase.validateColumnName(key);
+    }
     const values = keys.map((k) => (data as Record<string, unknown>)[k]);
     const setClause = keys.map((k) => `${k} = ?`).join(", ");
 
@@ -186,6 +192,9 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
   /**
    * Find one row matching the given criteria.
    * Criteria keys are constrained to columns of T.
+   *
+   * Uses LIMIT 1 without ORDER BY — for deterministic results with non-unique
+   * criteria, use `findAllBy` with explicit ordering instead.
    *
    * @throws Error if criteria is empty (prevents accidental full-table scans).
    *
@@ -257,8 +266,23 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
   }
 
   /**
+   * Validate that a key is a safe SQL identifier.
+   * Must start with a letter or underscore, followed by alphanumeric/underscore.
+   * Prevents digit-leading names like "123abc" and injection via special characters.
+   *
+   * @throws Error if the key is not a safe SQL identifier.
+   */
+  static validateColumnName(key: string): void {
+    const safeKey = /^[a-zA-Z_]\w*$/;
+    if (!safeKey.test(key)) {
+      throw new Error(`Unsafe column name: "${key}"`);
+    }
+  }
+
+  /**
    * Build a WHERE clause and positional values from a criteria object.
    * Validates that keys are safe SQL identifiers and criteria is non-empty.
+   * Handles null values correctly using IS NULL (since `col = NULL` is always false in SQL).
    */
   private _buildWhere(criteria: Partial<T>): { where: string; values: unknown[] } {
     const entries = Object.entries(criteria as Record<string, unknown>);
@@ -268,19 +292,22 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
       );
     }
 
-    // Validate keys are safe SQL identifiers (must start with letter/underscore,
-    // then alphanumeric/underscore). Prevents digit-leading names like "123abc".
-    const safeKey = /^[a-zA-Z_]\w*$/;
-    for (const [key] of entries) {
-      if (!safeKey.test(key)) {
-        throw new Error(`Unsafe column name in criteria: "${key}"`);
+    const clauses: string[] = [];
+    const values: unknown[] = [];
+
+    for (const [key, value] of entries) {
+      RepositoryBase.validateColumnName(key);
+
+      if (value === null) {
+        // SQL: `col = NULL` is always false — use IS NULL instead
+        clauses.push(`${key} IS NULL`);
+      } else {
+        clauses.push(`${key} = ?`);
+        values.push(value);
       }
     }
 
-    const where = entries.map(([key]) => `${key} = ?`).join(" AND ");
-    const values = entries.map(([, value]) => value);
-
-    return { where, values };
+    return { where: clauses.join(" AND "), values };
   }
 
   // ── Typed query helpers (for use with generated QueryMap) ──

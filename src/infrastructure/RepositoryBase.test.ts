@@ -61,6 +61,15 @@ describe("RepositoryBase dynamic finders", () => {
         usersRepo(env.DB).findOneBy({} as any),
       ).rejects.toThrow("Empty criteria is not allowed");
     });
+
+    it("handles null values with IS NULL", async () => {
+      // avatar_url is nullable — findOneBy({ avatar_url: null }) should find
+      // users where avatar_url IS NULL, not `avatar_url = NULL` (always false)
+      const user = await usersRepo(env.DB).findOneBy({ avatar_url: null, login: "finder-test-user" });
+      expect(user).not.toBeNull();
+      expect(user!.login).toBe("finder-test-user");
+      expect(user!.avatar_url).toBeNull();
+    });
   });
 
   describe("findAllBy", () => {
@@ -149,11 +158,14 @@ describe("RepositoryBase dynamic finders", () => {
   });
 
   describe("_buildWhere security", () => {
+    // These tests intentionally bypass TypeScript with `as any` to verify
+    // runtime guards against invalid column names and edge cases.
+
     it("rejects digit-leading column names", async () => {
       // TypeScript would catch this at compile time, but test runtime validation
       await expect(
         usersRepo(env.DB).findOneBy({ "123abc": "value" } as any),
-      ).rejects.toThrow('Unsafe column name in criteria: "123abc"');
+      ).rejects.toThrow('Unsafe column name: "123abc"');
     });
 
     it("rejects column names with special characters", async () => {
