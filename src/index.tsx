@@ -8,6 +8,7 @@ import WellKnownController from "views/routes/WellKnown/controller";
 import AuthController from "views/routes/Auth/controller";
 
 import { initDatabase } from "infrastructure/QueryLoader";
+import { seedDatabase } from "data/seed";
 import { unflattenFormBodyMiddleware } from "infrastructure/middlewares/unflatten-form-body";
 
 import schemaSql from "data/init.sql?raw";
@@ -34,6 +35,10 @@ app.use("*", async (c, next) => {
         }
         try {
           await initDatabase(env.DB as D1Database, schemaSql);
+          if (import.meta.env.DEV) {
+            await seedDatabase(env.DB as D1Database);
+            console.log("Database seeded");
+          }
           initialized = true;
           console.log("Database initialized");
         } catch (e) {
