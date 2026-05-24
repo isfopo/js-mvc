@@ -27,6 +27,8 @@
  * converted to data-{handler}-{key} attributes on the child element.
  */
 
+import type { JSX } from "hono/jsx";
+
 // ---------------------------------------------------------------------------
 // Known DOM event names (for autocomplete — any string still works)
 // ---------------------------------------------------------------------------
@@ -80,10 +82,10 @@ type WrapperProps = {
  */
 export function Action<
   HA extends Record<string, string>,
-  E extends keyof HA
+  E extends keyof HA & string
 >(name: E) {
   function Wrapper({ tag, children, ...rest }: WrapperProps) {
-    const Tag = (tag ?? "div") as string;
+    const Tag = (tag ?? "div") as keyof JSX.IntrinsicElements;
     return (
       <Tag data-controller={name} {...rest}>
         {children}
@@ -91,16 +93,21 @@ export function Action<
     );
   }
 
-  function Trigger({ event, method, children, ...dataProps }: TriggerProps<HA, E>) {
+  function Trigger({
+    event,
+    method,
+    children,
+    ...dataProps
+  }: TriggerProps<HA, E>) {
     // Attributes to inject into the child element
     const inject: Record<string, string> = {
       "data-controller": name,
-      "data-action": `${event}->${name}#${method}`,
+      "data-action": `${event}->${String(name)}#${method}`,
     };
 
     // Convert extra props to data-{handler}-{key}
     for (const key of Object.keys(dataProps)) {
-      inject[`data-${name}-${key}`] = String(dataProps[key]);
+      inject[`data-${String(name)}-${key}`] = String(dataProps[key]);
     }
 
     // Single child element — re-render with all injected attributes merged in
@@ -110,7 +117,7 @@ export function Action<
       "props" in children &&
       !Array.isArray(children)
     ) {
-      const Tag = (children as any).tag as string;
+      const Tag = (children as any).tag as keyof JSX.IntrinsicElements;
       const childProps = (children as any).props || {};
       const childChildren = (children as any).children;
       return (
