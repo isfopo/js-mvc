@@ -11,10 +11,6 @@ export class VotesRepository extends RepositoryBase<VoteRow, QueryMap> {
   override readonly tableName = "votes";
   protected override readonly queries = queries;
 
-  constructor(db: D1Database) {
-    super(db);
-  }
-
   async listForTenet(tenetId: number): Promise<VoteWithUserRow[]> {
     return this.queryAll("listForTenet", { tenetId });
   }

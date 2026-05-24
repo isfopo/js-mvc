@@ -7,11 +7,6 @@ export class TenetsRepository extends RepositoryBase<Tenet, QueryMap> {
   override readonly tableName = "tenets";
   protected override readonly queries = queries;
 
-  // Required: base class has explicit constructor, subclasses must call super()
-  constructor(db: D1Database) {
-    super(db);
-  }
-
   async getOptions(tenetId: number) {
     return this.queryAll("getOptions", { tenetId });
   }

@@ -455,9 +455,7 @@ export class TenetsRepository extends RepositoryBase<Tenet, QueryMap> {
   override readonly tableName = "tenets";
   protected override readonly queries = queries;
 
-  constructor(db: D1Database) {
-    super(db);
-  }
+  // No constructor needed — inherited from RepositoryBase
 
   // Simple lookups use dynamic finders (no .sql file needed)
   // e.g., tenetsRepo(db).findOneBy({ slug: "my-tenet" })

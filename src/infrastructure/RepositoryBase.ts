@@ -22,6 +22,10 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
   /** The database connection for this repository instance. */
   protected readonly db: D1Database;
 
+  /**
+   * Subclasses inherit this constructor automatically — only override if you
+   * need additional initialization logic beyond storing the db reference.
+   */
   constructor(db: D1Database) {
     this.db = db;
   }

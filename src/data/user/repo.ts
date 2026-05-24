@@ -6,10 +6,6 @@ export class UsersRepository extends RepositoryBase<UserRow, QueryMap> {
   override readonly tableName = "users";
   protected override readonly queries = queries;
 
-  constructor(db: D1Database) {
-    super(db);
-  }
-
   /**
    * Upsert a user from GitHub profile data.
    * Returns the user row (either newly created or updated).
