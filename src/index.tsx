@@ -20,8 +20,15 @@ app.use("*", unflattenFormBodyMiddleware());
 
 // Run DB schema initialization once on first request
 let initialized = false;
+let initFailed = false;
 let initPromise: Promise<void> | null = null;
 app.use("*", async (c, next) => {
+  // If a previous initialization attempt failed, reject all requests
+  // rather than serving with an uninitialized database
+  if (initFailed) {
+    return c.text("Database unavailable — check server logs", 503);
+  }
+
   if (!initialized) {
     if (!initPromise) {
       initPromise = (async () => {
@@ -31,6 +38,7 @@ app.use("*", async (c, next) => {
             "DB binding is not available. Available keys:",
             Object.keys(env),
           );
+          initFailed = true;
           return;
         }
         try {
@@ -43,10 +51,16 @@ app.use("*", async (c, next) => {
           console.log("Database initialized");
         } catch (e) {
           console.error("Database init failed:", e);
+          initFailed = true;
         }
       })();
     }
     await initPromise;
+
+    // Check again after awaiting — init may have failed
+    if (initFailed) {
+      return c.text("Database unavailable — check server logs", 503);
+    }
   }
   await next();
 });

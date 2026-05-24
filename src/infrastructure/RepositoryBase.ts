@@ -45,9 +45,39 @@ export abstract class RepositoryBase<T extends { id: number }> {
     return [resolved, values];
   }
 
-  /** Check if value is a plain object (not null, array, or primitive). */
+  /** Check if value is a plain object (not null, array, Date, Map, Set, etc.). */
   static isPlainObject(v: unknown): v is Record<string, unknown> {
-    return typeof v === "object" && v !== null && !Array.isArray(v);
+    return Object.prototype.toString.call(v) === "[object Object]";
+  }
+
+  /**
+   * Validate an ORDER BY clause to prevent SQL injection.
+   * Only allows column names (alphanumeric + underscore), commas,
+   * spaces, and ASC/DESC keywords.
+   *
+   * @throws Error if the clause contains unsafe characters or patterns.
+   */
+  static validateOrderBy(orderBy: string): void {
+    // Allow: column_name, column_name ASC, col1 DESC, col2 ASC, table.column
+    const safe = /^[\w\s,.]+$/;
+    if (!safe.test(orderBy)) {
+      throw new Error(
+        `Unsafe ORDER BY clause: "${orderBy}". ` +
+        `Only column names, commas, spaces, and ASC/DESC are allowed.`,
+      );
+    }
+    // Reject SQL keywords that could be used for injection
+    const dangerous = /\b(UNION|SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|EXEC|EXECUTE|INTO|FROM|WHERE|HAVING|GROUP|ORDER|LIMIT|OFFSET|JOIN|LEFT|RIGHT|INNER|OUTER|CROSS|ON|AS|SET|VALUES)\b/i;
+    // Allow ORDER and ASC/DESC but reject everything else
+    const stripped = orderBy
+      .replace(/\bASC\b/gi, "")
+      .replace(/\bDESC\b/gi, "");
+    if (dangerous.test(stripped)) {
+      throw new Error(
+        `Unsafe ORDER BY clause: "${orderBy}". ` +
+        `SQL keywords are not allowed in ORDER BY.`,
+      );
+    }
   }
 
   // ── Generic CRUD ──────────────────────────────────
@@ -61,14 +91,22 @@ export abstract class RepositoryBase<T extends { id: number }> {
     return row ?? null;
   }
 
-  /** Find all rows, optionally ordered and limited. */
+  /**
+   * Find all rows, optionally ordered and limited.
+   *
+   * @security `orderBy` is validated against a whitelist of safe patterns
+   * (column names, commas, ASC/DESC). Never pass user input directly.
+   */
   async findAll(
     db: D1Database,
     options?: { orderBy?: string; limit?: number },
   ): Promise<T[]> {
     let sql = `SELECT * FROM ${this.tableName}`;
     const params: unknown[] = [];
-    if (options?.orderBy) sql += ` ORDER BY ${options.orderBy}`;
+    if (options?.orderBy) {
+      RepositoryBase.validateOrderBy(options.orderBy);
+      sql += ` ORDER BY ${options.orderBy}`;
+    }
     if (options?.limit) {
       sql += ` LIMIT ?`;
       params.push(options.limit);
