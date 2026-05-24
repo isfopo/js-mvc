@@ -38,43 +38,21 @@ export class TenetsRepository extends RepositoryBase<Tenet, QueryMap> {
       cons?: string;
     }[],
   ) {
-    // Build the INSERT statement for the tenet
-    const keys = Object.keys(tenet);
-    const values = keys.map((k) => (tenet as Record<string, unknown>)[k]);
-    const cols = keys.join(", ");
-    const placeholders = keys.map(() => "?").join(", ");
+    const row = await this.create(tenet as Partial<Tenet>);
 
-    const stmts: D1PreparedStatement[] = [
-      this.db
-        .prepare(
-          `INSERT INTO ${this.tableName} (${cols}) VALUES (${placeholders})`,
-        )
-        .bind(...values),
-    ];
-
-    // Build INSERT statements for each option using last_insert_rowid()
     for (let i = 0; i < options.length; i++) {
       const opt = options[i];
-      stmts.push(
-        this.db
-          .prepare(
-            `INSERT INTO tenet_options (tenet_id, title, description, pros, cons, sort_order) VALUES (last_insert_rowid(), ?, ?, ?, ?, ?)`,
-          )
-          .bind(
-            opt.title,
-            opt.description ?? null,
-            opt.pros ?? null,
-            opt.cons ?? null,
-            i,
-          ),
-      );
+      await this.execute("insertOption", {
+        tenetId: row.id,
+        title: opt.title,
+        description: opt.description ?? null,
+        pros: opt.pros ?? null,
+        cons: opt.cons ?? null,
+        sortOrder: i,
+      });
     }
 
-    // db.batch() executes all statements atomically — if any fail, all roll back
-    const results = await this.db.batch(stmts);
-    const insertedId = (results[0].meta as { last_row_id: number }).last_row_id;
-
-    return (await this.findById(insertedId))!;
+    return row;
   }
 
   async updateStatus(id: number, status: TenetStatus): Promise<void> {
