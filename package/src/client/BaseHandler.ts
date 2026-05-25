@@ -17,7 +17,7 @@
  *         data-confirm-message="Delete?">Delete</button>
  */
 
-import type { Handler } from "./types";
+import type { Handler, LifecycleName } from "./types";
 
 export abstract class BaseHandler implements Handler {
   /** The root element that declared data-controller */
@@ -29,12 +29,42 @@ export abstract class BaseHandler implements Handler {
 
   // --- Lifecycle ---
 
+  /** Called before the handler is wired up (setup, initial state) */
+  beforeConnect(): void {
+    /* override in subclasses if needed */
+  }
+
   /** Called automatically after the handler is wired up */
   abstract connect(): void;
+
+  /** Called after all wiring is complete (safe to interact with DOM) */
+  afterConnect(): void {
+    /* override in subclasses if needed */
+  }
+
+  /** Called before the handler is torn down */
+  beforeDisconnect(): void {
+    /* override in subclasses if needed */
+  }
 
   /** Called when the element is removed from the DOM (cleanup) */
   disconnect(): void {
     /* override in subclasses if needed */
+  }
+
+  /** Called when the element enters the viewport */
+  appear(): void {
+    /* override in subclasses if needed */
+  }
+
+  /** Called when the element leaves the viewport */
+  disappear(): void {
+    /* override in subclasses if needed */
+  }
+
+  /** Called when an error occurs in any lifecycle method */
+  error(_error: Error, _lifecycle: LifecycleName): void {
+    /* override in subclasses if needed — default logs to console */
   }
 
   // --- Helpers ---

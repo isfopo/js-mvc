@@ -19,10 +19,39 @@ export interface HandlerConstructor {
   readonly handlerName: string;
 }
 
+/** Names of lifecycle methods that can emit errors */
+export type LifecycleName =
+  | "beforeConnect"
+  | "connect"
+  | "afterConnect"
+  | "beforeDisconnect"
+  | "disconnect"
+  | "appear"
+  | "disappear";
+
 /** Minimal handler interface used by the dispatcher */
 export interface Handler {
+  /** Called before the handler is wired up (setup, initial state) */
+  beforeConnect?(): void;
+
   /** Called after the handler is instantiated and targets are resolved */
   connect(): void;
-  /** Called when the element is removed from the DOM */
+
+  /** Called after all wiring is complete (safe to interact with DOM) */
+  afterConnect?(): void;
+
+  /** Called before the handler is torn down */
+  beforeDisconnect?(): void;
+
+  /** Called when the element is removed from the DOM (cleanup) */
   disconnect(): void;
+
+  /** Called when the element enters the viewport */
+  appear?(): void;
+
+  /** Called when the element leaves the viewport */
+  disappear?(): void;
+
+  /** Called when an error occurs in any lifecycle method */
+  error?(error: Error, lifecycle: LifecycleName): void;
 }
