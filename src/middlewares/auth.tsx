@@ -68,7 +68,7 @@ export function requireAuth(): MiddlewareHandler {
     }
 
     // Attach user to context
-    c.set("user", user);
+    c.set("layoutProps", { user });
 
     await next();
   };
