@@ -3,7 +3,8 @@ import { fileURLToPath } from "node:url";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { defineConfig } from "vite";
 import {
-  cssBuilderPlugin,
+  clientBuildPlugin,
+  cssBuildPlugin,
   sqlTransformPlugin,
   sqlTypesPlugin,
 } from "./package/plugins/index.ts";
@@ -34,7 +35,8 @@ export default defineConfig({
         people: "Person",
       },
     }),
-    cssBuilderPlugin(),
+    cssBuildPlugin(),
+    clientBuildPlugin(),
     cloudflare({ inspectorPort: 9229 }),
   ],
   esbuild: {
