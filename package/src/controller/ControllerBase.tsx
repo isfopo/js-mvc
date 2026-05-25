@@ -73,37 +73,31 @@ export const Patch = (path: string) => httpRoute("patch", path);
 /**
  * A layout component provided by the project.
  */
-export type LayoutComponent<P extends PropsWithChildren> = FC<P>;
+export type LayoutComponent = FC;
 
 export type ErrorHandler<T extends Env> = (
   c: Context<T>,
   error: unknown,
 ) => Response | Promise<Response>;
 
-export interface ControllerRenderConfig<
-  T extends Env,
-  P extends PropsWithChildren,
-> {
-  layout: LayoutComponent<P>;
+export interface ControllerRenderConfig<T extends Env> {
+  layout: LayoutComponent;
   handleError: ErrorHandler<T>;
 }
 
 /* ---------- Controller base class ---------- */
 
-export abstract class ControllerBase<
-  T extends Env,
-  P extends PropsWithChildren = PropsWithChildren,
-> {
+export abstract class ControllerBase<T extends Env> {
   _app: Hono<T>;
   abstract base: string;
-  renderConfig?: ControllerRenderConfig<T, P>;
+  renderConfig?: ControllerRenderConfig<T>;
 
   constructor() {
     this._app = new Hono();
   }
 
   /** Set render config for this controller instance */
-  configureRendering(config: ControllerRenderConfig<T, P>): void {
+  configureRendering(config: ControllerRenderConfig<T>): void {
     this.renderConfig = config;
   }
 
@@ -128,7 +122,7 @@ export abstract class ControllerBase<
           return c.html(doctype + renderToString(content));
         }
         const body = renderToString(
-          <Layout {...c.get("layoutProps")} currentPath={c.req.path}>
+          <Layout {...c.var} currentPath={c.req.path}>
             {content}
           </Layout>,
         );
