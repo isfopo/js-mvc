@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 
-import HomeController from "views/routes/Home/controller";
 import TenetsController from "views/routes/Tenets/controller";
 import TenetsApiController from "views/routes/Tenets/controller.api";
 import WellKnownController from "views/routes/WellKnown/controller";
@@ -64,7 +63,6 @@ app.use("*", async (c, next) => {
   await next();
 });
 
-HomeController.register(app);
 TenetsController.register(app);
 TenetsApiController.register(app);
 WellKnownController.register(app);
