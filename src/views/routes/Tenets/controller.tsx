@@ -26,7 +26,7 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
 
   @Get("/")
   async index(c: Context) {
-    const user = c.get("user") as unknown as UserRow;
+    const user = c.get("user") as UserRow;
     const result = await tenetService.list((c.env as CloudflareBindings).DB);
     return c.render(<IndexView {...viewBuilder.index(result.tenets, user)} />);
   }
@@ -39,7 +39,7 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
   @Post("/")
   @Validate(ProposeTenetRequest)
   async create(c: Context) {
-    const user = c.get("user") as unknown as UserRow;
+    const user = c.get("user") as UserRow;
     const input = c.get("validated") as ProposeTenetRequest;
     const tenet = await tenetService.propose(
       (c.env as CloudflareBindings).DB,
@@ -56,7 +56,7 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
     }),
   )
   async show(c: Context) {
-    const user = c.get("user") as unknown as UserRow;
+    const user = c.get("user") as UserRow;
     const tenetRow = c.get("tenet") as TenetRow;
     const detail = await tenetService.getBySlug(
       (c.env as CloudflareBindings).DB,
@@ -73,7 +73,7 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
   )
   @Validate(VoteRequest)
   async vote(c: Context) {
-    const user = c.get("user") as unknown as UserRow;
+    const user = c.get("user") as UserRow;
     const tenetRow = c.get("tenet") as TenetRow;
     const input = c.get("validated") as VoteRequest;
     await tenetService.vote(
@@ -92,7 +92,7 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
     }),
   )
   async transition(c: Context) {
-    const user = c.get("user") as unknown as UserRow;
+    const user = c.get("user") as UserRow;
     const tenetRow = c.get("tenet") as TenetRow;
     const body = await c.req.parseBody();
     const newStatus = body.status as string;

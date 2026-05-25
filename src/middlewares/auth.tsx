@@ -68,7 +68,7 @@ export function requireAuth(): MiddlewareHandler {
     }
 
     // Attach user to context (for controller access)
-    c.set("user", user as unknown as object);
+    c.set("user", user as object);
 
     await next();
   };

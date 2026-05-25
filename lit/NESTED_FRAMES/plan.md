@@ -584,7 +584,7 @@ app.use("*", async (c, next) => {
   if (!initialized) {
     if (!initPromise) {
       initPromise = (async () => {
-        const env = c.env as unknown as Record<string, unknown>;
+        const env = c.env as Record<string, unknown>;
         if (!env.DB) {
           console.error(
             "DB binding is not available. Available keys:",

@@ -1,20 +1,31 @@
 import type { FC } from "hono/jsx";
-import type { TenetListViewModel } from "views/pages/Tenets/view-model";
 import { TenetCard } from "views/components/TenetCard";
 import styles from "./index.module.css";
+import { TenetSummary, UserInfo } from "data/tenet/service";
+
+export interface TenetListViewModel {
+  tenets: TenetSummary[];
+  currentUser: UserInfo;
+}
 
 export const View: FC<TenetListViewModel> = ({ tenets }) => (
   <section>
     <header>
       <nav>
         <ul>
-          <li><hgroup>
-            <h1>Decisions</h1>
-            <p>Architecture decision records for your team.</p>
-          </hgroup></li>
+          <li>
+            <hgroup>
+              <h1>Decisions</h1>
+              <p>Architecture decision records for your team.</p>
+            </hgroup>
+          </li>
         </ul>
         <ul>
-          <li><a href="/tenets/new" role="button">Propose</a></li>
+          <li>
+            <a href="/tenets/new" role="button">
+              Propose
+            </a>
+          </li>
         </ul>
       </nav>
     </header>
@@ -23,7 +34,9 @@ export const View: FC<TenetListViewModel> = ({ tenets }) => (
       <article class={styles.emptyState}>
         <p>No tenets yet.</p>
         <p>Propose the first architecture decision for your team.</p>
-        <a href="/tenets/new" role="button">Propose a Tenet</a>
+        <a href="/tenets/new" role="button">
+          Propose a Tenet
+        </a>
       </article>
     ) : (
       <div class={styles.tenetGrid}>
