@@ -110,7 +110,10 @@ export function Action<
       inject[`data-${String(name)}-${key}`] = String(dataProps[key]);
     }
 
-    // Single child element — re-render with all injected attributes merged in
+    // Single child element — re-render with all injected attributes merged in.
+    // NOTE: This relies on Hono's internal VNode shape ({ tag, props, children }).
+    // This is an undocumented implementation detail. If Trigger stops injecting
+    // attributes after a Hono upgrade, check that the VNode structure hasn't changed.
     if (
       children != null &&
       typeof children === "object" &&

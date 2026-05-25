@@ -121,6 +121,10 @@ export abstract class ControllerBase<T extends Env> {
         if (!Layout) {
           return c.html(doctype + renderToString(content));
         }
+        // All values set via c.set() are spread as props into the Layout.
+        // This means middleware-set values (e.g., c.set("user", ...)) become
+        // layout props automatically. Avoid setting internal-only values
+        // via c.set() if they should not leak to the layout.
         const body = renderToString(
           <Layout {...c.var} currentPath={c.req.path}>
             {content}

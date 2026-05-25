@@ -6,7 +6,7 @@ import { resolve, dirname, basename } from "node:path";
 export interface CssBuildPluginOptions {
   /**
    * Source directories to scan for CSS files (relative to project root or absolute).
-   * @default ["src/views/styles", "src/views/components", "src/views/pages"]
+   * @default ["src/views/styles", "src/views/components", "src/views/routes"]
    */
   sourceDirs?: string[];
 
@@ -78,7 +78,7 @@ function resolvePaths(
       options.sourceDirs ?? [
         "src/views/styles",
         "src/views/components",
-        "src/views/pages",
+        "src/views/routes",
       ]
     ).map((d) => toAbsolute(d, d)),
     outDir: toAbsolute(options.outDir, "public/.generated/styles"),
@@ -235,7 +235,7 @@ function combineCSS(paths: ResolvedPaths): string {
  * Build CSS bundle and write to output directory.
  * Returns the minified CSS string.
  */
-export function buildCss(paths: ResolvedPaths): string {
+function buildCss(paths: ResolvedPaths): string {
   mkdirSync(paths.outDir, { recursive: true });
 
   const fullCSS = combineCSS(paths);
@@ -287,26 +287,30 @@ export function cssBuildPlugin(options: CssBuildPluginOptions = {}): Plugin {
         const isExcluded = resolvedPaths.excludePaths.some((p) =>
           file.includes(p),
         );
+        const isInSourceDir = resolvedPaths.sourceDirs.some((d) =>
+          file.startsWith(d),
+        );
         if (
-          file.endsWith(".css") ||
+          (file.endsWith(".css") ||
           file.endsWith(".module.css") ||
-          file.endsWith(".svg")
+          file.endsWith(".svg")) &&
+          !isExcluded &&
+          isInSourceDir &&
+          !isBuilding
         ) {
-          if (!isExcluded && !isBuilding) {
-            isBuilding = true;
-            console.log(`\n📝 ${basename(file)} changed, rebuilding CSS...`);
-            try {
-              buildCss(resolvedPaths);
-              // Trigger HMR by touching the configured layout file
-              if (resolvedPaths.hmrTriggerFile) {
-                server.watcher.emit("change", resolvedPaths.hmrTriggerFile);
-              }
-              console.log("✓ CSS rebuilt\n");
-            } catch (err) {
-              console.error("✗ CSS build failed:", (err as Error).message);
-            } finally {
-              isBuilding = false;
+          isBuilding = true;
+          console.log(`\n📝 ${basename(file)} changed, rebuilding CSS...`);
+          try {
+            buildCss(resolvedPaths);
+            // Trigger HMR by touching the configured layout file
+            if (resolvedPaths.hmrTriggerFile) {
+              server.watcher.emit("change", resolvedPaths.hmrTriggerFile);
             }
+            console.log("✓ CSS rebuilt\n");
+          } catch (err) {
+            console.error("✗ CSS build failed:", (err as Error).message);
+          } finally {
+            isBuilding = false;
           }
         }
       });

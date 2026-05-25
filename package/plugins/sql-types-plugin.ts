@@ -430,6 +430,14 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
           });
         }
       });
+
+      // Clean up debounce timeout when server shuts down
+      server.httpServer?.on("close", () => {
+        if (regenerationTimeout) {
+          clearTimeout(regenerationTimeout);
+          regenerationTimeout = null;
+        }
+      });
     },
   };
 }

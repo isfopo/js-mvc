@@ -285,7 +285,11 @@ The package uses `noImplicitOverride: true` and Stage 3 decorators. Your `tsconf
     "jsx": "preserve",
     "jsxImportSource": "hono/jsx",
     "strict": true,
-    "noImplicitOverride": true
+    "noImplicitOverride": true,
+    "lib": ["ESNext", "DOM"]
   }
 }
 ```
+
+> **Note:** `"DOM"` is required in `lib` for client-side features (`BaseHandler`, `Action`, `State`).
+> Server-only projects can omit it, but most projects will need it.

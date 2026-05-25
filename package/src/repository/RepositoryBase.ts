@@ -134,7 +134,7 @@ export abstract class RepositoryBase<
       .prepare(sql)
       .bind(...params)
       .all<T>();
-    return results;
+    return results ?? [];
   }
 
   /** Delete a row by primary key. Returns true if a row was deleted. */
@@ -237,7 +237,7 @@ export abstract class RepositoryBase<
       .prepare(`SELECT * FROM ${this.tableName} WHERE ${where}`)
       .bind(...values)
       .all<T>();
-    return results;
+    return results ?? [];
   }
 
   /**

@@ -209,7 +209,7 @@ function createObserver(): MutationObserver {
       for (const node of Array.from(mutation.addedNodes)) {
         if (node.nodeType === Node.ELEMENT_NODE) {
           const el = node as HTMLElement;
-          if (el.hasAttribute?.("data-controller")) {
+          if (el.hasAttribute("data-controller")) {
             connectElement(el);
           }
           // Also scan descendants
