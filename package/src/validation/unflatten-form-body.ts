@@ -62,7 +62,7 @@ export function unflattenFormBody(
   }
 
   // Compact sparse arrays (e.g., { "0": ..., "1": ... } → [...] )
-  return compactArrays(result);
+  return compactArrays(result) as Record<string, unknown>;
 }
 
 /** Recursively convert array-like objects into true arrays. */
