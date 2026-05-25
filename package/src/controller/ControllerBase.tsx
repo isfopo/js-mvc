@@ -157,7 +157,7 @@ export abstract class ControllerBase<
           }
           // Default fallback — prevents unhandled rejections if
           // configureRendering() was never called on this controller.
-          return c.html("<h1>Internal Server Error</h1>", 500);
+          return c.html("<!DOCTYPE html><h1>Internal Server Error</h1>", 500);
         }
       });
     }

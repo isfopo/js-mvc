@@ -35,7 +35,9 @@ export default defineConfig({
         people: "Person",
       },
     }),
-    cssBuildPlugin(),
+    cssBuildPlugin({
+      sourceDirs: ["src/views/styles", "src/views/components", "src/views/routes"],
+    }),
     clientBuildPlugin(),
     cloudflare({ inspectorPort: 9229 }),
   ],

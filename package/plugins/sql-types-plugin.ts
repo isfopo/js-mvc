@@ -123,13 +123,15 @@ interface GenerationCache {
   barrelHashes: Map<string, string>;
 }
 
-const cache: GenerationCache = {
-  migrationsHash: "",
-  tables: [],
-  barrelHashes: new Map(),
-};
+function createCache(): GenerationCache {
+  return {
+    migrationsHash: "",
+    tables: [],
+    barrelHashes: new Map(),
+  };
+}
 
-function clearCache(): void {
+function clearCache(cache: GenerationCache): void {
   cache.migrationsHash = "";
   cache.tables = [];
   cache.barrelHashes.clear();
@@ -228,6 +230,7 @@ function resolvePaths(
 async function runSqlTypeGeneration(
   paths: ResolvedPaths,
   tableNameOverrides: Record<string, string>,
+  cache: GenerationCache,
 ): Promise<TableDef[]> {
   // 1. Parse migrations and generate db-types.d.ts (with caching)
   const migrationsHash = await hashDirectory(
@@ -325,6 +328,7 @@ async function runSqlTypeGeneration(
 export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
   let projectRoot: string;
   let resolvedPaths: ResolvedPaths;
+  const cache = createCache();
 
   return {
     name: "sql-types",
@@ -337,11 +341,12 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
 
     async buildStart() {
       console.log("🗄️  Generating SQL types...");
-      clearCache();
+      clearCache(cache);
       try {
         await runSqlTypeGeneration(
           resolvedPaths,
           options.tableNameOverrides ?? {},
+          cache,
         );
         console.log("✓ SQL types generated");
       } catch (e) {
@@ -379,7 +384,7 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
       server.watcher.on("change", async (file: string) => {
         // Regenerate on migration changes
         if (
-          file.includes("/migrations/") &&
+          file.startsWith(resolvedPaths.migrationsDir) &&
           file.endsWith(".sql") &&
           !resolvedPaths.sqlExcludePatterns.some((p) => file.includes(p))
         ) {
@@ -390,6 +395,7 @@ export function sqlTypesPlugin(options: SqlTypesPluginOptions = {}): Plugin {
             await runSqlTypeGeneration(
               resolvedPaths,
               options.tableNameOverrides ?? {},
+              cache,
             );
             console.log("✓ SQL types regenerated\n");
           });

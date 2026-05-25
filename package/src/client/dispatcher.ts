@@ -206,7 +206,7 @@ function createObserver(): MutationObserver {
   return new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       // Connect new elements
-      for (const node of Array.from(mutation.addedNodes)) {
+      for (const node of mutation.addedNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) {
           const el = node as HTMLElement;
           if (el.hasAttribute?.("data-controller")) {
@@ -221,7 +221,7 @@ function createObserver(): MutationObserver {
         }
       }
       // Disconnect removed elements
-      for (const node of Array.from(mutation.removedNodes)) {
+      for (const node of mutation.removedNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) {
           const el = node as HTMLElement;
           disconnectElement(el);
