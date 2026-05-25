@@ -5,7 +5,7 @@ import { usersRepo } from "data/user/repo";
 import { tenetsRepo } from "data/tenet/repo";
 import { votesRepo } from "data/vote/repo";
 import schemaSql from "data/init.sql?raw";
-import { RepositoryBase } from "./RepositoryBase";
+import { RepositoryBase } from "js-mvc/repository/RepositoryBase";
 
 beforeAll(async () => {
   await initDatabase(env.DB, schemaSql);

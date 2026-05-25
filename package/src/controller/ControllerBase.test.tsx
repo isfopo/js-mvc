@@ -76,7 +76,7 @@ describe("@Validate guard execution", () => {
 
     controller.register(app);
 
-    const client = testClient(app);
+    const client = testClient(app) as any;
 
     // POST with form data (the default body parsing path)
     const res = await client.test.$post();
@@ -91,7 +91,7 @@ describe("@Validate guard execution", () => {
 
     controller.register(app);
 
-    const client = testClient(app);
+    const client = testClient(app) as any;
 
     const res = await client.test.$post();
 

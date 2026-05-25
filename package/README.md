@@ -255,9 +255,17 @@ import { sqlTransformPlugin, sqlTypesPlugin, cssBuildPlugin, clientBuildPlugin }
 export default {
   plugins: [
     sqlTransformPlugin(),
-    sqlTypesPlugin({ sqlDir: "./src/data/requests" }),
-    cssBuildPlugin({ entry: "./src/styles/app.css" }),
-    clientBuildPlugin({ entry: "./src/client/main.ts" }),
+    sqlTypesPlugin({
+      tableNameOverrides: {
+        people: "Person",
+      },
+    }),
+    cssBuildPlugin({
+      sourceDirs: ["src/styles", "src/components"],
+    }),
+    clientBuildPlugin({
+      entryPoint: "src/client-entry.ts",
+    }),
   ],
 }
 ```

@@ -36,12 +36,18 @@ export function clientBuildPlugin(options: ClientBuildPluginOptions = {}): Plugi
     esbuildOptions = {},
   } = options;
 
+  let isBuild = false;
+
   return {
     name: "client-build",
 
+    configResolved(config) {
+      isBuild = config.command === "build";
+    },
+
     async closeBundle() {
       // Only run during production builds, not dev
-      if (process.env.NODE_ENV === "development") {
+      if (!isBuild) {
         return;
       }
 

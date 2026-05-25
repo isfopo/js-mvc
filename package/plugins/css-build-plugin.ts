@@ -311,17 +311,5 @@ export function cssBuildPlugin(options: CssBuildPluginOptions = {}): Plugin {
         }
       });
     },
-
-    async closeBundle() {
-      // Production build safety net (buildStart already ran, but this ensures it runs after all other plugins)
-      if (process.env.NODE_ENV !== "development") {
-        console.log("🔨 Building CSS (production)...");
-        try {
-          buildCss(resolvedPaths);
-        } catch (err) {
-          console.error("✗ CSS build failed:", (err as Error).message);
-        }
-      }
-    },
   };
 }
