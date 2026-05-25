@@ -46,6 +46,13 @@ export interface CssBuildPluginOptions {
    * @default true
    */
   runInDev?: boolean;
+
+  /**
+   * File path to touch after CSS rebuild to trigger HMR.
+   * Set to false to disable HMR triggering.
+   * @default "src/views/routes/Shared/Layout.tsx"
+   */
+  hmrTriggerFile?: string | false;
 }
 
 interface ResolvedPaths {
@@ -56,6 +63,7 @@ interface ResolvedPaths {
   excludePaths: string[];
   svgIconDir: string;
   runInDev: boolean;
+  hmrTriggerFile: string | false;
 }
 
 function resolvePaths(
@@ -84,6 +92,10 @@ function resolvePaths(
     excludePaths: options.excludePaths ?? ["/public/", "/.generated/"],
     svgIconDir: toAbsolute(options.svgIconDir, "src/assets"),
     runInDev: options.runInDev ?? true,
+    hmrTriggerFile:
+      options.hmrTriggerFile === false
+        ? false
+        : toAbsolute(options.hmrTriggerFile, "src/views/routes/Shared/Layout.tsx"),
   };
 }
 
@@ -285,17 +297,10 @@ export function cssBuildPlugin(options: CssBuildPluginOptions = {}): Plugin {
             console.log(`\n📝 ${basename(file)} changed, rebuilding CSS...`);
             try {
               buildCss(resolvedPaths);
-              // Trigger HMR by touching the Layout file
-              const layoutPath = resolve(
-                resolvedPaths.outDir,
-                "../../..",
-                "src",
-                "views",
-                "routes",
-                "Shared",
-                "Layout.tsx",
-              );
-              server.watcher.emit("change", layoutPath);
+              // Trigger HMR by touching the configured layout file
+              if (resolvedPaths.hmrTriggerFile) {
+                server.watcher.emit("change", resolvedPaths.hmrTriggerFile);
+              }
               console.log("✓ CSS rebuilt\n");
             } catch (err) {
               console.error("✗ CSS build failed:", (err as Error).message);

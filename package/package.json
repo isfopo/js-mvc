@@ -3,6 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "clean-css": "^5.4.0",
+    "gray-matter": "^4.0.3",
+    "hono": "^4.12.16"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260524.1"
+  },
   "exports": {
     "./types": "./src/types.ts",
     "./controller/ControllerBase": "./src/controller/ControllerBase.tsx",

@@ -92,7 +92,7 @@ export interface ControllerRenderConfig<
 
 export abstract class ControllerBase<
   T extends Env,
-  P extends PropsWithChildren,
+  P extends PropsWithChildren = PropsWithChildren,
 > {
   _app: Hono<T>;
   abstract base: string;
@@ -155,7 +155,9 @@ export abstract class ControllerBase<
           if (errorHandler) {
             return errorHandler(c, error);
           }
-          throw error;
+          // Default fallback — prevents unhandled rejections if
+          // configureRendering() was never called on this controller.
+          return c.html("<h1>Internal Server Error</h1>", 500);
         }
       });
     }

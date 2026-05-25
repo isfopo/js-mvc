@@ -6,10 +6,10 @@ export type StatusCode =
   | 500 | 502 | 503;
 
 export class AppError extends Error {
-  readonly statusCode: number;
+  readonly statusCode: StatusCode;
   override name: string = "AppError";
 
-  constructor(message: string, statusCode: number) {
+  constructor(message: string, statusCode: StatusCode) {
     super(message);
     this.statusCode = statusCode;
   }

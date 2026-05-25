@@ -139,12 +139,17 @@ function connectElement(element: HTMLElement): void {
     // Phase 5: set up IntersectionObserver for appear/disappear
     let intersectionObserver: IntersectionObserver | undefined;
     if (instance.appear || instance.disappear) {
+      let isVisible = false;
       intersectionObserver = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
-            if (entry.isIntersecting) {
+            // Only fire once per visibility change to avoid
+            // repeated invocations during scrolling.
+            if (entry.isIntersecting && !isVisible) {
+              isVisible = true;
               invokeLifecycle(instance, "appear");
-            } else {
+            } else if (!entry.isIntersecting && isVisible) {
+              isVisible = false;
               invokeLifecycle(instance, "disappear");
             }
           }

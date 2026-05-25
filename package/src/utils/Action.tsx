@@ -81,8 +81,8 @@ type WrapperProps = {
  * for the handler (e.g. confirm).
  */
 export function Action<
-  HA extends Record<string, string>,
-  E extends keyof HA & string
+  HA extends Record<string, string> = Record<string, string>,
+  E extends keyof HA & string = string
 >(name: E) {
   function Wrapper({ tag, children, ...rest }: WrapperProps) {
     const Tag = (tag ?? "div") as keyof JSX.IntrinsicElements;
