@@ -20,6 +20,7 @@ app.use("*", unflattenFormBodyMiddleware());
 let initialized = false;
 let initFailed = false;
 let initPromise: Promise<void> | null = null;
+
 app.use("*", async (c, next) => {
   // If a previous initialization attempt failed, reject all requests
   // rather than serving with an uninitialized database
