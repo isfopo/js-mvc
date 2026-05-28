@@ -36,7 +36,7 @@ export default defineConfig({
       },
     }),
     cssBuildPlugin({
-      sourceDirs: ["src/views/styles", "src/views/components", "src/views/routes"],
+      sourceDirs: ["src/views/tokens", "src/views/elements", "src/views/components", "src/views/routes"],
     }),
     clientBuildPlugin(),
     cloudflare({ inspectorPort: 9229 }),
