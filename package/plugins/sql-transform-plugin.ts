@@ -13,9 +13,9 @@ export function sqlTransformPlugin(): Plugin {
     enforce: "pre",
 
     transform(code, id) {
-      // Strip YAML front matter from .sql files after Vite's raw loader
-      // has converted them to `export default "..."` modules.
-      if (!id.endsWith(".sql")) return;
+      // Strip YAML front matter from .sql files (with or without ?raw suffix)
+      // after Vite's raw loader has converted them to `export default "..."` modules.
+      if (!id.endsWith(".sql") && !id.endsWith(".sql?raw")) return;
 
       // Vite's ?raw loader (and the default asset handler) always produces
       // a single-line `export default "<json-escaped-string>";` statement.

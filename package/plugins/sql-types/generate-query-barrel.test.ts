@@ -48,7 +48,7 @@ describe("generateQueryBarrel", () => {
     return readFile(join(queriesDir, "queries.generated.ts"), "utf-8");
   }
 
-  it("generates barrel with correct imports", async () => {
+  it("generates barrel with correct type imports and embedded SQL", async () => {
     await setup({
       "findBySlug.sql": `---
 params:
@@ -62,7 +62,9 @@ SELECT * FROM tenets WHERE slug = @slug`,
     const content = await readGenerated();
 
     expect(content).toContain('import type { Tenet } from "../db-types"');
-    expect(content).toContain('import findBySlugRaw from "./findBySlug.sql?raw"');
+    // SQL is embedded directly, no .sql?raw imports
+    expect(content).not.toContain(".sql?raw");
+    expect(content).toContain("SELECT * FROM tenets WHERE slug = @slug");
   });
 
   it("generates QueryMap interface", async () => {
@@ -145,7 +147,7 @@ UPDATE tenets SET status = @status WHERE id = @id`,
     expect(content).toContain('import type { TenetStatus } from "../model"');
   });
 
-  it("generates stripFrontMatter helper", async () => {
+  it("does NOT include stripFrontMatter helper (handled by sqlTransformPlugin)", async () => {
     await setup({
       "test.sql": `SELECT 1`,
     });
@@ -153,12 +155,11 @@ UPDATE tenets SET status = @status WHERE id = @id`,
     await generateQueryBarrel(queriesDir, [], dbTypesPath, null);
     const content = await readGenerated();
 
-    expect(content).toContain("function stripFrontMatter(sql: string): string");
-    expect(content).toContain("BOM");
-    expect(content).toContain("\\r\\n");
+    expect(content).not.toContain("stripFrontMatter");
+    expect(content).not.toContain("function stripFrontMatter");
   });
 
-  it("generates queries const with stripFrontMatter calls", async () => {
+  it("generates queries const with embedded SQL (no imports, no wrapping)", async () => {
     await setup({
       "findBySlug.sql": `---
 params:
@@ -172,8 +173,26 @@ SELECT * FROM tenets WHERE slug = @slug`,
     const content = await readGenerated();
 
     expect(content).toContain("export const queries = {");
-    expect(content).toContain("findBySlug: stripFrontMatter(findBySlugRaw),");
+    expect(content).toContain("findBySlug: `SELECT * FROM tenets WHERE slug = @slug`,");
     expect(content).toContain("} as const;");
+    // No .sql?raw imports anywhere
+    expect(content).not.toContain(".sql?raw");
+  });
+
+  it("escapes template literal special chars in SQL", async () => {
+    await setup({
+      "tricky.sql": `---
+result: Tenet
+---
+SELECT * FROM tenets WHERE title LIKE '\`%\${search}%'`,
+    });
+
+    await generateQueryBarrel(queriesDir, ["tenets"], dbTypesPath, null);
+    const content = await readGenerated();
+
+    // Backticks and ${} should be escaped
+    expect(content).toContain("\\`");
+    expect(content).toContain("\\${");
   });
 
   it("handles complex result types", async () => {

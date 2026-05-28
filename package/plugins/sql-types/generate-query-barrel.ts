@@ -2,8 +2,7 @@
  * Generate typed query barrel files for a directory of SQL files.
  *
  * For each `queries/` directory containing `.sql` files, emits:
- * - `queries.generated.ts` — imports all SQL files and exports them as a record
- * - `queries.generated.d.ts` — declares the QueryMap interface with typed params/results
+ * - `queries.generated.ts` — embeds stripped SQL as template literals and exports them as a typed record
  */
 
 import { readdir, readFile, writeFile } from "node:fs/promises";
@@ -22,10 +21,21 @@ function isBareTableName(result: string): boolean {
 }
 
 /**
+ * Escape a SQL string for safe embedding in a TypeScript template literal.
+ * Handles backticks, ${ sequences, and backslashes.
+ */
+function escapeTemplateLiteral(sql: string): string {
+  return sql
+    .replace(/\\/g, "\\\\")
+    .replace(/`/g, "\\`")
+    .replace(/\$\{/g, "\\${");
+}
+
+/**
  * Generate the queries.generated.ts content (combined runtime + types).
  */
 function generateBarrel(
-  queryEntries: { name: string; data: SqlFrontMatter }[],
+  queryEntries: { name: string; data: SqlFrontMatter; sql: string }[],
   tableNames: string[],
   dbTypesRelPath: string,
   modelRelPath: string | null,
@@ -123,36 +133,16 @@ function generateBarrel(
 
   const queryMapInterface = `export interface QueryMap {\n${mapEntries.join("\n")}\n}`;
 
-  // Build runtime code
-  const helper = `/** Strip YAML front matter from SQL files at runtime. */
-function stripFrontMatter(sql: string): string {
-  // Handle BOM, leading whitespace, and different line endings (\\n or \\r\\n)
-  const cleaned = sql.replace(/^\\ufeff/, "").trimStart();
-  
-  // Match front matter with flexible line endings
-  const match = cleaned.match(/^---[\\r\\n]+[\\s\\S]*?[\\r\\n]+---[\\r\\n]+([\\s\\S]*)$/);
-  
-  if (!match) {
-    // No front matter or malformed — return as-is
-    return cleaned.trim();
-  }
-  
-  return match[1].trim();
-}`;
-
-  const queryNames = queryEntries.map((e) => e.name);
-  const sqlImports = queryNames
-    .map((name) => `import ${name}Raw from "./${name}.sql?raw";`)
-    .join("\n");
-
-  const entries = queryNames
-    .map((name) => `  ${name}: stripFrontMatter(${name}Raw),`)
+  // Build runtime code — embed stripped SQL directly as template literals.
+  // No .sql?raw imports needed; the generator already stripped front matter.
+  const entries = queryEntries
+    .map(({ name, sql }) => `  ${name}: \`${escapeTemplateLiteral(sql)}\`,`)
     .join("\n");
   const queriesConst = `export const queries = {\n${entries}\n} as const;`;
 
-  // Order: header, type imports (if any), sql imports, QueryMap interface, helper, queries const
+  // Order: header, type imports (if any), QueryMap interface, queries const
   const typeImportsBlock = typeImports.length > 0 ? `${typeImports.join("\n")}\n\n` : "";
-  return `${header}${typeImportsBlock}${sqlImports}\n\n${queryMapInterface}\n\n${helper}\n\n${queriesConst}\n`;
+  return `${header}${typeImportsBlock}${queryMapInterface}\n\n${queriesConst}\n`;
 }
 
 /**
@@ -223,8 +213,6 @@ export async function generateQueryBarrel(
       console.warn(`⚠ ${name}.sql: ${warning}`);
     }
   }
-
-  const queryNames = queryEntries.map((e) => e.name);
 
   // Compute relative paths from the queries directory
   const dbTypesRelPath = relative(queriesDir, dbTypesPath).replace(/\.d\.ts$/, "");
