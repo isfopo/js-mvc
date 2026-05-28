@@ -7,3 +7,19 @@
   - or keep a "SPA-like" app that always renders to a root html div
 - Create a TSX helper that builds dynamic CSS (:not, :has) selectors for no-JS interactivity
   - Similar to the existing "Action" helper
+
+- Atomic Design
+  - Extended (neutrino, quarks, hadrons)
+  - testing on all levels
+  - Pages are not implemented - they're created at runtime
+  - Separate design server for tokens, components, partials
+
+| | |
+| --- | --- | --- |
+| Primitive Token | CSS Variable | Neutrino |
+| Semantic Token | CSS Variable | Hadrons |
+| Variant Token | CSS Variable | Quarks |
+| HTML Elements | Atoms | Styled by global CSS |
+| Components | Molecules |
+| Partials | Organisms |
+| Templates | Cultures |
