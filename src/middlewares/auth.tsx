@@ -67,8 +67,8 @@ export function requireAuth(): MiddlewareHandler {
       return c.redirect("/auth/login");
     }
 
-    // Attach user to context
-    c.set("user", user);
+    // Attach user to context (for controller access)
+    c.set("user", user as object);
 
     await next();
   };

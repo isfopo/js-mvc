@@ -23,7 +23,7 @@ The CSS build is **automatic** with full HMR support:
 
 1. **Development** (`npm run dev`):
    - CSS builds once at startup
-   - Vite watches `src/styles/**/*.css`, `src/components/**/*.module.css`, and `src/pages/**/*.module.css`
+   - Vite watches `src/views/styles/**/*.css`, `src/views/components/**/*.module.css`, and `src/views/routes/**/*.module.css`
    - On save: CSS rebuilds + Layout HMR updates instantly
    
 2. **Production build** (`npm run build`): CSS builds, then Vite bundles
@@ -37,15 +37,17 @@ The CSS build is **automatic** with full HMR support:
 ## Architecture
 
 - **Entry point:** `src/index.tsx` — creates the `Hono` app, mounts controllers, and defines the root route directly.
-- **Controllers** (`src/pages/*/controller.tsx`): Each controller extends `ControllerBase`, sets an override `base` string (the route prefix), and declares routes via decorators (see **Routing Convention** below). New controllers must be registered in `infrastructure/controllers/index.ts`.
-- **API Controllers** (`src/api/*/controller.tsx`): Same pattern but return JSON. Share business logic via services.
-- **Views** (`src/pages/*/views/`): Top-level page components using `FC` from `hono/jsx` with typed ViewModel.
-- **Components** (`src/components/`): Reusable UI pieces. Use `Action()` for client-side handler wiring.
-- **Services** (`src/services/`): Business logic layer shared between HTML and API controllers. Extend `ServiceBase`.
-- **Repositories** (`src/data/*/repo.ts`): Data access layer. Extend `RepositoryBase<T, QueryMap>`. D1Database is injected via constructor; repos are created per-request using factory functions (e.g., `tenetsRepo(db)`). Inherit generic CRUD (`findById`, `findAll`, `create`, `update`, `delete`, `count`) and dynamic finders (`findOneBy`, `findAllBy`, `existsBy`, `deleteBy`). Complex queries use `.sql` files with YAML front matter and typed `queryOne`/`queryAll`/`execute` methods. See **Repository Security** below for validation details.
-- **Models** (`src/data/models/`): Row types matching D1 table columns.
-- **Requests** (`src/data/requests/`): IValidatable form objects with `validate()` method.
-- **Infrastructure** (`src/infrastructure/`): Framework base classes (ControllerBase, RepositoryBase, ServiceBase), validation decorators, auth middleware.
+- **Controllers** (`src/views/routes/*/controller.tsx`): Each controller extends `ControllerBase` from `js-mvc/controller/ControllerBase`, sets an override `base` string (the route prefix), declares routes via decorators, and calls `configureRendering({ layout, handleError })` in the constructor to wire up the shared layout and error handler.
+- **API Controllers** (`src/views/routes/*/controller.api.tsx`): Same pattern but return JSON. Share business logic via services.
+- **Views** (`src/views/routes/*/views/`): Top-level page components using `FC` from `hono/jsx` with typed ViewModel.
+- **Components** (`src/views/components/`): Reusable UI pieces. Use `Action()` from `js-mvc/utils/Action` for client-side handler wiring.
+- **Services** (`src/data/*/service.ts`): Business logic layer shared between HTML and API controllers. Extend `ServiceBase` from `js-mvc/service/ServiceBase`.
+- **Repositories** (`src/data/*/repo.ts`): Data access layer. Extend `RepositoryBase<T, QueryMap>` from `js-mvc/repository/RepositoryBase`. D1Database is injected via constructor; repos are created per-request using factory functions (e.g., `tenetsRepo(db)`). Inherit generic CRUD (`findById`, `findAll`, `create`, `update`, `delete`, `count`) and dynamic finders (`findOneBy`, `findAllBy`, `existsBy`, `deleteBy`). Complex queries use `.sql` files with YAML front matter and typed `queryOne`/`queryAll`/`execute` methods. See **Repository Security** below for validation details.
+- **Models** (`src/data/*/model.ts`): Row types matching D1 table columns.
+- **Requests** (`src/views/routes/*/requests/`): IValidatable form objects with `validate()` method.
+- **Framework** (`package/src/`): Reusable framework code imported via `js-mvc/*` path aliases. Contains `ControllerBase`, `RepositoryBase`, `ServiceBase`, `BaseHandler`, validation decorators, error classes, and utilities.
+- **Client entry** (`src/client-entry.ts`): Imports the framework dispatcher (`js-mvc/client/main`) and registers project-specific handlers.
+- **Error handler** (`src/error-handler.tsx`): Project-specific error handling that maps `AppError` subclasses to HTML responses. Imported by controllers via `configureRendering()`.
 
 ## Routing Convention
 
@@ -73,7 +75,7 @@ class MyController extends ControllerBase {
 Use validation/guard decorators to handle cross-cutting concerns before route handlers:
 
 ```ts
-import { Exists, Validate } from "../../infrastructure/validation/decorators";
+import { Exists, Validate } from "js-mvc/validation/decorators";
 import { ProposeTenetRequest } from "../../data/requests/ProposeTenetRequest";
 
 class TenetsController extends ControllerBase {
@@ -151,10 +153,10 @@ await repo.deleteBy({});
 
 ## Client-Side Handlers — Use `Action()` Always
 
-**Never write `data-controller` or `data-action` attributes manually.** Always use the `Action()` component factory from `src/utils/Action.tsx`.
+**Never write `data-controller` or `data-action` attributes manually.** Always use the `Action()` component factory from `js-mvc/utils/Action`.
 
 ```tsx
-import { Action } from "../../../utils/Action";
+import { Action } from "js-mvc/utils/Action";
 
 const MyHandler = Action("myhandler");
 
@@ -178,15 +180,30 @@ Extra props passed to `Wrapper` or `Trigger` are automatically converted to `dat
 
 Every new client handler must:
 1. Be added to `HandlerActions` in `src/utils/Action.tsx`
-2. Be registered in `src/infrastructure/client/main.ts`
+2. Be imported in `src/client-entry.ts`
 
 ## Layout / Rendering
 
-Controllers can wrap every route response in a layout automatically via `ControllerBase.register()`.
+Controllers wrap every route response in a layout automatically via `configureRendering()`:
+
+```ts
+import { ControllerBase, Get } from "js-mvc/controller/ControllerBase";
+import { Layout } from "views/routes/Shared/Layout";
+import { handleError } from "error-handler";
+
+class MyController extends ControllerBase {
+  override base = "my";
+
+  constructor() {
+    super();
+    this.configureRendering({ layout: Layout, handleError });
+  }
+}
+```
 
 - Use `c.render(<View />)` to render JSX wrapped in Layout
 - Controllers that need auth call `this._app.use("*", requireAuth())` in their constructor
-- The Layout receives `user` and `currentPath` from the renderer
+- The Layout receives all values set via `c.set()` (e.g., `user`) plus `currentPath`
 
 ## Conventions
 
@@ -200,3 +217,6 @@ Controllers can wrap every route response in a layout automatically via `Control
   is included in `ControllerBase.tsx` for environments that lack it.
 - Views use **semantic HTML** and rely on **Pico CSS defaults** for styling. Inline styles are prohibited.
   Custom layouts use CSS Modules in the same directory (e.g., `index.module.css`, `new.module.css`).
+- Framework code lives in `package/` and is imported via `js-mvc/*` path aliases.
+  Application code lives in `src/` and imports framework code, never the reverse.
+- Build scripts have been replaced by Vite plugins (`cssBuildPlugin`, `clientBuildPlugin`, `sqlTypesPlugin`, `sqlTransformPlugin`).

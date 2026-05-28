@@ -1,7 +1,5 @@
 import { Hono } from "hono";
 
-import HomeController from "views/routes/Home/controller";
-import ComponentsController from "views/routes/ComponentsDemo/controller";
 import TenetsController from "views/routes/Tenets/controller";
 import TenetsApiController from "views/routes/Tenets/controller.api";
 import WellKnownController from "views/routes/WellKnown/controller";
@@ -9,7 +7,7 @@ import AuthController from "views/routes/Auth/controller";
 
 import { initDatabase } from "data/init";
 import { seedDatabase } from "data/seed";
-import { unflattenFormBodyMiddleware } from "infrastructure/middlewares/unflatten-form-body";
+import { unflattenFormBodyMiddleware } from "js-mvc/middleware/unflatten-form-body";
 
 import schemaSql from "data/init.sql?raw";
 
@@ -22,6 +20,7 @@ app.use("*", unflattenFormBodyMiddleware());
 let initialized = false;
 let initFailed = false;
 let initPromise: Promise<void> | null = null;
+
 app.use("*", async (c, next) => {
   // If a previous initialization attempt failed, reject all requests
   // rather than serving with an uninitialized database
@@ -65,8 +64,6 @@ app.use("*", async (c, next) => {
   await next();
 });
 
-HomeController.register(app);
-ComponentsController.register(app);
 TenetsController.register(app);
 TenetsApiController.register(app);
 WellKnownController.register(app);

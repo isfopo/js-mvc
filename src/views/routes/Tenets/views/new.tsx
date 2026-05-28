@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
-import type { TenetFormViewModel } from "views/routes/Tenets/view-model";
-import { Action } from "infrastructure/utils/Action";
+import { Action } from "js-mvc/utils/Action";
 import styles from "./new.module.css";
+import { TenetDetail } from "data/tenet/service";
 
 const AddOption = Action("addoption");
 
@@ -89,6 +89,12 @@ function OptionTemplate() {
       </article>
     </template>
   );
+}
+
+export interface TenetFormViewModel {
+  isEditing: boolean;
+  tenet?: TenetDetail;
+  validationErrors?: Record<string, string>;
 }
 
 export const View: FC<TenetFormViewModel> = ({ validationErrors }) => (

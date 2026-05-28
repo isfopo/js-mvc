@@ -1,5 +1,7 @@
 import { Context, Env } from "hono";
-import { Get, Post, ControllerBase } from "infrastructure/ControllerBase";
+import { Get, Post, ControllerBase } from "js-mvc/controller/ControllerBase";
+import { Layout } from "views/routes/Shared/Layout";
+import { handleError } from "error-handler";
 import { buildAuthorizeUrl, exchangeCode, fetchUser } from "./github";
 import { usersRepo } from "data/user/repo";
 import { createSession, destroySession } from "middlewares/auth";
@@ -8,6 +10,11 @@ const DEFAULT_REDIRECT = "/tenets";
 
 class AuthController<T extends Env> extends ControllerBase<T> {
   override base = "auth";
+
+  constructor() {
+    super();
+    this.configureRendering({ layout: Layout, handleError });
+  }
 
   @Get("/login")
   async login(c: Context) {
