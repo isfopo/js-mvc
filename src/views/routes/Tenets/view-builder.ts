@@ -1,7 +1,8 @@
 import type { UserRow } from "data/user/model";
 import type { TenetDetail, TenetSummary } from "data/tenet/service";
 import type { TenetStatus } from "data/tenet/model";
-import type { TenetListViewModel, TenetDetailViewModel } from "./view-model";
+import { TenetListViewModel } from "./views";
+import { TenetDetailViewModel } from "./views/show";
 
 function toUserInfo(user: UserRow) {
   return {

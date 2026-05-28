@@ -1,4 +1,4 @@
-import { RepositoryBase } from "infrastructure/RepositoryBase";
+import { RepositoryBase } from "js-mvc/repository/RepositoryBase";
 import { queries, type QueryMap } from "./queries/queries.generated";
 import type { Tenet } from "data/db-types";
 import type { TenetStatus } from "./model";

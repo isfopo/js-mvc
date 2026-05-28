@@ -1,10 +1,20 @@
 import type { FC } from "hono/jsx";
-import type { TenetDetailViewModel } from "views/routes/Tenets/view-model";
-import { Action } from "infrastructure/utils/Action";
+import { Action } from "js-mvc/utils/Action";
 import { StatusBadge } from "views/components/StatusBadge";
 import { VoteButtons } from "views/components/VoteButtons";
 import { VoteProgress } from "views/components/VoteProgress";
 import styles from "./show.module.css";
+import { TenetStatus } from "data/tenet/model";
+import { TenetDetail, UserInfo } from "data/tenet/service";
+
+export interface TenetDetailViewModel {
+  tenet: TenetDetail;
+  currentUser: UserInfo;
+  userVote: { choice: string; reason: string | null } | null;
+  canVote: boolean;
+  canTransition: boolean;
+  allowedTransitions: TenetStatus[];
+}
 
 const Status = Action("status");
 

@@ -11,8 +11,8 @@
  * The event is prevented if the user cancels the confirm dialog.
  */
 
-import { BaseHandler } from "infrastructure/client/BaseHandler";
-import { register } from "infrastructure/client/dispatcher";
+import { BaseHandler } from "js-mvc/client/BaseHandler";
+import { register } from "js-mvc/client/dispatcher";
 
 export class ConfirmHandler extends BaseHandler {
   static override readonly handlerName = "confirm";
