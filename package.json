@@ -2,7 +2,7 @@
   "name": "js-mvc",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "deploy": "npm run build && wrangler deploy",
     "build": "vite build",
     "preview": "vite preview",
