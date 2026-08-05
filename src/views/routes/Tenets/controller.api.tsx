@@ -5,9 +5,9 @@ import { Layout } from "views/routes/Shared/Layout";
 import { handleError } from "error-handler";
 import { requireAuth } from "middlewares/auth";
 import { tenetService } from "data/tenet/service";
-import { tenetsRepo } from "data/tenet/repo";
 import { ProposeTenetRequest } from "views/routes/Tenets/requests/ProposeTenetRequest";
 import { VoteRequest } from "views/routes/Tenets/requests/VoteRequest";
+import { FindTenetGuard } from "views/routes/Tenets/guards/FindTenetGuard";
 import type { UserRow } from "data/user/model";
 import type { TenetRow } from "data/tenet/model";
 
@@ -27,11 +27,7 @@ class TenetsApiController<T extends Env> extends ControllerBase<T> {
   }
 
   @Get("/:slug")
-  @Exists("tenet", (c) =>
-    tenetsRepo((c.env as CloudflareBindings).DB).findOneBy({
-      slug: c.req.param("slug")!,
-    }),
-  )
+  @Exists(FindTenetGuard)
   async show(c: Context) {
     const tenetRow = c.get("tenet") as TenetRow;
     const detail = await tenetService.getBySlug(
@@ -55,11 +51,7 @@ class TenetsApiController<T extends Env> extends ControllerBase<T> {
   }
 
   @Post("/:slug/vote")
-  @Exists("tenet", (c) =>
-    tenetsRepo((c.env as CloudflareBindings).DB).findOneBy({
-      slug: c.req.param("slug")!,
-    }),
-  )
+  @Exists(FindTenetGuard)
   @Validate(VoteRequest)
   async vote(c: Context) {
     const user = c.get("user") as UserRow;
@@ -75,11 +67,7 @@ class TenetsApiController<T extends Env> extends ControllerBase<T> {
   }
 
   @Post("/:slug/status")
-  @Exists("tenet", (c) =>
-    tenetsRepo((c.env as CloudflareBindings).DB).findOneBy({
-      slug: c.req.param("slug")!,
-    }),
-  )
+  @Exists(FindTenetGuard)
   async transition(c: Context) {
     const user = c.get("user") as UserRow;
     const tenetRow = c.get("tenet") as TenetRow;

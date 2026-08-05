@@ -1,14 +1,13 @@
 import type { Context } from "hono";
 import { NotFoundError, ValidationError } from "../errors";
-import type { GuardDescriptor } from "./GuardDescriptor";
-import type { IValidatable } from "./IValidatable";
+import type { GuardDescriptor } from "./decorators";
 import { getParsedBody } from "../middleware/unflatten-form-body";
 
 /**
  * Execute a single guard against the current request context.
  *
- * - `exists`   → calls the loader, throws NotFoundError if null, stores on context
- * - `authorize` → calls the check function (should throw on failure)
+ * - `exists`   → instantiates the IExistable, calls load(), throws NotFoundError if null, stores on context
+ * - `authorize` → instantiates the IAuthorizable, calls authorize() (should throw on failure)
  * - `validate`  → parses body, constructs IValidatable, runs validate(), stores on context
  *
  * Called by ControllerBase.register() before each route handler.
@@ -16,14 +15,16 @@ import { getParsedBody } from "../middleware/unflatten-form-body";
 export async function executeGuard(guard: GuardDescriptor, c: Context): Promise<void> {
   switch (guard.type) {
     case "exists": {
-      const entity = await guard.load(c);
+      const instance = new guard.GuardClass();
+      const entity = await instance.load(c);
       if (entity == null) throw new NotFoundError();
-      c.set(guard.key, entity);
+      c.set(instance.key, entity);
       break;
     }
 
     case "authorize": {
-      await guard.check(c);
+      const instance = new guard.GuardClass();
+      await instance.authorize(c);
       break;
     }
 

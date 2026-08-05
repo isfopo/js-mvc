@@ -21,7 +21,7 @@
 import { Context, Env, Hono } from "hono";
 import { renderToString } from "hono/jsx/dom/server";
 import type { FC, PropsWithChildren } from "hono/jsx";
-import type { GuardDescriptor } from "../validation/GuardDescriptor";
+import type { GuardDescriptor } from "../validation/decorators";
 import { executeGuard } from "../validation/guard-executor";
 import { GUARDS_KEY } from "../validation/decorators";
 
