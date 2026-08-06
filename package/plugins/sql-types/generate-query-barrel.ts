@@ -20,6 +20,12 @@ function isBareTableName(result: string): boolean {
   return /^[a-z][a-z0-9_]*$/.test(result);
 }
 
+/** Normalize Windows paths so generated TypeScript imports remain portable. */
+function toModuleSpecifier(path: string): string {
+  const normalized = path.replace(/\\/g, "/");
+  return normalized.startsWith(".") ? normalized : `./${normalized}`;
+}
+
 /**
  * Escape a SQL string for safe embedding in a TypeScript template literal.
  * Handles backticks, ${ sequences, and backslashes.
@@ -215,9 +221,11 @@ export async function generateQueryBarrel(
   }
 
   // Compute relative paths from the queries directory
-  const dbTypesRelPath = relative(queriesDir, dbTypesPath).replace(/\.d\.ts$/, "");
+  const dbTypesRelPath = toModuleSpecifier(
+    relative(queriesDir, dbTypesPath).replace(/\.d\.ts$/, ""),
+  );
   const modelRelPath = modelPath
-    ? relative(queriesDir, modelPath).replace(/\.ts$/, "")
+    ? toModuleSpecifier(relative(queriesDir, modelPath).replace(/\.ts$/, ""))
     : null;
 
   // Generate combined barrel (.ts with both runtime code and types)
