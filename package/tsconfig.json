@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "lib": ["ESNext", "DOM"],
     "noImplicitOverride": true,
-    "baseUrl": "src"
+    "paths": {"*": ["./src/*"]}
   },
   "include": ["src/**/*", "plugins/**/*"]
 }

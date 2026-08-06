@@ -11,8 +11,8 @@
     "types": ["./worker-configuration", "vite/client", "node"],
     "noImplicitOverride": true,
     "plugins": [{ "name": "typescript-plugin-css-modules" }],
-    "baseUrl": "src",
     "paths": {
+      "*": ["./src/*"],
       "js-mvc/*": ["../package/src/*"],
       "js-mvc/plugins": ["../package/plugins/index.ts"],
       "js-mvc/plugins/sql-types": ["../package/plugins/sql-types/index.ts"]
