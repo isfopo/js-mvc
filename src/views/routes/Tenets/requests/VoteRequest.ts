@@ -1,4 +1,4 @@
-import type { ValidationResult, IValidatable } from "js-mvc/validation/IValidatable";
+import type { ValidationResult, IValidatable } from "js-mvc/validation/decorators";
 
 export class VoteRequest implements IValidatable {
   readonly choice: string;

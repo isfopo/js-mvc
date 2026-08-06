@@ -71,7 +71,7 @@ export function Exists(
   load: (c: Context) => Promise<unknown> | unknown,
 ): MethodDecoratorFactory;
 export function Exists(
-  guardOrKey: new () => IExistable | string,
+  guardOrKey: (new () => IExistable) | string,
   legacyLoad?: (c: Context) => Promise<unknown> | unknown,
 ): MethodDecoratorFactory {
   if (typeof guardOrKey === "string") {
@@ -102,7 +102,9 @@ export function Authorize(
   check: (c: Context) => Promise<void> | void,
 ): MethodDecoratorFactory;
 export function Authorize(
-  guardOrCheck: new () => IAuthorizable | ((c: Context) => Promise<void> | void),
+  guardOrCheck:
+    | (new () => IAuthorizable)
+    | ((c: Context) => Promise<void> | void),
 ): MethodDecoratorFactory {
   if (typeof guardOrCheck === "function" && !guardOrCheck.prototype?.authorize) {
     const check = guardOrCheck;
@@ -111,7 +113,7 @@ export function Authorize(
       handlerName,
       GuardClass: class implements IAuthorizable {
         authorize(c: Context) {
-          return check(c);
+          return (check as (c: Context) => Promise<void> | void)(c);
         }
       },
     }));

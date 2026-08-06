@@ -16,6 +16,4 @@ export function onReady(cb: () => void): void {
   }
 }
 
-// --- Bootstrap ---
-
 start();
