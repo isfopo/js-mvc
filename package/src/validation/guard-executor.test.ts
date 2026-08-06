@@ -47,10 +47,12 @@ class FailingAuthGuard implements IAuthorizable {
 
 class TestRequest implements IValidatable {
   static validateWasCalled = false;
+  static lastBody: Record<string, unknown> | undefined;
   body: Record<string, unknown>;
 
   constructor(body: Record<string, unknown>) {
     this.body = body;
+    TestRequest.lastBody = body;
   }
 
   async validate(): Promise<ValidationResult> {
@@ -150,6 +152,7 @@ describe("executeGuard — authorize path", () => {
 describe("executeGuard — validate path", () => {
   beforeEach(() => {
     TestRequest.validateWasCalled = false;
+    TestRequest.lastBody = undefined;
   });
 
   it("calls validate() on the request class and stores the instance", async () => {
@@ -167,7 +170,27 @@ describe("executeGuard — validate path", () => {
     await executeGuard(guard, c);
 
     expect(TestRequest.validateWasCalled).toBe(true);
+    expect(TestRequest.lastBody).toEqual({ name: "test", value: "123" });
     expect(c.set).toHaveBeenCalledWith("validated", expect.any(TestRequest));
+  });
+
+  it("unflattens form fields without global middleware", async () => {
+    const guard: ValidateGuard = {
+      type: "validate",
+      handlerName: "test",
+      RequestClass: TestRequest,
+    };
+
+    const c = createMockContext({
+      contentType: "application/x-www-form-urlencoded",
+      parsedBody: { "options[0][title]": "React" },
+    });
+
+    await executeGuard(guard, c);
+
+    expect(TestRequest.lastBody).toEqual({
+      options: [{ title: "React" }],
+    });
   });
 
   it("throws ValidationError when validate() returns valid: false", async () => {

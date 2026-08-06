@@ -24,7 +24,6 @@
     "./validation/GuardDescriptor": "./src/validation/decorators.ts",
     "./validation/guard-executor": "./src/validation/guard-executor.ts",
     "./validation/unflatten-form-body": "./src/validation/unflatten-form-body.ts",
-    "./middleware/unflatten-form-body": "./src/middleware/unflatten-form-body.ts",
     "./client/BaseHandler": "./src/client/BaseHandler.ts",
     "./client/dispatcher": "./src/client/dispatcher.ts",
     "./client/main": "./src/client/main.ts",

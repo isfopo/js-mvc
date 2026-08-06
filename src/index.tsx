@@ -7,14 +7,10 @@ import AuthController from "views/routes/Auth/controller";
 
 import { initDatabase } from "data/init";
 import { seedDatabase } from "data/seed";
-import { unflattenFormBodyMiddleware } from "js-mvc/middleware/unflatten-form-body";
 
 import schemaSql from "data/init.sql?raw";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
-
-// Unflatten bracket-notation form body keys (e.g. options[0][title] → nested objects)
-app.use("*", unflattenFormBodyMiddleware());
 
 // Run DB schema initialization once on first request
 let initialized = false;

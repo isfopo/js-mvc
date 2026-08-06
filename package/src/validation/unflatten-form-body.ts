@@ -1,3 +1,25 @@
+import type { Context } from "hono";
+
+/**
+ * Parse a request body into the shape expected by validation requests.
+ *
+ * JSON remains untouched. Form bodies use Hono's standard parser and are
+ * unflattened only here, at the validation boundary, rather than through a
+ * global middleware that changes the request for every route.
+ */
+export async function parseRequestBody(
+  c: Context,
+): Promise<Record<string, unknown>> {
+  const contentType = c.req.header("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    return c.req.json<Record<string, unknown>>();
+  }
+
+  const raw = await c.req.parseBody();
+  return unflattenFormBody(raw as Record<string, unknown>);
+}
+
 /**
  * Unflatten bracket-notation form keys into nested objects/arrays.
  *
