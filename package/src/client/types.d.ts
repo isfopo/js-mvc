@@ -16,7 +16,7 @@ export interface ActionDescriptor {
 export interface HandlerConstructor {
   new (element: HTMLElement): Handler;
   /** Each handler must declare which data-controller name it handles */
-  readonly handlerName: string;
+  readonly name: string;
 }
 
 /** Names of lifecycle methods that can emit errors */

@@ -14,7 +14,17 @@
  */
 
 import type { ActionDescriptor, Handler, HandlerConstructor, LifecycleName } from "./types";
-import { onReady } from "./main";
+
+// --- DOM helpers ---
+
+/** Waits for the DOM to be ready, then runs the callback */
+function onReady(cb: () => void): void {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", cb);
+  } else {
+    cb();
+  }
+}
 
 // --- Registry ---
 
@@ -24,8 +34,8 @@ const registry = new Map<string, HandlerConstructor>();
  * Register a handler class so the dispatcher can find it by name.
  * Called at import time by each handler module.
  */
-export function register(name: string, ctor: HandlerConstructor): void {
-  registry.set(name, ctor);
+export function register(name: string, constructor: HandlerConstructor): void {
+  registry.set(name, constructor);
 }
 
 // --- Action parsing ---
@@ -240,10 +250,14 @@ function createObserver(): MutationObserver {
 
 export function start(): void {
   onReady(() => {
-    scan(document);
-    createObserver().observe(document.body, {
-      childList: true,
-      subtree: true,
+    // Defer scan to next microtask to ensure all static handler imports
+    // have completed their register() calls before we scan the DOM
+    queueMicrotask(() => {
+      scan(document);
+      createObserver().observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
     });
   });
 }

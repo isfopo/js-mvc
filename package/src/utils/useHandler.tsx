@@ -27,26 +27,8 @@
  * converted to data-{handler}-{key} attributes on the child element.
  */
 
-import type { JSX } from "hono/jsx";
-
-// ---------------------------------------------------------------------------
-// Known DOM event names (for autocomplete — any string still works)
-// ---------------------------------------------------------------------------
-
-export type KnownDOMEvent =
-  | "click"
-  | "submit"
-  | "change"
-  | "input"
-  | "focus"
-  | "blur"
-  | "keydown"
-  | "keyup"
-  | "mouseenter"
-  | "mouseleave"
-  | "load"
-  | "scroll"
-  | "toggle";
+import { HandlerConstructor } from "../client/types";
+import { JSX } from "react";
 
 // ---------------------------------------------------------------------------
 // Component factory
@@ -54,7 +36,7 @@ export type KnownDOMEvent =
 
 type TriggerProps<HA extends Record<string, string>, E extends keyof HA> = {
   /** DOM event to listen for */
-  event: KnownDOMEvent | (string & {});
+  event: keyof GlobalEventHandlersEventMap | (string & {});
   /** Method name on the handler class */
   method: HA[E];
   children?: any;
@@ -80,14 +62,15 @@ type WrapperProps = {
  * Use Trigger alone when the interactive element is the right scope
  * for the handler (e.g. confirm).
  */
-export function Action<
+export function useHandler<
+  H extends HandlerConstructor,
   HA extends Record<string, string> = Record<string, string>,
   E extends keyof HA & string = string
->(name: E) {
+>(handler: H) {
   function Wrapper({ tag, children, ...rest }: WrapperProps) {
     const Tag = (tag ?? "div") as keyof JSX.IntrinsicElements;
     return (
-      <Tag data-controller={name} {...rest}>
+      <Tag data-controller={handler.name} {...rest}>
         {children}
       </Tag>
     );
@@ -101,19 +84,16 @@ export function Action<
   }: TriggerProps<HA, E>) {
     // Attributes to inject into the child element
     const inject: Record<string, string> = {
-      "data-controller": name,
-      "data-action": `${event}->${String(name)}#${method}`,
+      "data-controller": handler.name,
+      "data-action": `${event}->${String(handler.name)}#${method}`,
     };
 
     // Convert extra props to data-{handler}-{key}
     for (const key of Object.keys(dataProps)) {
-      inject[`data-${String(name)}-${key}`] = String(dataProps[key]);
+      inject[`data-${String(handler.name)}-${key}`] = String(dataProps[key]);
     }
 
-    // Single child element — re-render with all injected attributes merged in.
-    // NOTE: This relies on Hono's internal VNode shape ({ tag, props, children }).
-    // This is an undocumented implementation detail. If Trigger stops injecting
-    // attributes after a Hono upgrade, check that the VNode structure hasn't changed.
+    // Single child element — re-render with all injected attributes merged in
     if (
       children != null &&
       typeof children === "object" &&

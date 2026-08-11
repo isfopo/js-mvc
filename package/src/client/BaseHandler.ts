@@ -17,7 +17,38 @@
  *         data-confirm-message="Delete?">Delete</button>
  */
 
+import { register } from "./dispatcher";
 import type { Handler, LifecycleName } from "./types";
+
+/**
+ * Decorator that registers a handler class with the dispatcher.
+ * 
+ * Usage:
+ *   @Handler()
+ *   export class DismissHandler extends BaseHandler { ... }
+ *   // Registers as "dismiss" (class name minus "Handler" suffix, lowercased)
+ * 
+ *   @Handler("custom-name")
+ *   export class MyHandler extends BaseHandler { ... }
+ *   // Registers as "custom-name"
+ */
+export function Handler(name?: string) {
+  return function <T extends new (element: HTMLElement) => BaseHandler>(
+    target: T,
+    context: ClassDecoratorContext<T>,
+  ): T {
+    let handlerName = name;
+    if (!handlerName) {
+      const className = String(context.name);
+      // Strip "Handler" suffix if present, then lowercase
+      handlerName = className.endsWith("Handler")
+        ? className.slice(0, -7).toLowerCase()
+        : className.toLowerCase();
+    }
+    register(handlerName, target);
+    return target;
+  };
+}
 
 export abstract class BaseHandler implements Handler {
   /** The root element that declared data-controller */
@@ -76,7 +107,7 @@ export abstract class BaseHandler implements Handler {
    * Example: <input data-confirm-target="input" />  →  this.target("input")
    */
   target<T extends HTMLElement = HTMLElement>(name: string): T | null {
-    const attr = `data-${this.handlerName}-target`;
+    const attr = `data-${this.name}-target`;
     return this.element.querySelector<T>(`[${attr}="${name}"]`);
   }
 
@@ -84,7 +115,7 @@ export abstract class BaseHandler implements Handler {
    * Find all target elements within the handler's scope.
    */
   targets<T extends HTMLElement = HTMLElement>(name: string): NodeListOf<T> {
-    const attr = `data-${this.handlerName}-target`;
+    const attr = `data-${this.name}-target`;
     return this.element.querySelectorAll<T>(`[${attr}="${name}"]`);
   }
 
@@ -95,14 +126,14 @@ export abstract class BaseHandler implements Handler {
    *          →  this.data("message")  // "Sure?"
    */
   data(key: string): string | null {
-    return this.element.getAttribute(`data-${this.handlerName}-${key}`);
+    return this.element.getAttribute(`data-${this.name}-${key}`);
   }
 
-  /** Convenience: shorthand for this.constructor.handlerName */
-  private get handlerName(): string {
-    return (this.constructor as typeof BaseHandler).handlerName;
+  /** Convenience: shorthand for this.constructor.name */
+  get name(): string {
+    return (this.constructor as typeof BaseHandler).name;
   }
 
   /** Static handler name — override in subclasses */
-  static readonly handlerName: string = "";
+  static readonly name: string = "";
 }
