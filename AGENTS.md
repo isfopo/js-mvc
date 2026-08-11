@@ -178,9 +178,33 @@ const MyHandler = Action("myhandler");
 
 Extra props passed to `Wrapper` or `Trigger` are automatically converted to `data-{handler}-{key}` attributes. This keeps handler names and method names in sync between server views and client handlers.
 
+### Creating a New Handler
+
+Handlers extend `BaseHandler` and use the `@Handler` decorator for automatic registration:
+
+```ts
+import { BaseHandler, Handler } from "js-mvc/client/BaseHandler";
+
+@Handler()
+export class DismissHandler extends BaseHandler {
+  override connect(): void {
+    // Called when the handler is wired to the DOM
+  }
+
+  hide(): void {
+    // Called when data-action="click->dismiss#hide" fires
+  }
+}
+```
+
+The decorator automatically derives the handler name from the class name by stripping the "Handler" suffix and lowercasing (e.g., `DismissHandler` → `dismiss`). You can also provide an explicit name: `@Handler("custom-name")`.
+
+The `@Handler("name")` decorator automatically registers the handler with the dispatcher. No manual `register()` call needed.
+
 Every new client handler must:
-1. Be added to `HandlerActions` in `src/utils/Action.tsx`
-2. Be imported in `src/client-entry.ts`
+1. Use the `@Handler()` decorator (name auto-derived from class name, or provide explicit name)
+2. Be added to `HandlerActions` in `src/utils/Action.tsx`
+3. Be imported in `src/client-entry.ts`
 
 ## Layout / Rendering
 

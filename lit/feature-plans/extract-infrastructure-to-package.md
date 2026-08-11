@@ -237,7 +237,7 @@ Replace the hardcoded `HandlerActions` interface with a generic type parameter:
    | "submit"
    // ... (stays the same)
 
--export function Action<E extends keyof HandlerActions>(name: E) {
+-export function useHandler<E extends keyof HandlerActions>(name: E) {
 +export function Action<
 +  HA extends Record<string, string>,
 +  E extends keyof HA
@@ -484,7 +484,7 @@ Move all files from `.vite/sql-types/` to `package/plugins/sql-types/`. Update t
 | `"infrastructure/middlewares/unflatten-form-body"` | `"js-mvc/middleware/unflatten-form-body"` |
 | `"infrastructure/client/BaseHandler"` | `"js-mvc/client/BaseHandler"` |
 | `"infrastructure/client/dispatcher"` | `"js-mvc/client/dispatcher"` |
-| `"infrastructure/utils/Action"` | `"js-mvc/utils/Action"` |
+| `"infrastructure/utils/useHandler"` | `"js-mvc/utils/useHandler"` |
 | `"infrastructure/utils/State"` | `"js-mvc/utils/State"` |
 
 ### 5.2. Create Project-Side `handleError`
@@ -588,7 +588,7 @@ ControllerBase.setDefaultRenderConfig({
     "./client/dispatcher": "./src/client/dispatcher.ts",
     "./client/main": "./src/client/main.ts",
     "./client/types": "./src/client/types.d.ts",
-    "./utils/Action": "./src/utils/Action.tsx",
+    "./utils/useHandler": "./src/utils/useHandler.tsx",
     "./utils/State": "./src/utils/State.tsx",
     "./utils/State.types": "./src/utils/State.types.ts",
     "./utils/State.scope": "./src/utils/State.scope.ts",
@@ -654,7 +654,7 @@ package/
 │   └── main → dispatcher (no handler imports)
 ├── middleware/unflatten-form-body
 │   └── depends on: validation/unflatten-form-body, hono
-├── utils/Action
+├── utils/useHandler
 │   └── generic (HA type parameter, no project coupling)
 ├── utils/State*
 │   └── standalone
@@ -669,7 +669,7 @@ src/ (project)
 ├── controllers/*         → import js-mvc/controller, js-mvc/validation
 ├── repos/*               → import js-mvc/repository
 ├── services/*            → import js-mvc/service
-├── views/*               → import js-mvc/utils/Action, js-mvc/utils/State
+├── views/*               → import js-mvc/utils/useHandler, js-mvc/utils/State
 ├── handlers/*            → import js-mvc/client/BaseHandler, js-mvc/client/dispatcher
 └── .vite/plugins.ts      → imports js-mvc/plugins, js-mvc/plugins/sql-types
 ```
@@ -683,7 +683,7 @@ src/ (project)
 | Vite alias doesn't resolve `.tsx`/`.ts` extensions | Add `resolve.extensions: [".ts", ".tsx", ".js"]` in vite config |
 | `D1Database` type not available in package tsconfig | Add `"types": ["@cloudflare/workers-types"]` to package tsconfig |
 | `cssBuilderPlugin` hardcodes `src/styles`, `src/layouts` paths | Leave it in project — it's inherently project-specific |
-| `Action.tsx` `HandlerActions` interface was project-specific | Now generic via `HA` type parameter; project defines its own |
+| `useHandler.tsx` `HandlerActions` interface was project-specific | Now generic via `HA` type parameter; project defines its own |
 | Tests in package reference `infrastructure/` imports | Update to relative paths during Phase 1 |
 | `handleError` in `ControllerBase` references `ResultsView` | Removed in Phase 2; error handler is now injected |
 
@@ -821,7 +821,7 @@ The `StatusCode` type is just a union of valid HTTP status codes. Replace it wit
 
 #### B.6. Decouple JSX from `hono/jsx` in Utils
 
-`Action.tsx` and `State.tsx` import `JSX` from `hono/jsx` for typing. Replace with a minimal type:
+`useHandler.tsx` and `State.tsx` import `JSX` from `hono/jsx` for typing. Replace with a minimal type:
 
 ```diff
 -import { JSX } from "hono/jsx";
@@ -845,7 +845,7 @@ Or just use `any` for the child element check — JSX is a compile-time concern,
 | `validation/*` | **Yes** (intentional) | None | Hono Context for guards |
 | `middleware/*` | **Yes** (intentional) | None | Hono middleware pattern |
 | `errors` | None (StatusCode replaced) | None | Fully agnostic |
-| `utils/Action` | None (JSX type replaced) | None | Fully agnostic |
+| `utils/useHandler` | None (JSX type replaced) | None | Fully agnostic |
 | `utils/State` | None (JSX type replaced) | None | Fully agnostic |
 | `client/*` | None | None | Pure DOM, fully agnostic |
 | `plugins/*` | None | None | Build-time Node.js only |
@@ -875,7 +875,7 @@ package/
 │   └── pure DOM — no framework dependencies
 ├── middleware/unflatten-form-body
 │   └── depends on: hono (intentional), validation
-├── utils/Action
+├── utils/useHandler
 │   └── no framework dependencies (generic JSX type)
 ├── utils/State*
 │   └── no framework dependencies

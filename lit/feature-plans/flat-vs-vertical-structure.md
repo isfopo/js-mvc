@@ -19,7 +19,7 @@ src/
       Home.tsx
       Components.tsx
     components/
-      Action.tsx
+      useHandler.tsx
       Alert/
         index.tsx
         index.module.css
@@ -64,7 +64,7 @@ src/
     WellKnown/
       controller.tsx          ← was controllers/WellKnownController.tsx
   components/                 ← shared/reusable UI components
-    Action.tsx
+    useHandler.tsx
     Alert/
       index.tsx
       index.module.css
@@ -232,7 +232,7 @@ src/
     Components.view.tsx
     WellKnown.controller.tsx
   components/
-    Action.tsx
+    useHandler.tsx
     Alert/
   layouts/
     Layout.tsx

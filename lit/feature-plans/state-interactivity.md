@@ -2,7 +2,7 @@
 
 ## Overview
 
-A `State()` factory function — the CSS-only sibling to `Action()`. Declare state-driven relationships (show/hide/reveal/disable) in JSX. The component emits data attributes on elements and a `<style>` block inline that wires them together using `:has()`, `:valid`, `:focus-within`, etc. All CSS generation is automatic — no selectors to write.
+A `State()` factory function — the CSS-only sibling to `useHandler()`. Declare state-driven relationships (show/hide/reveal/disable) in JSX. The component emits data attributes on elements and a `<style>` block inline that wires them together using `:has()`, `:valid`, `:focus-within`, etc. All CSS generation is automatic — no selectors to write.
 
 Supports optional animated transitions via named presets or custom CSS transition strings.
 
@@ -266,7 +266,7 @@ const NavMenu = State("nav", { scope: "mobile-nav" });
 src/utils/State.tsx
 ```
 
-Single file. The entire feature lives in one module, mirroring `Action.tsx`.
+Single file. The entire feature lives in one module, mirroring `useHandler.tsx`.
 
 ## Implementation Details
 
@@ -393,11 +393,11 @@ The generated condition rule for `Disable`/`Enable` also sets `aria-disabled="tr
 
 ### Trigger Child Merging
 
-`Trigger` follows the same pattern as `Action.Trigger` — it injects `data-state-value` into its single child element, or wraps in a `<span>` if the child can't be merged.
+`Trigger` follows the same pattern as `useHandler.Trigger` — it injects `data-state-value` into its single child element, or wraps in a `<span>` if the child can't be merged.
 
 ## Type Registry
 
-Analogous to `HandlerActions` in `Action.tsx`:
+Analogous to `HandlerActions` in `useHandler.tsx`:
 
 ```ts
 export interface StateConditions {
