@@ -21,12 +21,10 @@
  *   </Dismiss.Trigger>
  */
 
-import { BaseHandler } from "js-mvc/client/BaseHandler";
-import { register } from "js-mvc/client/dispatcher";
+import { BaseHandler, Handler } from "js-mvc/client/BaseHandler";
 
+@Handler()
 export class DismissHandler extends BaseHandler {
-  static override readonly handlerName = "dismiss";
-
   override connect(): void {
     // no-op — actions are wired by the dispatcher
   }
@@ -41,5 +39,3 @@ export class DismissHandler extends BaseHandler {
     }
   }
 }
-
-register("dismiss", DismissHandler);

@@ -2,12 +2,10 @@
  * Status transition handler — confirms before changing tenet status.
  */
 
-import { BaseHandler } from "js-mvc/client/BaseHandler";
-import { register } from "js-mvc/client/dispatcher";
+import { BaseHandler, Handler } from "js-mvc/client/BaseHandler";
 
+@Handler("status")
 export class StatusTransitionHandler extends BaseHandler {
-  static override readonly handlerName = "status";
-
   override connect(): void {
     // Actions are wired by the dispatcher via data-action attributes
   }
@@ -29,5 +27,3 @@ export class StatusTransitionHandler extends BaseHandler {
     form.requestSubmit();
   }
 }
-
-register("status", StatusTransitionHandler);

@@ -11,12 +11,10 @@
  * The event is prevented if the user cancels the confirm dialog.
  */
 
-import { BaseHandler } from "js-mvc/client/BaseHandler";
-import { register } from "js-mvc/client/dispatcher";
+import { BaseHandler, Handler } from "js-mvc/client/BaseHandler";
 
+@Handler()
 export class ConfirmHandler extends BaseHandler {
-  static override readonly handlerName = "confirm";
-
   override connect(): void {
     // The dispatcher already wires data-action attributes, but we also
     // support the simpler pattern: any link/form inside the scope can
@@ -35,5 +33,3 @@ export class ConfirmHandler extends BaseHandler {
     }
   }
 }
-
-register("confirm", ConfirmHandler);

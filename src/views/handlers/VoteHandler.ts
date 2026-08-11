@@ -4,12 +4,10 @@
  * For "block", prompts for a reason before submitting the form.
  */
 
-import { BaseHandler } from "js-mvc/client/BaseHandler";
-import { register } from "js-mvc/client/dispatcher";
+import { BaseHandler, Handler } from "js-mvc/client/BaseHandler";
 
+@Handler()
 export class VoteHandler extends BaseHandler {
-  static override readonly handlerName = "vote";
-
   override connect(): void {
     // Actions are wired by the dispatcher via data-action attributes
   }
@@ -33,5 +31,3 @@ export class VoteHandler extends BaseHandler {
     form.requestSubmit();
   }
 }
-
-register("vote", VoteHandler);

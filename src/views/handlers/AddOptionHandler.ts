@@ -5,12 +5,10 @@
  * The template uses `__IDX__` as a placeholder for the field index.
  */
 
-import { BaseHandler } from "js-mvc/client/BaseHandler";
-import { register } from "js-mvc/client/dispatcher";
+import { BaseHandler, Handler } from "js-mvc/client/BaseHandler";
 
+@Handler()
 export class AddOptionHandler extends BaseHandler {
-  static override readonly handlerName = "addoption";
-
   private counter = 1; // template has index 0, so start at 1
 
   override connect(): void {
@@ -29,5 +27,3 @@ export class AddOptionHandler extends BaseHandler {
     this.counter++;
   }
 }
-
-register("addoption", AddOptionHandler);
