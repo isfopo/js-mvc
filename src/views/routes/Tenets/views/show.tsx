@@ -1,11 +1,12 @@
 import type { FC } from "hono/jsx";
-import { Action } from "js-mvc/utils/Action";
+import { useHandler } from "js-mvc/utils/useHandler";
 import { StatusBadge } from "views/components/StatusBadge";
 import { VoteButtons } from "views/components/VoteButtons";
 import { VoteProgress } from "views/components/VoteProgress";
 import styles from "./show.module.css";
 import { TenetStatus } from "data/tenet/model";
 import { TenetDetail, UserInfo } from "data/tenet/service";
+import { StatusTransitionHandler } from "views/handlers/StatusTransitionHandler";
 
 export interface TenetDetailViewModel {
   tenet: TenetDetail;
@@ -15,8 +16,6 @@ export interface TenetDetailViewModel {
   canTransition: boolean;
   allowedTransitions: TenetStatus[];
 }
-
-const Status = Action("status");
 
 const STATUS_TRANSITIONS: Record<
   string,
@@ -60,108 +59,112 @@ export const View: FC<TenetDetailViewModel> = ({
   canVote,
   canTransition,
   allowedTransitions,
-}) => (
-  <section>
-    <header>
-      <StatusBadge status={tenet.status} />
-      <small>
-        Proposed by {tenet.proposedBy.login} on{" "}
-        {new Date(tenet.createdAt).toLocaleDateString()}
-      </small>
-    </header>
+}) => {
+  const Status = useHandler(StatusTransitionHandler);
 
-    <h1>{tenet.title}</h1>
+  return (
+    <section>
+      <header>
+        <StatusBadge status={tenet.status} />
+        <small>
+          Proposed by {tenet.proposedBy.login} on{" "}
+          {new Date(tenet.createdAt).toLocaleDateString()}
+        </small>
+      </header>
 
-    {tenet.decision && (
-      <article class={styles.decisionBox}>
-        <strong>Decision:</strong> {tenet.decision}
-        {tenet.rationale && (
-          <p>
-            <strong>Rationale:</strong> {tenet.rationale}
-          </p>
-        )}
-      </article>
-    )}
+      <h1>{tenet.title}</h1>
 
-    <hgroup>
-      <h2>Context</h2>
-      <p>{tenet.context}</p>
-    </hgroup>
+      {tenet.decision && (
+        <article class={styles.decisionBox}>
+          <strong>Decision:</strong> {tenet.decision}
+          {tenet.rationale && (
+            <p>
+              <strong>Rationale:</strong> {tenet.rationale}
+            </p>
+          )}
+        </article>
+      )}
 
-    <h2>Options</h2>
-    {tenet.options.map((opt) => (
-      <article key={opt.id}>
-        <h3>{opt.title}</h3>
-        {opt.description && <p>{opt.description}</p>}
-        {opt.pros && (
-          <details>
-            <summary>Pros</summary>
-            <p>{opt.pros}</p>
-          </details>
-        )}
-        {opt.cons && (
-          <details>
-            <summary>Cons</summary>
-            <p>{opt.cons}</p>
-          </details>
-        )}
-      </article>
-    ))}
+      <hgroup>
+        <h2>Context</h2>
+        <p>{tenet.context}</p>
+      </hgroup>
 
-    {canVote && <VoteButtons slug={tenet.slug} userVote={userVote} />}
+      <h2>Options</h2>
+      {tenet.options.map((opt) => (
+        <article key={opt.id}>
+          <h3>{opt.title}</h3>
+          {opt.description && <p>{opt.description}</p>}
+          {opt.pros && (
+            <details>
+              <summary>Pros</summary>
+              <p>{opt.pros}</p>
+            </details>
+          )}
+          {opt.cons && (
+            <details>
+              <summary>Cons</summary>
+              <p>{opt.cons}</p>
+            </details>
+          )}
+        </article>
+      ))}
 
-    <VoteProgress votes={tenet.votes} />
+      {canVote && <VoteButtons slug={tenet.slug} userVote={userVote} />}
 
-    <h2>Votes</h2>
-    {tenet.votes.length === 0 ? (
-      <p>
-        <small>No votes yet.</small>
-      </p>
-    ) : (
-      <table>
-        <thead>
-          <tr>
-            <th>User</th>
-            <th>Choice</th>
-            <th>Reason</th>
-          </tr>
-        </thead>
-        <tbody>
-          {tenet.votes.map((v) => (
-            <tr key={v.userId}>
-              <td>{v.user.login}</td>
-              <td>
-                <strong>{v.choice}</strong>
-              </td>
-              <td>{v.reason ?? ""}</td>
+      <VoteProgress votes={tenet.votes} />
+
+      <h2>Votes</h2>
+      {tenet.votes.length === 0 ? (
+        <p>
+          <small>No votes yet.</small>
+        </p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Choice</th>
+              <th>Reason</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    )}
+          </thead>
+          <tbody>
+            {tenet.votes.map((v) => (
+              <tr key={v.userId}>
+                <td>{v.user.login}</td>
+                <td>
+                  <strong>{v.choice}</strong>
+                </td>
+                <td>{v.reason ?? ""}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
-    {canTransition && (
-      <div class={styles.transitionGroup}>
-        {STATUS_TRANSITIONS[tenet.status]
-          ?.filter((t) => allowedTransitions.includes(t.target as any))
-          .map((t) => (
-            <form
-              method="post"
-              action={`/tenets/${tenet.slug}/status`}
-              class={styles.inlineForm}
-            >
-              <input type="hidden" name="status" value={t.target} />
-              <Status.Trigger
-                event="click"
-                method="transition"
-                target={t.target}
-                message={t.message}
+      {canTransition && (
+        <div class={styles.transitionGroup}>
+          {STATUS_TRANSITIONS[tenet.status]
+            ?.filter((t) => allowedTransitions.includes(t.target as any))
+            .map((t) => (
+              <form
+                method="post"
+                action={`/tenets/${tenet.slug}/status`}
+                class={styles.inlineForm}
               >
-                <button type="submit">{t.label}</button>
-              </Status.Trigger>
-            </form>
-          ))}
-      </div>
-    )}
-  </section>
-);
+                <input type="hidden" name="status" value={t.target} />
+                <Status.Trigger
+                  event="click"
+                  method="transition"
+                  target={t.target}
+                  message={t.message}
+                >
+                  <button type="submit">{t.label}</button>
+                </Status.Trigger>
+              </form>
+            ))}
+        </div>
+      )}
+    </section>
+  );
+};

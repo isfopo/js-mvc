@@ -1,9 +1,8 @@
 import type { FC } from "hono/jsx";
-import { Action } from "js-mvc/utils/Action";
+import { useHandler } from "js-mvc/utils/useHandler";
 import styles from "./new.module.css";
 import { TenetDetail } from "data/tenet/service";
-
-const AddOption = Action("addoption");
+import { AddOptionHandler } from "views/handlers/AddOptionHandler";
 
 /** Renders a single option row with the given index. */
 function OptionCard(idx: number) {
@@ -97,63 +96,69 @@ export interface TenetFormViewModel {
   validationErrors?: Record<string, string>;
 }
 
-export const View: FC<TenetFormViewModel> = ({ validationErrors }) => (
-  <section>
-    <hgroup>
-      <h1>Propose a Tenet</h1>
-      <p>Record an architecture decision for your team to review.</p>
-    </hgroup>
+export const View: FC<TenetFormViewModel> = ({ validationErrors }) => {
+  const AddOption = useHandler(AddOptionHandler);
 
-    <form method="post" action="/tenets">
-      <label for="title">Title</label>
-      <input
-        id="title"
-        name="title"
-        type="text"
-        required
-        aria-invalid={validationErrors?.title ? "true" : undefined}
-      />
-      {validationErrors?.title && <small>{validationErrors.title}</small>}
+  return (
+    <section>
+      <hgroup>
+        <h1>Propose a Tenet</h1>
+        <p>Record an architecture decision for your team to review.</p>
+      </hgroup>
 
-      <label for="context">Context</label>
-      <textarea
-        id="context"
-        name="context"
-        rows={5}
-        required
-        aria-invalid={validationErrors?.context ? "true" : undefined}
-        placeholder="What problem are you trying to solve? What constraints exist?"
-      />
-      {validationErrors?.context && <small>{validationErrors.context}</small>}
+      <form method="post" action="/tenets">
+        <label for="title">Title</label>
+        <input
+          id="title"
+          name="title"
+          type="text"
+          required
+          aria-invalid={validationErrors?.title ? "true" : undefined}
+        />
+        {validationErrors?.title && <small>{validationErrors.title}</small>}
 
-      <fieldset>
-        <legend>Options</legend>
-        <p>
-          <small>
-            Each option represents a possible choice. Add pros and cons for
-            each.
-          </small>
-        </p>
+        <label for="context">Context</label>
+        <textarea
+          id="context"
+          name="context"
+          rows={5}
+          required
+          aria-invalid={validationErrors?.context ? "true" : undefined}
+          placeholder="What problem are you trying to solve? What constraints exist?"
+        />
+        {validationErrors?.context && <small>{validationErrors.context}</small>}
 
-        <AddOption start="3">
-          <div data-option-container>
-            {OptionCard(0)}
-            {OptionCard(1)}
-          </div>
+        <fieldset>
+          <legend>Options</legend>
+          <p>
+            <small>
+              Each option represents a possible choice. Add pros and cons for
+              each.
+            </small>
+          </p>
 
-          {OptionTemplate()}
+          <AddOption start="3">
+            <div data-option-container>
+              {OptionCard(0)}
+              {OptionCard(1)}
+            </div>
 
-          <AddOption.Trigger event="click" method="add">
-            <button type="button" class="outline">
-              + Add option
-            </button>
-          </AddOption.Trigger>
-        </AddOption>
+            {OptionTemplate()}
 
-        {validationErrors?.options && <small>{validationErrors.options}</small>}
-      </fieldset>
+            <AddOption.Trigger event="click" method="add">
+              <button type="button" class="outline">
+                + Add option
+              </button>
+            </AddOption.Trigger>
+          </AddOption>
 
-      <button type="submit">Create Tenet</button>
-    </form>
-  </section>
-);
+          {validationErrors?.options && (
+            <small>{validationErrors.options}</small>
+          )}
+        </fieldset>
+
+        <button type="submit">Create Tenet</button>
+      </form>
+    </section>
+  );
+};
