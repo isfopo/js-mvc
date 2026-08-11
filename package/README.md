@@ -9,7 +9,7 @@ MVC framework for Cloudflare Workers built on Hono with server-side JSX
 - **Decorator-based routing** — Stage 3 TC39 decorators (`@Get`, `@Post`, etc.) on controller methods
 - **Guard pipeline** — `@Exists`, `@Authorize`, `@Validate` decorators run before handlers
 - **SQL repository layer** — Generic CRUD, dynamic finders, typed `.sql` file queries, injection-safe
-- **Client-side handlers** — `Action()` factory wires server JSX to client controllers without manual attributes
+- **Client-side handlers** — `useHandler()` factory wires server JSX to client controllers without manual attributes
 - **CSS-only interactivity** — `State()` factory generates scoped CSS rules for show/hide/disable based on form state
 - **Vite plugins** — SQL transform, SQL type generation, CSS build, client bundle
 
@@ -71,9 +71,9 @@ const drafts = await repo(db).findAllBy({ status: "draft" })
 ### Client handler
 
 ```tsx
-import { Action } from "js-mvc/utils/Action"
+import { useHandler } from "js-mvc/utils/useHandler"
 
-const Dismiss = Action("dismiss")
+const Dismiss = useHandler("dismiss")
 
 <Dismiss>
   <div class="card">
@@ -120,8 +120,8 @@ const Plan = State<"plan", "free" | "pro">("plan")
 
 - **Strict MVC layers** — Controllers handle routing/rendering, services handle business rules, repositories handle data access
 - **HTML vs API controllers** — Same pattern, different output. Business logic lives in services
-- **Server vs client** — `Action()` generates `data-*` attributes server-side; `BaseHandler` consumes them client-side. No manual strings to keep in sync
-- **CSS-only vs JS interactivity** — `State()` generates scoped CSS rules. `Action()` wires JS handlers. Choose the right tool per interaction
+- **Server vs client** — `useHandler()` generates `data-*` attributes server-side; `BaseHandler` consumes them client-side. No manual strings to keep in sync
+- **CSS-only vs JS interactivity** — `State()` generates scoped CSS rules. `useHandler()` wires JS handlers. Choose the right tool per interaction
 
 ### Convention Over Configuration
 
@@ -139,7 +139,7 @@ const Plan = State<"plan", "free" | "pro">("plan")
 
 ### Developer Experience
 
-- **Declarative over imperative** — `@Validate(Request)` instead of manual checks. `Action("dismiss")` instead of hand-written `data-*` attributes
+- **Declarative over imperative** — `@Validate(Request)` instead of manual checks. `useHandler("dismiss")` instead of hand-written `data-*` attributes
 - **Type safety by default** — `noImplicitOverride: true`, generic repositories, typed request objects, Stage 3 decorators
 - **Safety nets built in** — Column name validation, ORDER BY validation, empty criteria protection, correct null handling
 - **Instant feedback** — Vite HMR for CSS. Layout updates without full reload
@@ -176,7 +176,7 @@ const Plan = State<"plan", "free" | "pro">("plan")
 | `js-mvc/validation/decorators` | `@Exists`, `@Authorize`, `@Validate` |
 | `js-mvc/validation/IValidatable` | `IValidatable` interface for request objects |
 | `js-mvc/errors` | `AppError`, `NotFoundError`, `ValidationError`, etc. |
-| `js-mvc/utils/Action` | `Action()` factory for client handlers |
+| `js-mvc/utils/useHandler` | `useHandler()` factory for client handlers |
 | `js-mvc/utils/State` | `State()` factory for CSS-only interactivity |
 | `js-mvc/client/BaseHandler` | `BaseHandler` for custom client controllers |
 | `js-mvc/client/dispatcher` | Client-side handler dispatcher |
@@ -291,5 +291,5 @@ The package uses `noImplicitOverride: true` and Stage 3 decorators. Your `tsconf
 }
 ```
 
-> **Note:** `"DOM"` is required in `lib` for client-side features (`BaseHandler`, `Action`, `State`).
+> **Note:** `"DOM"` is required in `lib` for client-side features (`BaseHandler`, `useHandler`, `State`).
 > Server-only projects can omit it, but most projects will need it.
