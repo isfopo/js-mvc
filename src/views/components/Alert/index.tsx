@@ -1,6 +1,6 @@
 import type { FC, PropsWithChildren } from "hono/jsx";
 import styles from "./index.module.css";
-import { useHandler } from "js-mvc/utils/useHandler";
+import { useHandler } from "js-mvc/client/useHandler";
 import { DismissHandler } from "views/handlers/DismissHandler";
 
 export type AlertVariant = "info" | "success" | "warning" | "error";

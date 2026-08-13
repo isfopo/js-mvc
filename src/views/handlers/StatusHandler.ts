@@ -1,19 +1,18 @@
 /**
- * Status transition handler — confirms before changing tenet status.
+ * Status handler — confirms before changing tenet status.
  */
 
-import { BaseHandler, Handler } from "js-mvc/client/BaseHandler";
+import { BaseHandler } from "js-mvc/client/BaseHandler";
 
-@Handler("status")
-export class StatusTransitionHandler extends BaseHandler {
+export class StatusHandler extends BaseHandler {
   override connect(): void {
-    // Actions are wired by the dispatcher via data-action attributes
+    // Actions are wired by the runtime on hydration
   }
 
   transition(event: Event): void {
     const target = event.currentTarget as HTMLElement;
-    const status = target.getAttribute("data-status-target");
-    const message = target.getAttribute("data-status-message") ?? "Change status?";
+    const status = target.getAttribute("data-status");
+    const message = target.getAttribute("data-message") ?? "Change status?";
 
     if (!confirm(message)) {
       event.preventDefault();

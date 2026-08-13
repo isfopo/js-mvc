@@ -5,7 +5,7 @@
  */
 
 import type { FC } from "hono/jsx";
-import { useHandler } from "js-mvc/utils/useHandler";
+import { useHandler } from "js-mvc/client/useHandler";
 import { VoteHandler } from "views/handlers/VoteHandler";
 
 export type UserVoteInfo = { choice: string; reason: string | null } | null;

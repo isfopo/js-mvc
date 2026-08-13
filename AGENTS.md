@@ -40,13 +40,13 @@ The CSS build is **automatic** with full HMR support:
 - **Controllers** (`src/views/routes/*/controller.tsx`): Each controller extends `ControllerBase` from `js-mvc/controller/ControllerBase`, sets an override `base` string (the route prefix), declares routes via decorators, and calls `configureRendering({ layout, handleError })` in the constructor to wire up the shared layout and error handler.
 - **API Controllers** (`src/views/routes/*/controller.api.tsx`): Same pattern but return JSON. Share business logic via services.
 - **Views** (`src/views/routes/*/views/`): Top-level page components using `FC` from `hono/jsx` with typed ViewModel.
-- **Components** (`src/views/components/`): Reusable UI pieces. Use `Action()` from `js-mvc/utils/Action` for client-side handler wiring.
+- **Components** (`src/views/components/`): Reusable UI pieces. Use `useHandler()` from `js-mvc/client/useHandler` for client-side handler wiring.
 - **Services** (`src/data/*/service.ts`): Business logic layer shared between HTML and API controllers. Extend `ServiceBase` from `js-mvc/service/ServiceBase`.
 - **Repositories** (`src/data/*/repo.ts`): Data access layer. Extend `RepositoryBase<T, QueryMap>` from `js-mvc/repository/RepositoryBase`. D1Database is injected via constructor; repos are created per-request using factory functions (e.g., `tenetsRepo(db)`). Inherit generic CRUD (`findById`, `findAll`, `create`, `update`, `delete`, `count`) and dynamic finders (`findOneBy`, `findAllBy`, `existsBy`, `deleteBy`). Complex queries use `.sql` files with YAML front matter and typed `queryOne`/`queryAll`/`execute` methods. See **Repository Security** below for validation details.
 - **Models** (`src/data/*/model.ts`): Row types matching D1 table columns.
 - **Requests** (`src/views/routes/*/requests/`): IValidatable form objects with `validate()` method.
 - **Framework** (`package/src/`): Reusable framework code imported via `js-mvc/*` path aliases. Contains `ControllerBase`, `RepositoryBase`, `ServiceBase`, `BaseHandler`, validation decorators, error classes, and utilities.
-- **Client entry** (`src/client-entry.ts`): Imports the framework dispatcher (`js-mvc/client/main`) and registers project-specific handlers.
+- **Client entry** (`src/client-entry.ts`): Registers project handler classes with the hydration runtime (`register(...)` from `js-mvc/client/main`) and re-exports `hydrate`.
 - **Error handler** (`src/error-handler.tsx`): Project-specific error handling that maps `AppError` subclasses to HTML responses. Imported by controllers via `configureRendering()`.
 
 ## Routing Convention
@@ -151,60 +151,59 @@ await repo.findOneBy({});
 await repo.deleteBy({});
 ```
 
-## Client-Side Handlers — Use `Action()` Always
+## Client-Side Handlers — Use `useHandler()` Always
 
-**Never write `data-controller` or `data-action` attributes manually.** Always use the `Action()` component factory from `js-mvc/utils/Action`.
+**Never write `data-controller`, `data-action`, or hydration scripts by hand.** Always use the `useHandler()` component factory from `js-mvc/client/useHandler`. It renders the element, generates a unique id, and emits an inline `<script type="module">` that hydrates the handler onto that element — the handler ships with its HTML, and no handler name appears in the markup.
 
 ```tsx
-import { Action } from "js-mvc/utils/Action";
+import { useHandler } from "js-mvc/client/useHandler";
+import { AddOptionHandler } from "views/handlers/AddOptionHandler";
 
-const MyHandler = Action("myhandler");
+const AddOption = useHandler(AddOptionHandler);
 
 // Wrapper + Trigger — handler scoped to a container
-<MyHandler start="2">
-  <div>
-    {content}
-  </div>
-  <MyHandler.Trigger event="click" method="add">
+<AddOption start="2">
+  <div data-option-container>{content}</div>
+  <AddOption.Trigger event="click" method="add">
     <button>Add</button>
-  </MyHandler.Trigger>
-</MyHandler>
+  </AddOption.Trigger>
+</AddOption>
 
 // Trigger-only — handler lives on the element itself
-<MyHandler.Trigger event="click" method="submit" choice="approve">
+const Confirm = useHandler(ConfirmHandler);
+<Confirm.Trigger event="click" method="ask" message="Are you sure?">
   <button class="primary">Approve</button>
-</MyHandler.Trigger>
+</Confirm.Trigger>
 ```
 
-Extra props passed to `Wrapper` or `Trigger` are automatically converted to `data-{handler}-{key}` attributes. This keeps handler names and method names in sync between server views and client handlers.
+Extra props passed to `Wrapper` or `Trigger` are automatically converted to `data-{key}` attributes on the element (read in the handler via `this.data("key")`). Known HTML attributes (`class`, `style`, `data-*`, `aria-*`, ...) pass through unchanged. The handler name is derived from the class name and used only internally to key the client registry — you never write it.
 
 ### Creating a New Handler
 
-Handlers extend `BaseHandler` and use the `@Handler` decorator for automatic registration:
+Handlers extend `BaseHandler`. The name is derived from the class name (`DismissHandler` → `"dismiss"`) at runtime — no decorator or static declaration is needed:
 
 ```ts
-import { BaseHandler, Handler } from "js-mvc/client/BaseHandler";
+import { BaseHandler } from "js-mvc/client/BaseHandler";
 
-@Handler()
 export class DismissHandler extends BaseHandler {
   override connect(): void {
-    // Called when the handler is wired to the DOM
+    // Called when the handler is hydrated onto its element
   }
 
   hide(): void {
-    // Called when data-action="click->dismiss#hide" fires
+    // Called when data-action="click->hide" fires
   }
 }
 ```
 
-The decorator automatically derives the handler name from the class name by stripping the "Handler" suffix and lowercasing (e.g., `DismissHandler` → `dismiss`). You can also provide an explicit name: `@Handler("custom-name")`.
+Every new client handler must be registered once in `src/client-entry.ts`:
 
-The `@Handler("name")` decorator automatically registers the handler with the dispatcher. No manual `register()` call needed.
+```ts
+import { register } from "js-mvc/client/main";
+import { DismissHandler } from "./views/handlers/DismissHandler";
 
-Every new client handler must:
-1. Use the `@Handler()` decorator (name auto-derived from class name, or provide explicit name)
-2. Be added to `HandlerActions` in `src/utils/Action.tsx`
-3. Be imported in `src/client-entry.ts`
+register(DismissHandler);
+```
 
 ## Layout / Rendering
 

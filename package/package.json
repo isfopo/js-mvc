@@ -27,7 +27,7 @@
     "./client/BaseHandler": "./src/client/BaseHandler.ts",
     "./client/dispatcher": "./src/client/dispatcher.ts",
     "./client/main": "./src/client/main.ts",
-    "./utils/useHandler": "./src/utils/useHandler.tsx",
+    "./client/useHandler": "./src/client/useHandler.tsx",
     "./utils/State": "./src/utils/State.tsx",
     "./utils/State.types": "./src/utils/State.types.ts",
     "./adapters/d1": "./src/adapters/d1.ts",

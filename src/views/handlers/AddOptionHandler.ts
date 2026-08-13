@@ -5,9 +5,8 @@
  * The template uses `__IDX__` as a placeholder for the field index.
  */
 
-import { BaseHandler, Handler } from "js-mvc/client/BaseHandler";
+import { BaseHandler } from "js-mvc/client/BaseHandler";
 
-@Handler()
 export class AddOptionHandler extends BaseHandler {
   private counter = 1; // template has index 0, so start at 1
 

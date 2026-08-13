@@ -1,5 +1,5 @@
 import type { FC } from "hono/jsx";
-import { useHandler } from "js-mvc/utils/useHandler";
+import { useHandler } from "js-mvc/client/useHandler";
 import styles from "./new.module.css";
 import { TenetDetail } from "data/tenet/service";
 import { AddOptionHandler } from "views/handlers/AddOptionHandler";

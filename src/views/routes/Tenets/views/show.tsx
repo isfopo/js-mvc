@@ -1,12 +1,12 @@
 import type { FC } from "hono/jsx";
-import { useHandler } from "js-mvc/utils/useHandler";
+import { useHandler } from "js-mvc/client/useHandler";
 import { StatusBadge } from "views/components/StatusBadge";
 import { VoteButtons } from "views/components/VoteButtons";
 import { VoteProgress } from "views/components/VoteProgress";
 import styles from "./show.module.css";
 import { TenetStatus } from "data/tenet/model";
 import { TenetDetail, UserInfo } from "data/tenet/service";
-import { StatusTransitionHandler } from "views/handlers/StatusTransitionHandler";
+import { StatusHandler } from "views/handlers/StatusHandler";
 
 export interface TenetDetailViewModel {
   tenet: TenetDetail;
@@ -60,7 +60,7 @@ export const View: FC<TenetDetailViewModel> = ({
   canTransition,
   allowedTransitions,
 }) => {
-  const Status = useHandler(StatusTransitionHandler);
+  const Status = useHandler(StatusHandler);
 
   return (
     <section>
@@ -156,7 +156,7 @@ export const View: FC<TenetDetailViewModel> = ({
                 <Status.Trigger
                   event="click"
                   method="transition"
-                  target={t.target}
+                  status={t.target}
                   message={t.message}
                 >
                   <button type="submit">{t.label}</button>

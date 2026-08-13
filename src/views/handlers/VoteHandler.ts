@@ -4,17 +4,16 @@
  * For "block", prompts for a reason before submitting the form.
  */
 
-import { BaseHandler, Handler } from "js-mvc/client/BaseHandler";
+import { BaseHandler } from "js-mvc/client/BaseHandler";
 
-@Handler()
 export class VoteHandler extends BaseHandler {
   override connect(): void {
-    // Actions are wired by the dispatcher via data-action attributes
+    // Actions are wired by the runtime on hydration
   }
 
   submit(event: Event): void {
     const target = event.currentTarget as HTMLElement;
-    const choice = target.getAttribute("data-vote-choice");
+    const choice = target.getAttribute("data-choice");
     const form = this.element.closest("form") as HTMLFormElement | null;
     if (!form || !choice) return;
 

@@ -1,139 +1,118 @@
 /**
  * Abstract base class for client-side handlers.
  *
- * Mirrors the server-side ControllerBase pattern. Subclasses declare
- * a static `handlerName` and implement `connect()`.
+ * Mirrors the server-side ControllerBase pattern. Subclasses implement
+ * `connect()`; the handler name is derived from the class name at runtime
+ * (e.g. `DismissHandler` → `"dismiss"`), so no decorator or static
+ * declaration is needed.
  *
- * Usage is via the Action component factory.
- * The handler name is bound once, and data params are passed as props:
+ * Usage is via the useHandler component factory:
  *
- *   const Confirm = Action("confirm");
+ *   const Confirm = useHandler(ConfirmHandler);
  *   <Confirm.Trigger event="click" method="ask" message="Delete?">
  *     <button>Delete</button>
  *   </Confirm.Trigger>
  *
- * This renders: <button data-controller="confirm"
- *         data-action="click->confirm#ask"
- *         data-confirm-message="Delete?">Delete</button>
+ * This renders the button with a generated id, `data-action="click->ask"`,
+ * a `data-message="Delete?"` param, and an inline script that hydrates
+ * ConfirmHandler onto that button:
+ *
+ *   <button id="..." data-action="click->ask" data-message="Delete?">Delete</button>
+ *   <script type="module">
+ *     import { hydrate } from "...";
+ *     hydrate("confirm", "...");
+ *   </script>
  */
 
-import { register } from "./dispatcher";
 import type { Handler, LifecycleName } from "./types";
 
-/**
- * Decorator that registers a handler class with the dispatcher.
- * 
- * Usage:
- *   @Handler()
- *   export class DismissHandler extends BaseHandler { ... }
- *   // Registers as "dismiss" (class name minus "Handler" suffix, lowercased)
- * 
- *   @Handler("custom-name")
- *   export class MyHandler extends BaseHandler { ... }
- *   // Registers as "custom-name"
- */
-export function Handler(name?: string) {
-  return function <T extends new (element: HTMLElement) => BaseHandler>(
-    target: T,
-    context: ClassDecoratorContext<T>,
-  ): T {
-    let handlerName = name;
-    if (!handlerName) {
-      const className = String(context.name);
-      // Strip "Handler" suffix if present, then lowercase
-      handlerName = className.endsWith("Handler")
-        ? className.slice(0, -7).toLowerCase()
-        : className.toLowerCase();
-    }
-    register(handlerName, target);
-    return target;
-  };
-}
-
 export abstract class BaseHandler implements Handler {
-  /** The root element that declared data-controller */
+  /** The root element the handler is bound to */
   readonly element: HTMLElement;
 
   constructor(element: HTMLElement) {
     this.element = element;
   }
 
+  // --- Name ---
+
+  /**
+   * The handler name, derived from the class name:
+   * "DismissHandler" → "dismiss", "ConfirmHandler" → "confirm".
+   * Used internally to key the client registry; it never appears in the
+   * rendered HTML or in the component interface.
+   */
+  static get handlerName(): string {
+    const raw = this.name; // the class's own Function.name
+    return raw.endsWith("Handler")
+      ? raw.slice(0, -7).toLowerCase()
+      : raw.toLowerCase();
+  }
+
+  /** Alias of the handler name, for instance methods like data()/target() */
+  get name(): string {
+    return (this.constructor as typeof BaseHandler).handlerName;
+  }
+
   // --- Lifecycle ---
 
   /** Called before the handler is wired up (setup, initial state) */
-  beforeConnect(): void {
-    /* override in subclasses if needed */
-  }
+  beforeConnect(): void {}
 
   /** Called automatically after the handler is wired up */
-  abstract connect(): void;
+  connect(): void {}
 
   /** Called after all wiring is complete (safe to interact with DOM) */
-  afterConnect(): void {
-    /* override in subclasses if needed */
-  }
+  afterConnect(): void {}
 
   /** Called before the handler is torn down */
-  beforeDisconnect(): void {
-    /* override in subclasses if needed */
-  }
+  beforeDisconnect(): void {}
 
   /** Called when the element is removed from the DOM (cleanup) */
-  disconnect(): void {
-    /* override in subclasses if needed */
-  }
+  disconnect(): void {}
 
   /** Called when the element enters the viewport */
-  appear(): void {
-    /* override in subclasses if needed */
-  }
+  appear(): void {}
 
   /** Called when the element leaves the viewport */
-  disappear(): void {
-    /* override in subclasses if needed */
-  }
+  disappear(): void {}
 
   /** Called when an error occurs in any lifecycle method */
-  error(_error: Error, _lifecycle: LifecycleName): void {
-    /* override in subclasses if needed — default logs to console */
-  }
+  error(_error: Error, _lifecycle: LifecycleName): void {}
 
   // --- Helpers ---
 
   /**
    * Find a single target element within the handler's scope.
-   * Targets are declared as data-{handler}-target="{name}" on child elements.
+   * Targets are declared as data-ref="{name}" on child elements.
    *
-   * Example: <input data-confirm-target="input" />  →  this.target("input")
+   * Example: <input data-ref="input" />  →  this.target("input")
    */
   target<T extends HTMLElement = HTMLElement>(name: string): T | null {
-    const attr = `data-${this.name}-target`;
-    return this.element.querySelector<T>(`[${attr}="${name}"]`);
+    return this.element.querySelector<T>(`[data-ref="${name}"]`);
   }
 
   /**
    * Find all target elements within the handler's scope.
    */
   targets<T extends HTMLElement = HTMLElement>(name: string): NodeListOf<T> {
-    const attr = `data-${this.name}-target`;
-    return this.element.querySelectorAll<T>(`[${attr}="${name}"]`);
+    return this.element.querySelectorAll<T>(`[data-ref="${name}"]`);
   }
 
   /**
-   * Read a configuration value from data-{handler}-{key} on the root element.
+   * Read a configuration value from a data-{key} attribute on the root
+   * element, falling back to the first matching attribute on a descendant.
+   * Params passed to Wrapper/Trigger are converted to these attributes.
    *
-   * Example: <div data-controller="confirm" data-confirm-message="Sure?">
-   *          →  this.data("message")  // "Sure?"
+   * Example: <div data-message="Sure?">  →  this.data("message")  // "Sure?"
    */
   data(key: string): string | null {
-    return this.element.getAttribute(`data-${this.name}-${key}`);
+    const attr = `data-${key}`;
+    const root = this.element.getAttribute(attr);
+    if (root !== null) return root;
+    return (
+      this.element.querySelector<HTMLElement>(`[${attr}]`)?.getAttribute(attr) ??
+      null
+    );
   }
-
-  /** Convenience: shorthand for this.constructor.name */
-  get name(): string {
-    return (this.constructor as typeof BaseHandler).name;
-  }
-
-  /** Static handler name — override in subclasses */
-  static readonly name: string = "";
 }

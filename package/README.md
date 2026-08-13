@@ -71,9 +71,16 @@ const drafts = await repo(db).findAllBy({ status: "draft" })
 ### Client handler
 
 ```tsx
-import { useHandler } from "js-mvc/utils/useHandler"
+import { BaseHandler } from "js-mvc/client/BaseHandler"
+import { useHandler } from "js-mvc/client/useHandler"
 
-const Dismiss = useHandler("dismiss")
+class DismissHandler extends BaseHandler {
+  hide() {
+    // called when a Trigger fires with method="hide"
+  }
+}
+
+const Dismiss = useHandler(DismissHandler)
 
 <Dismiss>
   <div class="card">
@@ -176,7 +183,7 @@ const Plan = State<"plan", "free" | "pro">("plan")
 | `js-mvc/validation/decorators` | `@Exists`, `@Authorize`, `@Validate` |
 | `js-mvc/validation/IValidatable` | `IValidatable` interface for request objects |
 | `js-mvc/errors` | `AppError`, `NotFoundError`, `ValidationError`, etc. |
-| `js-mvc/utils/useHandler` | `useHandler()` factory for client handlers |
+| `js-mvc/client/useHandler` | `useHandler()` factory for client handlers |
 | `js-mvc/utils/State` | `State()` factory for CSS-only interactivity |
 | `js-mvc/client/BaseHandler` | `BaseHandler` for custom client controllers |
 | `js-mvc/client/dispatcher` | Client-side handler dispatcher |

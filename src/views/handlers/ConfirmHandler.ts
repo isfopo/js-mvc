@@ -1,8 +1,8 @@
 /**
  * Confirm handler — shows a native confirm dialog before an action proceeds.
  *
- * Usage with Action component (Trigger-only, recommended):
- *   const Confirm = Action("confirm");
+ * Usage with useHandler (Trigger-only, recommended):
+ *   const Confirm = useHandler(ConfirmHandler);
  *
  *   <Confirm.Trigger event="click" method="ask" message="Delete this item?">
  *     <button>Delete</button>
@@ -11,14 +11,11 @@
  * The event is prevented if the user cancels the confirm dialog.
  */
 
-import { BaseHandler, Handler } from "js-mvc/client/BaseHandler";
+import { BaseHandler } from "js-mvc/client/BaseHandler";
 
-@Handler()
 export class ConfirmHandler extends BaseHandler {
   override connect(): void {
-    // The dispatcher already wires data-action attributes, but we also
-    // support the simpler pattern: any link/form inside the scope can
-    // be intercepted without an explicit data-action by listening globally.
+    // Actions are wired by the runtime on hydration
   }
 
   /**

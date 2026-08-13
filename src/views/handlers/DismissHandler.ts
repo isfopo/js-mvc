@@ -3,8 +3,8 @@
  *
  * Useful for dismissible alerts, banners, toasts, modals.
  *
- * Usage with Action component (Wrapper + Trigger):
- *   const Dismiss = Action("dismiss");
+ * Usage with useHandler (Wrapper + Trigger):
+ *   const Dismiss = useHandler(DismissHandler);
  *
  *   <Dismiss role="alert">
  *     <span>Something happened.</span>
@@ -13,20 +13,19 @@
  *     </Dismiss.Trigger>
  *   </Dismiss>
  *
- * The controller is on the Wrapper because hide() hides the container
- * element itself (this.element). Set data-dismiss-remove="true" via
+ * The handler is hydrated on the Wrapper because hide() hides the
+ * container element itself (this.element). Set remove="true" on the
  * Trigger to remove the element from the DOM instead:
  *   <Dismiss.Trigger event="click" method="hide" remove="true">
  *     <button>✕</button>
  *   </Dismiss.Trigger>
  */
 
-import { BaseHandler, Handler } from "js-mvc/client/BaseHandler";
+import { BaseHandler } from "js-mvc/client/BaseHandler";
 
-@Handler()
 export class DismissHandler extends BaseHandler {
   override connect(): void {
-    // no-op — actions are wired by the dispatcher
+    // no-op — actions are wired by the runtime on hydration
   }
 
   /** Hide the handler's root element */
