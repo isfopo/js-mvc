@@ -15,4 +15,9 @@ export type {
   ValidationResult,
 } from "./decorators";
 export { executeGuard } from "./guard-executor";
-export { parseRequestBody, unflattenFormBody } from "./unflatten-form-body";
+export {
+  BODY_KEY,
+  parseBody,
+  parseRequestBody,
+  unflattenFormBody,
+} from "./parseBody";

@@ -76,6 +76,7 @@ Use validation/guard decorators to handle cross-cutting concerns before route ha
 
 ```ts
 import { Exists, Validate } from "js-mvc/validation/decorators";
+import { parseRequestBody } from "js-mvc/validation";
 import { ProposeTenetRequest } from "../../data/requests/ProposeTenetRequest";
 
 class TenetsController extends ControllerBase {
@@ -89,11 +90,19 @@ class TenetsController extends ControllerBase {
   @Post("/")
   @Validate(ProposeTenetRequest)
   async create(c: Context) {
-    const input = c.get("validated") as ProposeTenetRequest; // already validated
+    const input = parseRequestBody(c) as ProposeTenetRequest; // already validated
     // ...
   }
 }
 ```
+
+> **Body parsing:** `@Validate` reads the request body parsed by the
+> `parseBody()` middleware (`js-mvc/validation`). Mount it globally
+> (`app.use("*", parseBody())`) or per controller. It parses JSON as-is
+> and unflattens form bodies into nested objects/arrays, storing the
+> result on the context under `BODY_KEY`. Handlers read it via
+> `parseRequestBody(c)` or `c.get(BODY_KEY)` — never call `c.req.json()` /
+> `c.req.parseBody()` directly.
 
 ## Repository Security
 

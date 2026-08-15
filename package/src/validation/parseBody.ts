@@ -1,14 +1,44 @@
+import type { Context, MiddlewareHandler } from "hono";
 
-import type { Context } from "hono";
+/** Context key where the parsed request body is stored by `parseBody()`. */
+export const BODY_KEY = "body";
 
 /**
- * Parse a request body into the shape expected by validation requests.
+ * Read the request body parsed by the `parseBody()` middleware.
  *
- * JSON remains untouched. Form bodies use Hono's standard parser and are
- * unflattened only here, at the validation boundary, rather than through a
- * global middleware that changes the request for every route.
+ * The middleware is the only place bodies are parsed; this accessor
+ * returns the canonical body stored on the context (empty object when
+ * the request carried no body or the middleware did not run).
  */
-export async function parseRequestBody(
+export function parseRequestBody(c: Context): Record<string, unknown> {
+  return (c.get(BODY_KEY) ?? {}) as Record<string, unknown>;
+}
+
+/**
+ * Middleware that parses the request body once, correctly, and stores the
+ * result on the context under `BODY_KEY`.
+ *
+ * JSON bodies are parsed as-is; form bodies are unflattened so keys like
+ * `options[0][title]` become `body.options[0].title`. Handlers and guards
+ * then read `parseRequestBody(c)` / `c.get(BODY_KEY)` instead of re-parsing,
+ * which circumvents Hono's gotcha of the request body being readable only
+ * once, and only through the parser matching the content type.
+ *
+ * Requests without a body (no content-type, or zero-length) are skipped.
+ *
+ * Mount globally (e.g. `app.use("*", parseBody())`) or per controller.
+ */
+export function parseBody(): MiddlewareHandler {
+  return async (c, next) => {
+    if (hasRequestBody(c)) {
+      c.set(BODY_KEY, await parseBodyByMimeType(c));
+    }
+    await next();
+  };
+}
+
+/** Parse a request body exactly once into the shape expected by requests. */
+async function parseBodyByMimeType(
   c: Context,
 ): Promise<Record<string, unknown>> {
   const contentType = c.req.header("content-type") ?? "";
@@ -19,6 +49,14 @@ export async function parseRequestBody(
 
   const raw = await c.req.parseBody();
   return unflattenFormBody(raw as Record<string, unknown>);
+}
+
+/** True when the request carries a body worth parsing. */
+function hasRequestBody(c: Context): boolean {
+  if (!c.req.header("content-type")) return false;
+  const length = c.req.header("content-length");
+  if (length !== undefined && parseInt(length, 10) > 0) return true;
+  return !!c.req.header("transfer-encoding");
 }
 
 /**

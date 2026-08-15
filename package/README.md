@@ -28,6 +28,7 @@ Requires `hono` as a peer dependency.
 ```ts
 import { ControllerBase, Get, Post } from "js-mvc/controller/ControllerBase"
 import { Exists, Validate } from "js-mvc/validation/decorators"
+import { parseRequestBody } from "js-mvc/validation"
 import { MyRequest } from "./requests"
 
 class TenetsController extends ControllerBase {
@@ -43,11 +44,19 @@ class TenetsController extends ControllerBase {
   @Post("/")
   @Validate(MyRequest)
   async create(c) {
-    const input = c.get("validated") as MyRequest
+    const input = parseRequestBody(c) as MyRequest
     // ...
   }
 }
 ```
+
+> **Body parsing:** `@Validate` reads the request body parsed by the
+> `parseBody()` middleware from `js-mvc/validation` — mount it globally
+> (`app.use("*", parseBody())`) or per controller. It parses JSON as-is
+> and unflattens form bodies into nested objects/arrays, storing the
+> result on the context under `BODY_KEY`. Handlers read it via
+> `parseRequestBody(c)` or `c.get(BODY_KEY)` — never call `c.req.json()` /
+> `c.req.parseBody()` directly.
 
 ### Repository
 
@@ -181,6 +190,7 @@ const Plan = State<"plan", "free" | "pro">("plan")
 | `js-mvc/repository/RepositoryBase` | `RepositoryBase` with CRUD and dynamic finders |
 | `js-mvc/service/ServiceBase` | `ServiceBase` with error helpers |
 | `js-mvc/validation/decorators` | `@Exists`, `@Authorize`, `@Validate` |
+| `js-mvc/validation` | `parseBody()` middleware, `parseRequestBody()`, `unflattenFormBody()`, `BODY_KEY` |
 | `js-mvc/validation/IValidatable` | `IValidatable` interface for request objects |
 | `js-mvc/errors` | `AppError`, `NotFoundError`, `ValidationError`, etc. |
 | `js-mvc/client/useHandler` | `useHandler()` factory for client handlers |

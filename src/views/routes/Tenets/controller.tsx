@@ -14,6 +14,7 @@ import { View as NewView } from "./views/new";
 import { viewBuilder } from "./view-builder";
 import type { UserRow } from "data/user/model";
 import type { TenetRow } from "data/tenet/model";
+import { TransitionRequest } from "./requests/TransitionRequest";
 
 class TenetsController<T extends Env> extends ControllerBase<T> {
   override base = "tenets";
@@ -40,7 +41,7 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
   @Validate(ProposeTenetRequest)
   async create(c: Context) {
     const user = c.get("user") as UserRow;
-    const input = c.get("validated") as ProposeTenetRequest;
+    const input = c.get("body") as ProposeTenetRequest;
     const tenet = await tenetService.propose(
       (c.env as CloudflareBindings).DB,
       user.id,
@@ -67,7 +68,7 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
   async vote(c: Context) {
     const user = c.get("user") as UserRow;
     const tenetRow = c.get("tenet") as TenetRow;
-    const input = c.get("validated") as VoteRequest;
+    const input = c.get("body") as VoteRequest;
     await tenetService.vote(
       (c.env as CloudflareBindings).DB,
       user.id,
@@ -82,13 +83,13 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
   async transition(c: Context) {
     const user = c.get("user") as UserRow;
     const tenetRow = c.get("tenet") as TenetRow;
-    const body = await c.req.parseBody();
-    const newStatus = body.status as string;
+    const body = c.get("body") as TransitionRequest;
+
     await tenetService.transitionStatus(
       (c.env as CloudflareBindings).DB,
       user.id,
       tenetRow.slug,
-      newStatus as any,
+      body.status,
     );
     return c.redirect(`/tenets/${tenetRow.slug}`);
   }

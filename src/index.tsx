@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { parseBody } from "js-mvc/validation";
 
 import TenetsController from "views/routes/Tenets/controller";
 import TenetsApiController from "views/routes/Tenets/controller.api";
@@ -59,6 +60,12 @@ app.use("*", async (c, next) => {
   }
   await next();
 });
+
+// Parse request bodies once, correctly (JSON as-is, forms unflattened)
+// so every route and guard reads a canonical body from the context —
+// circumventing Hono's gotcha of the body being readable only once and
+// only through the parser matching the content type.
+app.use("*", parseBody());
 
 TenetsController.register(app);
 TenetsApiController.register(app);

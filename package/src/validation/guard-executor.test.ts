@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { executeGuard } from "./guard-executor";
+import { BODY_KEY } from "./parseBody";
 import { NotFoundError, ForbiddenError, ValidationError } from "../errors";
 import type {
   AuthorizeGuard,
@@ -80,6 +81,11 @@ function createMockContext(options: {
   parsedBody?: Record<string, unknown>;
 } = {}) {
   const store = new Map<string, unknown>();
+
+  // Simulate the parseBody() middleware having run for this request
+  if (options.parsedBody !== undefined) {
+    store.set(BODY_KEY, options.parsedBody);
+  }
 
   return {
     req: {
@@ -171,19 +177,20 @@ describe("executeGuard — validate path", () => {
 
     expect(TestRequest.validateWasCalled).toBe(true);
     expect(TestRequest.lastBody).toEqual({ name: "test", value: "123" });
-    expect(c.set).toHaveBeenCalledWith("validated", expect.any(TestRequest));
+    expect(c.set).toHaveBeenCalledWith("body", expect.any(TestRequest));
   });
 
-  it("unflattens form fields without global middleware", async () => {
+  it("passes the middleware-parsed body to the request class", async () => {
     const guard: ValidateGuard = {
       type: "validate",
       handlerName: "test",
       RequestClass: TestRequest,
     };
 
+    // Unflattening already happened in the parseBody() middleware
     const c = createMockContext({
       contentType: "application/x-www-form-urlencoded",
-      parsedBody: { "options[0][title]": "React" },
+      parsedBody: { options: [{ title: "React" }] },
     });
 
     await executeGuard(guard, c);
