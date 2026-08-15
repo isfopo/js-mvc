@@ -64,65 +64,25 @@ function guardDecorator(
   };
 }
 
-/** Register an entity loader guard. Supports both class and legacy callback forms. */
-export function Exists(GuardClass: new () => IExistable): MethodDecoratorFactory;
+/** Register an entity loader guard. */
 export function Exists(
-  key: string,
-  load: (c: Context) => Promise<unknown> | unknown,
-): MethodDecoratorFactory;
-export function Exists(
-  guardOrKey: (new () => IExistable) | string,
-  legacyLoad?: (c: Context) => Promise<unknown> | unknown,
+  GuardClass: new () => IExistable,
 ): MethodDecoratorFactory {
-  if (typeof guardOrKey === "string") {
-    if (!legacyLoad) throw new TypeError("Exists requires a loader");
-    const key = guardOrKey;
-    return guardDecorator((handlerName) => ({
-      type: "exists",
-      handlerName,
-      GuardClass: class implements IExistable {
-        load(c: Context) {
-          return Promise.resolve(legacyLoad!(c));
-        }
-        key = key;
-      },
-    }));
-  }
-
   return guardDecorator((handlerName) => ({
     type: "exists",
     handlerName,
-    GuardClass: guardOrKey,
+    GuardClass,
   }));
 }
 
-/** Register an authorization guard. Supports both class and legacy callback forms. */
-export function Authorize(GuardClass: new () => IAuthorizable): MethodDecoratorFactory;
+/** Register an authorization guard. */
 export function Authorize(
-  check: (c: Context) => Promise<void> | void,
-): MethodDecoratorFactory;
-export function Authorize(
-  guardOrCheck:
-    | (new () => IAuthorizable)
-    | ((c: Context) => Promise<void> | void),
+  GuardClass: new () => IAuthorizable,
 ): MethodDecoratorFactory {
-  if (typeof guardOrCheck === "function" && !guardOrCheck.prototype?.authorize) {
-    const check = guardOrCheck;
-    return guardDecorator((handlerName) => ({
-      type: "authorize",
-      handlerName,
-      GuardClass: class implements IAuthorizable {
-        authorize(c: Context) {
-          return (check as (c: Context) => Promise<void> | void)(c);
-        }
-      },
-    }));
-  }
-
   return guardDecorator((handlerName) => ({
     type: "authorize",
     handlerName,
-    GuardClass: guardOrCheck as new () => IAuthorizable,
+    GuardClass,
   }));
 }
 
