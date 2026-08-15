@@ -1,7 +1,20 @@
 import type { Context } from "hono";
 import { NotFoundError, ValidationError } from "../errors";
-import type { GuardDescriptor } from "./decorators";
-import { parseRequestBody } from "./parseBody";
+import { parseRequestBody } from "../middleware/parseBody";
+import type { GuardDescriptor, MethodDecoratorFactory } from "./types";
+
+/** Shared metadata key used by decorators and ControllerBase. */
+export const GUARDS_KEY = Symbol("hono:guards");
+
+export function guardDecorator(
+  createGuard: (handlerName: string) => GuardDescriptor,
+): MethodDecoratorFactory {
+  return (_target, context) => {
+    const metadata = context.metadata as Record<PropertyKey, unknown>;
+    const guards = (metadata[GUARDS_KEY] ??= []) as GuardDescriptor[];
+    guards.push(createGuard(String(context.name)));
+  };
+}
 
 /**
  * Execute a single guard against the current request context.
@@ -13,7 +26,10 @@ import { parseRequestBody } from "./parseBody";
  *
  * Called by ControllerBase.register() before each route handler.
  */
-export async function executeGuard(guard: GuardDescriptor, c: Context): Promise<void> {
+export async function executeGuard(
+  guard: GuardDescriptor,
+  c: Context,
+): Promise<void> {
   switch (guard.type) {
     case "exists": {
       const instance = new guard.GuardClass();

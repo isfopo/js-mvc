@@ -4,7 +4,7 @@ import {
   parseBody,
   parseRequestBody,
   unflattenFormBody,
-} from "./parseBody";
+} from "./parseBody"
 
 describe("unflattenFormBody", () => {
   it("passes through flat keys unchanged", () => {
@@ -70,12 +70,14 @@ describe("unflattenFormBody", () => {
 
 // ── Helpers ─────────────────────────────────────────────────────
 
-function createMockContext(options: {
-  contentType?: string;
-  contentLength?: string;
-  transferEncoding?: string;
-  parsedBody?: Record<string, unknown>;
-} = {}) {
+function createMockContext(
+  options: {
+    contentType?: string;
+    contentLength?: string;
+    transferEncoding?: string;
+    parsedBody?: Record<string, unknown>;
+  } = {},
+) {
   const store = new Map<string, unknown>();
 
   return {

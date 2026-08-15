@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { parseBody } from "js-mvc/validation";
+import { parseBody } from "js-mvc/middleware";
 
 import TenetsController from "views/routes/Tenets/controller";
 import TenetsApiController from "views/routes/Tenets/controller.api";

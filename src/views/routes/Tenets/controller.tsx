@@ -1,6 +1,6 @@
 import { Context, Env } from "hono";
 import { Get, Post, ControllerBase } from "js-mvc/controller/ControllerBase";
-import { Exists, Validate } from "js-mvc/validation/decorators";
+import { Exists, Validate } from "js-mvc/gaurds";
 import { Layout } from "views/routes/Shared/Layout";
 import { handleError } from "error-handler";
 import { requireAuth } from "middlewares/auth";

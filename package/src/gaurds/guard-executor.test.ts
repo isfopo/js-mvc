@@ -1,16 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { executeGuard } from "./guard-executor";
-import { BODY_KEY } from "./parseBody";
+
 import { NotFoundError, ForbiddenError, ValidationError } from "../errors";
-import type {
-  AuthorizeGuard,
-  ExistsGuard,
-  IAuthorizable,
-  IExistable,
-  IValidatable,
-  ValidateGuard,
-  ValidationResult,
-} from "./decorators";
+import { BODY_KEY } from "middleware/parseBody";
+import { IAuthorizable, AuthorizeGuard } from "./Authorize";
+import { IExistable, ExistsGuard } from "./Exists";
+import { IValidatable, ValidationResult, ValidateGuard } from "./Validate";
 
 // ── Test guards ─────────────────────────────────────────────────
 
@@ -76,10 +71,12 @@ class FailingRequest implements IValidatable {
 
 // ── Helpers ─────────────────────────────────────────────────────
 
-function createMockContext(options: {
-  contentType?: string;
-  parsedBody?: Record<string, unknown>;
-} = {}) {
+function createMockContext(
+  options: {
+    contentType?: string;
+    parsedBody?: Record<string, unknown>;
+  } = {},
+) {
   const store = new Map<string, unknown>();
 
   // Simulate the parseBody() middleware having run for this request

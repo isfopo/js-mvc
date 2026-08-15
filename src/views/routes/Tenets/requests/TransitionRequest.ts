@@ -2,7 +2,7 @@ import { TenetStatus } from "data/tenet/model";
 import type {
   ValidationResult,
   IValidatable,
-} from "js-mvc/validation/decorators";
+} from "js-mvc/gaurds";
 
 export class TransitionRequest implements IValidatable {
   readonly status: TenetStatus;

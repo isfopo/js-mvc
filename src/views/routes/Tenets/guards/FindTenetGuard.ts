@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import type { IExistable } from "js-mvc/validation/decorators";
+import type { IExistable } from "js-mvc/gaurds";
 import { tenetsRepo } from "data/tenet/repo";
 
 export class FindTenetGuard implements IExistable {
