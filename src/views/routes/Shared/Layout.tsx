@@ -1,5 +1,5 @@
 import type { FC, JSXNode, PropsWithChildren } from "hono/jsx";
-import type { UserRow } from "data/user/model";
+import type { UserRow } from "domains/user/model";
 
 interface LayoutProps extends PropsWithChildren {
   head?: JSXNode;

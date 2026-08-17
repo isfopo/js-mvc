@@ -5,7 +5,7 @@
  */
 
 import type { FC } from "hono/jsx";
-import type { VoteDetail } from "data/tenet/service";
+import type { VoteDetail } from "domains/tenet/service";
 import styles from "./index.module.css";
 
 interface Props {

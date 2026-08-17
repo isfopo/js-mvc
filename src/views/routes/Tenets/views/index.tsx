@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
 import { TenetCard } from "views/components/TenetCard";
 import styles from "./index.module.css";
-import { TenetSummary, UserInfo } from "data/tenet/service";
+import { TenetSummary, UserInfo } from "domains/tenet/service";
 
 export interface TenetListViewModel {
   tenets: TenetSummary[];

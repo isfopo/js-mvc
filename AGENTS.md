@@ -41,9 +41,9 @@ The CSS build is **automatic** with full HMR support:
 - **API Controllers** (`src/views/routes/*/controller.api.tsx`): Same pattern but return JSON. Share business logic via services.
 - **Views** (`src/views/routes/*/views/`): Top-level page components using `FC` from `hono/jsx` with typed ViewModel.
 - **Components** (`src/views/components/`): Reusable UI pieces. Use `useHandler()` from `js-mvc/client/useHandler` for client-side handler wiring.
-- **Services** (`src/data/*/service.ts`): Business logic layer shared between HTML and API controllers. Extend `ServiceBase` from `js-mvc/service/ServiceBase`.
-- **Repositories** (`src/data/*/repo.ts`): Data access layer. Extend `RepositoryBase<T, QueryMap>` from `js-mvc/repository/RepositoryBase`. D1Database is injected via constructor; repos are created per-request using factory functions (e.g., `tenetsRepo(db)`). Inherit generic CRUD (`findById`, `findAll`, `create`, `update`, `delete`, `count`) and dynamic finders (`findOneBy`, `findAllBy`, `existsBy`, `deleteBy`). Complex queries use `.sql` files with YAML front matter and typed `queryOne`/`queryAll`/`execute` methods. See **Repository Security** below for validation details.
-- **Models** (`src/data/*/model.ts`): Row types matching D1 table columns.
+- **Services** (`src/domains/*/service.ts`): Business logic layer shared between HTML and API controllers. Extend `ServiceBase` from `js-mvc/service/ServiceBase`.
+- **Repositories** (`src/domains/*/repo.ts`): Data access layer. Extend `RepositoryBase<T, QueryMap>` from `js-mvc/repository/RepositoryBase`. D1Database is injected via constructor; repos are created per-request using factory functions (e.g., `tenetsRepo(db)`). Inherit generic CRUD (`findById`, `findAll`, `create`, `update`, `delete`, `count`) and dynamic finders (`findOneBy`, `findAllBy`, `existsBy`, `deleteBy`). Complex queries use `.sql` files with YAML front matter and typed `queryOne`/`queryAll`/`execute` methods. See **Repository Security** below for validation details.
+- **Models** (`src/domains/*/model.ts`): Row types matching D1 table columns.
 - **Requests** (`src/views/routes/*/requests/`): IValidatable form objects with `validate()` method.
 - **Framework** (`package/src/`): Reusable framework code imported via `js-mvc/*` path aliases. Contains `ControllerBase`, `RepositoryBase`, `ServiceBase`, `BaseHandler`, validation decorators, error classes, and utilities.
 - **Client entry** (`src/client-entry.ts`): Registers project handler classes with the hydration runtime (`register(...)` from `js-mvc/client/main`) and re-exports `hydrate`.
@@ -77,7 +77,7 @@ Use validation/guard decorators to handle cross-cutting concerns before route ha
 ```ts
 import { Exists, Validate } from "js-mvc/validation/decorators";
 import { parseRequestBody } from "js-mvc/validation";
-import { ProposeTenetRequest } from "../../data/requests/ProposeTenetRequest";
+import { ProposeTenetRequest } from "../../domains/requests/ProposeTenetRequest";
 
 class TenetsController extends ControllerBase {
   @Get("/:slug")

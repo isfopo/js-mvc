@@ -4,12 +4,12 @@ import { Exists, Validate } from "js-mvc/gaurds";
 import { Layout } from "views/routes/Shared/Layout";
 import { handleError } from "error-handler";
 import { requireAuth } from "middleware/auth";
-import { tenetService } from "data/tenet/service";
+import { tenetService } from "domains/tenet/service";
 import { ProposeTenetRequest } from "views/routes/Tenets/requests/ProposeTenetRequest";
 import { VoteRequest } from "views/routes/Tenets/requests/VoteRequest";
 import { FindTenetGuard } from "views/routes/Tenets/guards/FindTenetGuard";
-import type { UserRow } from "data/user/model";
-import type { TenetRow } from "data/tenet/model";
+import type { UserRow } from "domains/user/model";
+import type { TenetRow } from "domains/tenet/model";
 import { TransitionRequest } from "./requests/TransitionRequest";
 
 class TenetsApiController<T extends Env> extends ControllerBase<T> {

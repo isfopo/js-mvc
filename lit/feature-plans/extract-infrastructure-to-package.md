@@ -289,7 +289,7 @@ Replace the hardcoded `HandlerActions` interface with a generic type parameter:
 The plugin has two concerns:
 
 - **Generic**: `.sql` file transform (strip YAML front matter) → goes in package
-- **Project-specific**: watching `migrations/` and `src/data/`, generating `db-types.d.ts` and `local.db` → stays in project
+- **Project-specific**: watching `migrations/` and `src/domains/`, generating `db-types.d.ts` and `local.db` → stays in project
 
 **Generic transform** (`package/plugins/sql-transform-plugin.ts`):
 
@@ -333,7 +333,7 @@ import {
 
 export function sqlTypesPlugin(options = {}) {
   // Uses the imported generic tools but with project-specific paths
-  // (migrations/, src/data/, etc.)
+  // (migrations/, src/domains/, etc.)
   // ... same logic as current sqlTypesPlugin but imports from package
 }
 ```

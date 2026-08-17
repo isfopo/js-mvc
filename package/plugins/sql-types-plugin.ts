@@ -150,13 +150,13 @@ export interface SqlTypesPluginOptions {
 
   /**
    * Path to the data directory containing .sql query files (relative to project root or absolute).
-   * @default "src/data"
+   * @default "src/domains"
    */
   dataDir?: string;
 
   /**
    * Output path for the generated db-types.d.ts file.
-   * @default "src/data/db-types.d.ts"
+   * @default "src/domains/db-types.d.ts"
    */
   dbTypesPath?: string;
 
@@ -210,8 +210,8 @@ function resolvePaths(
 
   return {
     migrationsDir: toAbsolute(options.migrationsDir, "src/migrations"),
-    dataDir: toAbsolute(options.dataDir, "src/data"),
-    dbTypesPath: toAbsolute(options.dbTypesPath, "src/data/db-types.d.ts"),
+    dataDir: toAbsolute(options.dataDir, "src/domains"),
+    dbTypesPath: toAbsolute(options.dbTypesPath, "src/domains/db-types.d.ts"),
     localDbPath: toAbsolute(options.localDbPath, "local.db"),
     modelFileName: options.modelFileName ?? "model.ts",
     sqlExcludePatterns: options.sqlExcludePatterns ?? [

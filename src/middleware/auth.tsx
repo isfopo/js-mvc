@@ -7,7 +7,7 @@
  */
 
 import type { Context, MiddlewareHandler } from "hono";
-import type { UserRow } from "data/user/model";
+import type { UserRow } from "domains/user/model";
 
 const SESSION_COOKIE = "tenet_session";
 const COOKIE_MAX_AGE = 604800; // 7 days

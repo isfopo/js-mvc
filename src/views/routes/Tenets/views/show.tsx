@@ -4,8 +4,8 @@ import { StatusBadge } from "views/components/StatusBadge";
 import { VoteButtons } from "views/components/VoteButtons";
 import { VoteProgress } from "views/components/VoteProgress";
 import styles from "./show.module.css";
-import { TenetStatus } from "data/tenet/model";
-import { TenetDetail, UserInfo } from "data/tenet/service";
+import { TenetStatus } from "domains/tenet/model";
+import { TenetDetail, UserInfo } from "domains/tenet/service";
 import { StatusHandler } from "views/handlers/StatusHandler";
 
 export interface TenetDetailViewModel {

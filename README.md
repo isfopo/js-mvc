@@ -31,7 +31,7 @@ npm run cf-typegen
 │   └── plugins/          # Vite plugins (CSS build, SQL types, client bundle)
 ├── src/                  # Application code
 │   ├── client-entry.ts   # Client-side entry point
-│   ├── data/             # Repositories, models, SQL queries
+│   ├── domains/             # Repositories, models, SQL queries
 │   ├── error-handler.tsx # Project-specific error handling
 │   ├── middleware/      # Auth and other middleware
 │   └── views/            # Controllers, views, components, handlers

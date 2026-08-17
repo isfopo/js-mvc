@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
 import { useHandler } from "js-mvc/client/useHandler";
 import styles from "./new.module.css";
-import { TenetDetail } from "data/tenet/service";
+import { TenetDetail } from "domains/tenet/service";
 import { AddOptionHandler } from "views/handlers/AddOptionHandler";
 
 /** Renders a single option row with the given index. */

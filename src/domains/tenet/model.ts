@@ -1,4 +1,4 @@
-import type { Tenet, TenetOption } from "data/db-types";
+import type { Tenet, TenetOption } from "domains/db-types";
 
 /** Status union type derived from the generated schema. */
 export type TenetStatus = Tenet["status"];

@@ -166,7 +166,7 @@ src/
     Tenets/
       controller.tsx        # API controller (JSON responses, same service as HTML)
 
-  data/
+  domains/
     models/
       user.ts               # UserRow type
       tenet.ts              # TenetRow, TenetOptionRow types
@@ -327,10 +327,10 @@ export type TenetStatus =
 
 ## 8. Data Models
 
-Row type definitions live in `src/data/models/`, one file per entity. These are plain TypeScript interfaces matching the D1 table columns, prefixed with the entity name (e.g., `TenetRow`).
+Row type definitions live in `src/domains/models/`, one file per entity. These are plain TypeScript interfaces matching the D1 table columns, prefixed with the entity name (e.g., `TenetRow`).
 
 ```typescript
-// src/data/models/user.ts
+// src/domains/models/user.ts
 
 export interface UserRow {
   id: number;
@@ -344,7 +344,7 @@ export interface UserRow {
 ```
 
 ```typescript
-// src/data/models/tenet.ts
+// src/domains/models/tenet.ts
 
 export type TenetStatus =
   | "draft" | "voting" | "accepted"
@@ -376,7 +376,7 @@ export interface TenetOptionRow {
 ```
 
 ```typescript
-// src/data/models/vote.ts
+// src/domains/models/vote.ts
 
 export interface VoteRow {
   id: number;
@@ -467,14 +467,14 @@ export abstract class RepositoryBase<T extends { id: number }, QM = {}> {
 | `_buildWhere()` | Null handling in dynamic finders | Uses `IS NULL` instead of `= NULL` |
 | Empty criteria check | Dynamic finders | Throws on `{}` to prevent full-table operations |
 
-### Concrete example (`data/tenet/repo.ts`)
+### Concrete example (`domains/tenet/repo.ts`)
 
 ```typescript
-// src/data/tenet/repo.ts
+// src/domains/tenet/repo.ts
 
 import { RepositoryBase } from "infrastructure/RepositoryBase";
 import { queries, type QueryMap } from "./queries/queries.generated";
-import type { Tenet } from "data/db-types";
+import type { Tenet } from "domains/db-types";
 import type { TenetStatus } from "./model";
 
 export class TenetsRepository extends RepositoryBase<Tenet, QueryMap> {
@@ -536,8 +536,8 @@ export const tenetsRepo = (db: D1Database) => new TenetsRepository(db);
 ```typescript
 // pages/Tenets/view-builder.ts
 
-import { tenetsRepo } from "../../data/tenet/repo";
-import { votesRepo } from "../../data/vote/repo";
+import { tenetsRepo } from "../../domains/tenet/repo";
+import { votesRepo } from "../../domains/vote/repo";
 
 export const viewBuilder = {
   async show(env: Env, slug: string, currentUserId?: number) {
@@ -578,7 +578,7 @@ pages/Tenets/controller.tsx          api/Tenets/controller.tsx
                  services/TenetsService.ts
                   (validation, authz, orchestration)
                        │
-                 data/repos/tenets.ts
+                 domains/repos/tenets.ts
                   (D1 queries via RepositoryBase)
 ```
 
@@ -619,9 +619,9 @@ export abstract class ServiceBase {
 
 ```typescript
 import { ServiceBase } from "../infrastructure/services/ServiceBase";
-import { tenetsRepo } from "../data/tenet/repo";
-import { votesRepo } from "../data/vote/repo";
-import type { Tenet, TenetOption, Vote } from "../data/db-types";
+import { tenetsRepo } from "../domains/tenet/repo";
+import { votesRepo } from "../domains/vote/repo";
+import type { Tenet, TenetOption, Vote } from "../domains/db-types";
 import type { UserInfo } from "../pages/Tenets/view-model";
 
 // ── Input DTOs ───────────────────────────────────
@@ -866,7 +866,7 @@ class TenetsApiController extends ControllerBase {
 
 | Layer | Types | Purpose |
 |---|---|---|
-| **Models** (`data/models/`) | `TenetRow`, `VoteRow` | Mirror D1 schema, used by repos |
+| **Models** (`domains/models/`) | `TenetRow`, `VoteRow` | Mirror D1 schema, used by repos |
 | **Service DTOs** (`services/`) | `TenetDetail`, `VoteInput` | Shared between HTML + API controllers |
 | **ViewModels** (`pages/Tenets/view-model.ts`) | `TenetDetailViewModel` | HTML-only: adds UI state (`canVote`, `currentUser`) |
 
@@ -1065,7 +1065,7 @@ register<E extends Env>(app: Hono<E>): void {
 ### Request objects
 
 ```typescript
-// src/data/requests/ProposeTenetRequest.ts
+// src/domains/requests/ProposeTenetRequest.ts
 
 export class ProposeTenetRequest implements IValidatable {
   readonly title: string;
@@ -1089,7 +1089,7 @@ export class ProposeTenetRequest implements IValidatable {
 ```
 
 ```typescript
-// src/data/requests/VoteRequest.ts
+// src/domains/requests/VoteRequest.ts
 
 export class VoteRequest implements IValidatable {
   readonly choice: "approve" | "abstain" | "block";
@@ -1301,8 +1301,8 @@ interface CloudflareBindings extends Cloudflare.Env {
 | `src/infrastructure/validation/GuardDescriptor.ts` | New file: guard types |
 | `src/infrastructure/validation/decorators.ts` | New file: @Exists, @Authorize, @Validate |
 | `src/infrastructure/validation/guard-executor.ts` | New file: executeGuard logic |
-| `src/data/requests/ProposeTenetRequest.ts` | New file: IValidatable form request |
-| `src/data/requests/VoteRequest.ts` | New file: IValidatable form request |
+| `src/domains/requests/ProposeTenetRequest.ts` | New file: IValidatable form request |
+| `src/domains/requests/VoteRequest.ts` | New file: IValidatable form request |
 | `src/api/Tenets/controller.tsx` | New file: API controller (JSON) |
 
 ---
@@ -1314,8 +1314,8 @@ interface CloudflareBindings extends Cloudflare.Env {
 - Create D1 database + KV namespace via wrangler
 - Update `wrangler.jsonc` and regenerate types
 - Write and apply migration `001_create_tables.sql`
-- Implement `data/models/` (user.ts, tenet.ts, vote.ts)
-- Implement `data/user/repo.ts` (UsersRepository)
+- Implement `domains/models/` (user.ts, tenet.ts, vote.ts)
+- Implement `domains/user/repo.ts` (UsersRepository)
 - Update `infrastructure/RepositoryBase.ts` (add dynamic finders, typed query helpers, security validation)
 - Implement `infrastructure/services/ServiceBase.ts` (abstract base class)
 - Implement `infrastructure/validation/IValidatable.ts` (interface + types)
@@ -1331,10 +1331,10 @@ interface CloudflareBindings extends Cloudflare.Env {
 
 ### Milestone 2 — Tenet CRUD
 
-- Implement `data/tenet/repo.ts` (TenetsRepository)
-- Implement `data/vote/repo.ts` (VotesRepository)
-- Implement `data/requests/ProposeTenetRequest.ts` (IValidatable form request)
-- Implement `data/requests/VoteRequest.ts` (IValidatable form request)
+- Implement `domains/tenet/repo.ts` (TenetsRepository)
+- Implement `domains/vote/repo.ts` (VotesRepository)
+- Implement `domains/requests/ProposeTenetRequest.ts` (IValidatable form request)
+- Implement `domains/requests/VoteRequest.ts` (IValidatable form request)
 - Implement `services/TenetsService.ts` (business logic — validation, authz, orchestration)
 - Implement `pages/Tenets/view-model.ts`
 - Implement `pages/Tenets/view-builder.ts` (now shapes Service DTOs into ViewModels)
@@ -1353,7 +1353,7 @@ interface CloudflareBindings extends Cloudflare.Env {
 > **Gate:** All tests must pass before proceeding to Milestone 4. This ensures the data access layer and UI rendering are verified before building interactive features on top of them.
 
 - Add CSS module shim to vitest setup (`vitest.setup.ts`)
-- Write repository integration tests (`data/tenet/repo.test.ts`, `data/vote/repo.test.ts`, `data/user/repo.test.ts`)
+- Write repository integration tests (`domains/tenet/repo.test.ts`, `domains/vote/repo.test.ts`, `domains/user/repo.test.ts`)
   - CRUD operations, joins, filters, ordering, edge cases (nulls, duplicates, FK violations)
 - Write view/component render tests
   - `pages/Tenets/views/index.test.tsx` — empty state, populated list, status badges
@@ -1414,8 +1414,8 @@ Before implementation starts:
 Tests live alongside the code they test, using a `.test.ts` or `.test.tsx` suffix:
 
 ```
-src/data/requests/ProposeTenetRequest.ts
-src/data/requests/ProposeTenetRequest.test.ts     ← colocated
+src/domains/requests/ProposeTenetRequest.ts
+src/domains/requests/ProposeTenetRequest.test.ts     ← colocated
 
 src/services/TenetsService.ts
 src/services/TenetsService.test.ts                 ← colocated
@@ -1430,7 +1430,7 @@ src/services/TenetsService.test.ts                 ← colocated
 No bindings, no rendering. Fastest tier.
 
 ```typescript
-// src/data/requests/ProposeTenetRequest.test.ts
+// src/domains/requests/ProposeTenetRequest.test.ts
 it("rejects empty title", () => {
   const req = new ProposeTenetRequest({
     title: "", context: "c", options: [{ title: "A" }],
@@ -1450,7 +1450,7 @@ it("rejects empty title", () => {
 Data access layer against real D1 via the Workers pool.
 
 ```typescript
-// src/data/tenet/repo.test.ts
+// src/domains/tenet/repo.test.ts
 import { env } from "cloudflare:workers";
 import { tenetsRepo } from "./repo";
 

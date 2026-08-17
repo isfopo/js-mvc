@@ -1,6 +1,6 @@
 import { RepositoryBase } from "js-mvc/repository/RepositoryBase";
 import { queries, type QueryMap } from "./queries/queries.generated";
-import type { Tenet } from "data/db-types";
+import type { Tenet } from "domains/db-types";
 import type { TenetStatus } from "./model";
 
 export class TenetsRepository extends RepositoryBase<Tenet, QueryMap> {

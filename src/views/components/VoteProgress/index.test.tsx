@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { renderToString } from "hono/jsx/dom/server";
 import { VoteProgress } from "./index";
-import type { VoteDetail, UserInfo } from "data/tenet/service";
+import type { VoteDetail, UserInfo } from "domains/tenet/service";
 
 const mockUser: UserInfo = {
   id: 1,

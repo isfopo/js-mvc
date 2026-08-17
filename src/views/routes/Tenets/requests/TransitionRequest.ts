@@ -1,4 +1,4 @@
-import { TenetStatus } from "data/tenet/model";
+import { TenetStatus } from "domains/tenet/model";
 import type {
   ValidationResult,
   IValidatable,

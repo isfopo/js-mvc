@@ -14,6 +14,7 @@
     "paths": {
       "*": ["./src/*"],
       "js-mvc/*": ["./package/src/*"],
+      "domains/*": ["./src/domains/*"],
       "js-mvc/plugins": ["./package/plugins/index.ts"],
       "js-mvc/plugins/sql-types": ["./package/plugins/sql-types/index.ts"]
     }

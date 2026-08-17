@@ -1,8 +1,8 @@
 import { ServiceBase } from "js-mvc/service/ServiceBase";
 import { tenetsRepo } from "./repo";
-import { votesRepo } from "data/vote/repo";
+import { votesRepo } from "domains/vote/repo";
 import type { TenetRow, TenetOptionRow, TenetStatus } from "./model";
-import type { VoteRow } from "data/vote/model";
+import type { VoteRow } from "domains/vote/model";
 import type { ProposeTenetRequest } from "views/routes/Tenets/requests/ProposeTenetRequest";
 import type { VoteRequest } from "views/routes/Tenets/requests/VoteRequest";
 

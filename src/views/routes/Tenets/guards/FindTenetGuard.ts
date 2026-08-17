@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 import type { IExistable } from "js-mvc/gaurds";
-import { tenetsRepo } from "data/tenet/repo";
+import { tenetsRepo } from "domains/tenet/repo";
 
 export class FindTenetGuard implements IExistable {
   key = "tenet";

@@ -22,7 +22,7 @@ import { Context, Env, Hono } from "hono";
 import { renderToString } from "hono/jsx/dom/server";
 import type { FC, PropsWithChildren } from "hono/jsx";
 import { executeGuard, GUARDS_KEY } from "../gaurds/guard-executor";
-import { GuardDescriptor } from "gaurds/types";
+import type { GuardDescriptor } from "../gaurds/types";
 
 /* ---------- Symbol.metadata polyfill ---------- */
 

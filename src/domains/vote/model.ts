@@ -1,4 +1,4 @@
-import type { Vote } from "data/db-types";
+import type { Vote } from "domains/db-types";
 
 /** Choice union type derived from the generated schema. */
 export type VoteChoice = Vote["choice"];

@@ -1,4 +1,4 @@
-import type { User } from "data/db-types";
+import type { User } from "domains/db-types";
 
 /** Row type for the `users` D1 table. */
 export type UserRow = User;

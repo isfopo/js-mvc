@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { tenetService } from "./service";
-import { usersRepo } from "data/user/repo";
+import { usersRepo } from "domains/user/repo";
 import { ProposeTenetRequest } from "views/routes/Tenets/requests/ProposeTenetRequest";
 import { VoteRequest } from "views/routes/Tenets/requests/VoteRequest";
 

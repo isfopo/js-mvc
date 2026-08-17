@@ -1,7 +1,7 @@
 import type { FC } from "hono/jsx";
 import { StatusBadge } from "views/components/StatusBadge";
 import { UserAvatar } from "views/components/UserAvatar";
-import type { TenetSummary } from "data/tenet/service";
+import type { TenetSummary } from "domains/tenet/service";
 import styles from "./index.module.css";
 
 interface Props {

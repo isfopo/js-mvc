@@ -19,7 +19,7 @@ export default defineConfig({
     alias: {
       // Top-level src/ directories — enables bare imports like "db/init"
       api: resolve(src, "api"),
-      data: resolve(src, "domains"),
+      domains: resolve(src, "domains"),
       "error-handler": resolve(src, "error-handler.tsx"),
       "js-mvc": pkg,
       middleware: resolve(src, "middleware"),
