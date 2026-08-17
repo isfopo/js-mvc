@@ -6,7 +6,7 @@ import TenetsApiController from "views/routes/Tenets/controller.api";
 import WellKnownController from "views/routes/WellKnown/controller";
 import AuthController from "views/routes/Auth/controller";
 
-import { applySql } from "js-mvc/data/applySql";
+import { applySql, clearSeedData } from "js-mvc/data/applySql";
 
 import schemaSql from "./migrations/schema.sql?raw";
 import seedSql from "./migrations/seed.sql?raw";
@@ -40,6 +40,13 @@ app.use("*", async (c, next) => {
         try {
           await applySql(env.DB as D1Database, schemaSql);
           if (import.meta.env.DEV) {
+            await clearSeedData(env.DB as D1Database, [
+              "votes",
+              "tenet_options",
+              "tenets",
+              "users",
+            ]);
+
             await applySql(env.DB as D1Database, seedSql);
             console.log("Database seeded");
           }
