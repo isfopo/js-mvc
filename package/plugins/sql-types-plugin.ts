@@ -144,7 +144,7 @@ function clearCache(cache: GenerationCache): void {
 export interface SqlTypesPluginOptions {
   /**
    * Path to the migrations directory (relative to project root or absolute).
-   * @default "migrations"
+   * @default "src/migrations"
    */
   migrationsDir?: string;
 
@@ -209,7 +209,7 @@ function resolvePaths(
     p && p.startsWith("/") ? p : resolve(projectRoot, p ?? fallback);
 
   return {
-    migrationsDir: toAbsolute(options.migrationsDir, "migrations"),
+    migrationsDir: toAbsolute(options.migrationsDir, "src/migrations"),
     dataDir: toAbsolute(options.dataDir, "src/data"),
     dbTypesPath: toAbsolute(options.dbTypesPath, "src/data/db-types.d.ts"),
     localDbPath: toAbsolute(options.localDbPath, "local.db"),

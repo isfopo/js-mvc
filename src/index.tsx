@@ -6,10 +6,10 @@ import TenetsApiController from "views/routes/Tenets/controller.api";
 import WellKnownController from "views/routes/WellKnown/controller";
 import AuthController from "views/routes/Auth/controller";
 
-import { initDatabase } from "data/init";
-import { seedDatabase } from "data/seed";
+import { applySql } from "js-mvc/data/applySql";
 
-import schemaSql from "data/init.sql?raw";
+import schemaSql from "./migrations/schema.sql?raw";
+import seedSql from "./migrations/seed.sql?raw";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -38,9 +38,9 @@ app.use("*", async (c, next) => {
           return;
         }
         try {
-          await initDatabase(env.DB as D1Database, schemaSql);
+          await applySql(env.DB as D1Database, schemaSql);
           if (import.meta.env.DEV) {
-            await seedDatabase(env.DB as D1Database);
+            await applySql(env.DB as D1Database, seedSql);
             console.log("Database seeded");
           }
           initialized = true;

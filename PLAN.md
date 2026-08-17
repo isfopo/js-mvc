@@ -196,7 +196,7 @@ src/
       GuardDescriptor.ts     # Guard types for decorator metadata
       decorators.ts          # @Exists, @Authorize, @Validate factories
       guard-executor.ts      # executeGuard() — invoked by ControllerBase
-    middlewares/
+    middleware/
       auth.tsx              # requireAuth middleware
 
   pages/
@@ -1325,7 +1325,7 @@ interface CloudflareBindings extends Cloudflare.Env {
 - Update `infrastructure/ControllerBase.tsx` (read + execute guards in register())
 - Implement `api/Auth/github.ts` (token exchange, user fetch)
 - Implement `api/Auth/controller.tsx` (login, callback, logout)
-- Implement `infrastructure/middlewares/auth.tsx` (session check)
+- Implement `infrastructure/middleware/auth.tsx` (session check)
 - Update `Layout.tsx` nav (login/logout, user avatar)
 - Register AuthController
 

@@ -4,7 +4,7 @@ import { Layout } from "views/routes/Shared/Layout";
 import { handleError } from "error-handler";
 import { buildAuthorizeUrl, exchangeCode, fetchUser } from "./github";
 import { usersRepo } from "data/user/repo";
-import { createSession, destroySession } from "middlewares/auth";
+import { createSession, destroySession } from "middleware/auth";
 
 const DEFAULT_REDIRECT = "/tenets";
 

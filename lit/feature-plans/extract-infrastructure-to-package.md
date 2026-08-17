@@ -18,7 +18,7 @@ Separate the generic framework code from the project-specific application code b
 | `client/*` | **Split** | BaseHandler, dispatcher, types → package; `main.ts` handler imports → project |
 | `utils/Action.tsx` | **Generic** | But `HandlerActions` interface is project-specific — must be made generic |
 | `utils/State.*` | **Generic** | All 6 files |
-| `middlewares/unflatten-form-body.ts` | **Generic** | Both the middleware and the utility |
+| `middleware/unflatten-form-body.ts` | **Generic** | Both the middleware and the utility |
 | `.vite/plugins.ts` (`cssBuilderPlugin`) | **Project** | Watches project-specific paths (`src/styles`, `src/layouts`) |
 | `.vite/plugins.ts` (`sqlTypesPlugin`) | **Split** | SQL transform (generic) + type generation (project paths) |
 | `.vite/sql-types/*` | **Generic** | All 12 files — pure SQL parsing/type generation |
@@ -90,7 +90,7 @@ All internal imports within the package switch from `"infrastructure/..."` to re
 -import { NotFoundError, ValidationError } from "infrastructure/errors/index";
 +import { NotFoundError, ValidationError } from "../errors";
 
--import { getParsedBody } from "infrastructure/middlewares/unflatten-form-body";
+-import { getParsedBody } from "infrastructure/middleware/unflatten-form-body";
 +import { getParsedBody } from "../middleware/unflatten-form-body";
 
 -import { unflattenFormBody } from "infrastructure/validation/unflatten-form-body";
@@ -268,7 +268,7 @@ Replace the hardcoded `HandlerActions` interface with a generic type parameter:
 +import { NotFoundError, ValidationError } from "../errors";
  import type { GuardDescriptor } from "./GuardDescriptor";
  import type { IValidatable } from "./IValidatable";
--import { getParsedBody } from "infrastructure/middlewares/unflatten-form-body";
+-import { getParsedBody } from "infrastructure/middleware/unflatten-form-body";
 +import { getParsedBody } from "../middleware/unflatten-form-body";
 ```
 
@@ -402,7 +402,7 @@ Move all files from `.vite/sql-types/` to `package/plugins/sql-types/`. Update t
        data: resolve(src, "data"),
 -      infrastructure: resolve(src, "infrastructure"),
 +      "js-mvc": pkg,
-       middlewares: resolve(src, "middlewares"),
+       middleware: resolve(src, "middleware"),
        utils: resolve(src, "utils"),
        views: resolve(src, "views"),
      },
@@ -441,7 +441,7 @@ Move all files from `.vite/sql-types/` to `package/plugins/sql-types/`. Update t
        db: resolve(src, "db"),
 -      infrastructure: resolve(src, "infrastructure"),
 +      "js-mvc": pkg,
-       middlewares: resolve(src, "middlewares"),
+       middleware: resolve(src, "middleware"),
        utils: resolve(src, "utils"),
        views: resolve(src, "views"),
      },
@@ -481,7 +481,7 @@ Move all files from `.vite/sql-types/` to `package/plugins/sql-types/`. Update t
 | `"infrastructure/validation/guard-executor"` | `"js-mvc/validation/guard-executor"` |
 | `"infrastructure/validation/GuardDescriptor"` | `"js-mvc/validation/GuardDescriptor"` |
 | `"infrastructure/validation/unflatten-form-body"` | `"js-mvc/validation/unflatten-form-body"` |
-| `"infrastructure/middlewares/unflatten-form-body"` | `"js-mvc/middleware/unflatten-form-body"` |
+| `"infrastructure/middleware/unflatten-form-body"` | `"js-mvc/middleware/unflatten-form-body"` |
 | `"infrastructure/client/BaseHandler"` | `"js-mvc/client/BaseHandler"` |
 | `"infrastructure/client/dispatcher"` | `"js-mvc/client/dispatcher"` |
 | `"infrastructure/utils/useHandler"` | `"js-mvc/utils/useHandler"` |

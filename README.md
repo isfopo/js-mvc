@@ -33,7 +33,7 @@ npm run cf-typegen
 │   ├── client-entry.ts   # Client-side entry point
 │   ├── data/             # Repositories, models, SQL queries
 │   ├── error-handler.tsx # Project-specific error handling
-│   ├── middlewares/      # Auth and other middleware
+│   ├── middleware/      # Auth and other middleware
 │   └── views/            # Controllers, views, components, handlers
 ├── vite.config.ts        # Vite configuration with js-mvc plugins
 └── vitest.config.ts      # Test configuration

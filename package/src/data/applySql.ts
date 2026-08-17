@@ -1,10 +1,12 @@
+import type { Database } from "../types";
+
 /**
  * Apply the schema migration. Safe to call multiple times (uses IF NOT EXISTS).
  * Strips SQL comments (single-line --) then splits on semicolons and executes
  * each statement individually.
  */
-export async function initDatabase(
-  db: D1Database,
+export async function applySql(
+  db: Database,
   schemaSql: string,
 ): Promise<void> {
   // Remove single-line comments (--) before splitting on semicolons,

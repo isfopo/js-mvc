@@ -12,11 +12,11 @@ export default defineConfig({
   resolve: {
     alias: {
       api: resolve(src, "api"),
-      data: resolve(src, "data"),
+      data: resolve(src, "domains"),
       db: resolve(src, "db"),
       "error-handler": resolve(src, "error-handler.tsx"),
       "js-mvc": pkg,
-      middlewares: resolve(src, "middlewares"),
+      middleware: resolve(src, "middleware"),
       utils: resolve(src, "utils"),
       views: resolve(src, "views"),
     },

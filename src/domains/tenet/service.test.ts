@@ -5,13 +5,13 @@ import { ProposeTenetRequest } from "views/routes/Tenets/requests/ProposeTenetRe
 import { VoteRequest } from "views/routes/Tenets/requests/VoteRequest";
 
 import { env } from "cloudflare:workers";
-import { initDatabase } from "../init";
+import { applySql } from "../../../package/src/data/applySql";
 
-import schemaSql from "data/init.sql?raw";
+import schemaSql from "../../migrations/schema.sql?raw";
 
 beforeAll(async () => {
   // Run migrations so tables exist
-  await initDatabase(env.DB, schemaSql);
+  await applySql(env.DB, schemaSql);
 
   // Seed a test user
   await usersRepo(env.DB).upsertFromGithub({

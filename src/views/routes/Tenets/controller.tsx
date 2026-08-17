@@ -3,7 +3,7 @@ import { Get, Post, ControllerBase } from "js-mvc/controller/ControllerBase";
 import { Exists, Validate } from "js-mvc/gaurds";
 import { Layout } from "views/routes/Shared/Layout";
 import { handleError } from "error-handler";
-import { requireAuth } from "middlewares/auth";
+import { requireAuth } from "middleware/auth";
 import { tenetService } from "data/tenet/service";
 import { ProposeTenetRequest } from "./requests/ProposeTenetRequest";
 import { VoteRequest } from "./requests/VoteRequest";

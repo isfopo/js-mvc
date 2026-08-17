@@ -326,7 +326,7 @@ export const Layout: FC<LayoutProps> = ({
 
 ### Task 1.7 — Modify `auth.tsx` — depth-aware redirects
 
-**File:** `src/middlewares/auth.tsx` (modify)
+**File:** `src/middleware/auth.tsx` (modify)
 
 **What:** When `requireAuth()` redirects at depth > 0, the redirect must break out of the iframe using an HTML response with `window.top.location` instead of a server-side redirect. A server-side redirect inside an iframe would only redirect the iframe, leaving the top-level page stuck.
 
@@ -1531,7 +1531,7 @@ async index(c: Context) {
 |---|---|
 | `src/infrastructure/ControllerBase.tsx` | Depth-aware renderer (Layout at depth 0, FrameShell at depth 1+) |
 | `src/views/pages/Shared/Layout.tsx` | Add `depth` prop, render `<Outlet />` at depth 0 |
-| `src/middlewares/auth.tsx` | `frameRedirect()` helper for depth-aware auth redirects |
+| `src/middleware/auth.tsx` | `frameRedirect()` helper for depth-aware auth redirects |
 | `src/infrastructure/errors/index.tsx` | Depth-aware error rendering (FrameShell at depth > 0) |
 | `src/views/pages/Shared/Results.tsx` | Add `depth` prop, skip Layout wrapper at depth > 0 |
 | `src/index.tsx` | Register `frameMiddleware` |

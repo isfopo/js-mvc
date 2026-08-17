@@ -11,5 +11,5 @@
     "noImplicitOverride": true,
     "paths": {"*": ["./src/*"]}
   },
-  "include": ["src/**/*", "plugins/**/*"]
+  "include": ["src/**/*", "plugins/**/*", "worker-configuration.d.ts"]
 }
