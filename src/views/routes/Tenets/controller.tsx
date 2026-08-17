@@ -12,9 +12,9 @@ import { View as IndexView } from "./views/index";
 import { View as ShowView } from "./views/show";
 import { View as NewView } from "./views/new";
 import { viewBuilder } from "./view-builder";
+import { TransitionRequest } from "./requests/TransitionRequest";
 import type { UserRow } from "domains/user/model";
 import type { TenetRow } from "domains/tenet/model";
-import { TransitionRequest } from "./requests/TransitionRequest";
 
 class TenetsController<T extends Env> extends ControllerBase<T> {
   override base = "tenets";
