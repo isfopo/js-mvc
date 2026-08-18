@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { executeGuard } from "./guard-executor";
+import { ControllerBase } from "../controller/ControllerBase";
 
 import { NotFoundError, ForbiddenError, ValidationError } from "../errors";
 import { BODY_KEY } from "middleware/parseBody";
@@ -109,7 +109,7 @@ describe("executeGuard — exists path", () => {
     };
 
     const c = createMockContext();
-    await executeGuard(guard, c);
+    await ControllerBase.executeGuard(guard, c);
 
     expect(c.set).toHaveBeenCalledWith("tenet", { id: 1, slug: "test" });
   });
@@ -122,7 +122,7 @@ describe("executeGuard — exists path", () => {
     };
 
     const c = createMockContext();
-    await expect(executeGuard(guard, c)).rejects.toThrow(NotFoundError);
+    await expect(ControllerBase.executeGuard(guard, c)).rejects.toThrow(NotFoundError);
   });
 });
 
@@ -135,7 +135,7 @@ describe("executeGuard — authorize path", () => {
     };
 
     const c = createMockContext();
-    await executeGuard(guard, c);
+    await ControllerBase.executeGuard(guard, c);
 
     // authorize() was called (no throw = success)
   });
@@ -148,7 +148,7 @@ describe("executeGuard — authorize path", () => {
     };
 
     const c = createMockContext();
-    await expect(executeGuard(guard, c)).rejects.toThrow(ForbiddenError);
+    await expect(ControllerBase.executeGuard(guard, c)).rejects.toThrow(ForbiddenError);
   });
 });
 
@@ -170,7 +170,7 @@ describe("executeGuard — validate path", () => {
       parsedBody: { name: "test", value: "123" },
     });
 
-    await executeGuard(guard, c);
+    await ControllerBase.executeGuard(guard, c);
 
     expect(TestRequest.validateWasCalled).toBe(true);
     expect(TestRequest.lastBody).toEqual({ name: "test", value: "123" });
@@ -190,7 +190,7 @@ describe("executeGuard — validate path", () => {
       parsedBody: { options: [{ title: "React" }] },
     });
 
-    await executeGuard(guard, c);
+    await ControllerBase.executeGuard(guard, c);
 
     expect(TestRequest.lastBody).toEqual({
       options: [{ title: "React" }],
@@ -209,10 +209,10 @@ describe("executeGuard — validate path", () => {
       parsedBody: { bad: "data" },
     });
 
-    await expect(executeGuard(guard, c)).rejects.toThrow(ValidationError);
+    await expect(ControllerBase.executeGuard(guard, c)).rejects.toThrow(ValidationError);
 
     try {
-      await executeGuard(guard, c);
+      await ControllerBase.executeGuard(guard, c);
     } catch (error) {
       expect(error).toBeInstanceOf(ValidationError);
       expect((error as ValidationError).fields).toEqual({ field: "error" });

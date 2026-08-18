@@ -21,7 +21,9 @@
 import { Context, Env, Hono } from "hono";
 import { renderToString } from "hono/jsx/dom/server";
 import type { FC, PropsWithChildren } from "hono/jsx";
-import { executeGuard, GUARDS_KEY } from "../gaurds/guard-executor";
+import { NotFoundError, ValidationError } from "../errors";
+import { parseRequestBody } from "../middleware/parseBody";
+import { GUARDS_KEY } from "../gaurds/guard-executor";
 import type { GuardDescriptor } from "../gaurds/types";
 
 /* ---------- Symbol.metadata polyfill ---------- */
@@ -100,6 +102,50 @@ export abstract class ControllerBase<T extends Env> {
     this.renderConfig = config;
   }
 
+  /**
+   * Execute a single guard against the current request context.
+   *
+   * - `exists`   → instantiates the IExistable, calls load(), throws NotFoundError if null, stores on context
+   * - `authorize` → instantiates the IAuthorizable, calls authorize() (should throw on failure)
+   * - `validate`  → reads the body parsed by the parseBody() middleware,
+   *   constructs IValidatable, runs validate(), stores on context
+   *
+   * Called by register() before each route handler.
+   */
+  static async executeGuard(
+    guard: GuardDescriptor,
+    c: Context,
+  ): Promise<void> {
+    switch (guard.type) {
+      case "exists": {
+        const instance = new guard.GuardClass();
+        const entity = await instance.load(c);
+        if (entity == null) throw new NotFoundError();
+        c.set(instance.key, entity);
+        break;
+      }
+
+      case "authorize": {
+        const instance = new guard.GuardClass();
+        await instance.authorize(c);
+        break;
+      }
+
+      case "validate": {
+        const body = parseRequestBody(c);
+        const instance = new guard.RequestClass(body);
+        const result = await instance.validate();
+
+        if (!result.valid) {
+          throw new ValidationError("Invalid input", result.errors);
+        }
+
+        c.set("body", instance);
+        break;
+      }
+    }
+  }
+
   /** Register every collected route on the parent Hono application. */
   register<E extends Env>(app: Hono<E>): void {
     /* Read the route table that the decorators wrote to the shared
@@ -144,7 +190,7 @@ export abstract class ControllerBase<T extends Env> {
         try {
           /* Execute guards in declaration order before the handler. */
           for (const guard of handlerGuards) {
-            await executeGuard(guard, c);
+            await ControllerBase.executeGuard(guard, c);
           }
           return (this as any)[route.handlerName](c);
         } catch (error: unknown) {
