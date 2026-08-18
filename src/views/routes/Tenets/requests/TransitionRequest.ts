@@ -1,12 +1,10 @@
 import { TenetStatus } from "domains/tenet/model";
-import type {
-  ValidationResult,
-  IValidatable,
-} from "js-mvc/gaurds";
+import { RequestGuard, type ValidationResult } from "js-mvc/gaurds";
 
-export class TransitionRequest implements IValidatable {
+export class TransitionRequest extends RequestGuard {
   readonly status: TenetStatus;
   constructor(body: Record<string, unknown>) {
+    super(body);
     this.status = body.status as TenetStatus;
   }
 

@@ -23,7 +23,7 @@ import { renderToString } from "hono/jsx/dom/server";
 import type { FC, PropsWithChildren } from "hono/jsx";
 import { NotFoundError, ValidationError } from "../errors";
 import { parseRequestBody } from "../middleware/parseBody";
-import { GUARDS_KEY } from "../gaurds/guard-executor";
+import { GUARDS_KEY } from "../gaurds/GuardDecorator";
 import type { GuardDescriptor } from "../gaurds/types";
 
 /* ---------- Symbol.metadata polyfill ---------- */

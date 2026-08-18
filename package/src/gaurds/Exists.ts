@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 import { MethodDecoratorFactory } from "./types";
-import { guardDecorator } from "./guard-executor";
+import { GuardDecorator } from "./GuardDecorator";
 
 /** Contract for a guard that loads an entity into the request context. */
 export interface IExistable {
@@ -14,13 +14,19 @@ export interface ExistsGuard {
   GuardClass: new () => IExistable;
 }
 
+class ExistsDecorator extends GuardDecorator<ExistsGuard> {
+  constructor(private readonly GuardClass: new () => IExistable) {
+    super();
+  }
+
+  protected build(): Omit<ExistsGuard, "handlerName"> {
+    return { type: "exists", GuardClass: this.GuardClass };
+  }
+}
+
 /** Register an entity loader guard. */
 export function Exists(
   GuardClass: new () => IExistable,
 ): MethodDecoratorFactory {
-  return guardDecorator((handlerName) => ({
-    type: "exists",
-    handlerName,
-    GuardClass,
-  }));
+  return new ExistsDecorator(GuardClass).decorate();
 }

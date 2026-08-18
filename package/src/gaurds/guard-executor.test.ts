@@ -3,9 +3,12 @@ import { ControllerBase } from "../controller/ControllerBase";
 
 import { NotFoundError, ForbiddenError, ValidationError } from "../errors";
 import { BODY_KEY } from "middleware/parseBody";
-import { IAuthorizable, AuthorizeGuard } from "./Authorize";
-import { IExistable, ExistsGuard } from "./Exists";
-import { IValidatable, ValidationResult, ValidateGuard } from "./Validate";
+import { Authorize, type IAuthorizable } from "./Authorize";
+import { Exists, type IExistable } from "./Exists";
+import { Validate, type ValidationResult } from "./Validate";
+import { RequestGuard } from "./RequestGuard";
+import { GUARDS_KEY } from "./GuardDecorator";
+import type { GuardDescriptor } from "./types";
 
 // ── Test guards ─────────────────────────────────────────────────
 
@@ -41,13 +44,12 @@ class FailingAuthGuard implements IAuthorizable {
   }
 }
 
-class TestRequest implements IValidatable {
+class TestRequest extends RequestGuard {
   static validateWasCalled = false;
   static lastBody: Record<string, unknown> | undefined;
-  body: Record<string, unknown>;
 
   constructor(body: Record<string, unknown>) {
-    this.body = body;
+    super(body);
     TestRequest.lastBody = body;
   }
 
@@ -57,23 +59,40 @@ class TestRequest implements IValidatable {
   }
 }
 
-class FailingRequest implements IValidatable {
-  body: Record<string, unknown>;
-
-  constructor(body: Record<string, unknown>) {
-    this.body = body;
-  }
-
+class FailingRequest extends RequestGuard {
   async validate(): Promise<ValidationResult> {
     return { valid: false, errors: { field: "error" } };
   }
+}
+
+// ── Test controller (decorators built through GuardDecorator) ────
+
+class TestController {
+  @Exists(TestFindGuard)
+  replace(_: unknown) {}
+
+  @Authorize(TestAuthGuard)
+  authorize(_: unknown) {}
+
+  @Validate(TestRequest)
+  create(_: unknown) {}
+
+  @Validate(FailingRequest)
+  fail(_: unknown) {}
+}
+
+/** Collect the guard descriptors registered for a given handler. */
+function guardsFor(handlerName: string): GuardDescriptor[] {
+  const metadata = (TestController as any)[Symbol.metadata];
+  return (metadata?.[GUARDS_KEY] ?? []).filter(
+    (g: GuardDescriptor) => g.handlerName === handlerName,
+  );
 }
 
 // ── Helpers ─────────────────────────────────────────────────────
 
 function createMockContext(
   options: {
-    contentType?: string;
     parsedBody?: Record<string, unknown>;
   } = {},
 ) {
@@ -85,14 +104,6 @@ function createMockContext(
   }
 
   return {
-    req: {
-      header: vi.fn((name: string) => {
-        if (name === "content-type") return options.contentType ?? "";
-        return undefined;
-      }),
-      parseBody: vi.fn(async () => options.parsedBody ?? {}),
-      json: vi.fn(async () => options.parsedBody ?? {}),
-    },
     set: vi.fn((key: string, value: unknown) => store.set(key, value)),
     get: vi.fn((key: string) => store.get(key)),
   } as any;
@@ -100,14 +111,35 @@ function createMockContext(
 
 // ── Tests ───────────────────────────────────────────────────────
 
+describe("guard decorators register descriptors via GuardDecorator", () => {
+  it("Exists() registers an exists guard with the handler name", () => {
+    const [guard] = guardsFor("replace");
+    expect(guard).toBeDefined();
+    expect(guard).toMatchObject({ type: "exists", GuardClass: TestFindGuard });
+  });
+
+  it("Authorize() registers an authorize guard with the handler name", () => {
+    const [guard] = guardsFor("authorize");
+    expect(guard).toBeDefined();
+    expect(guard).toMatchObject({
+      type: "authorize",
+      GuardClass: TestAuthGuard,
+    });
+  });
+
+  it("Validate() registers a validate guard with the handler name", () => {
+    const [guard] = guardsFor("create");
+    expect(guard).toBeDefined();
+    expect(guard).toMatchObject({
+      type: "validate",
+      RequestClass: TestRequest,
+    });
+  });
+});
+
 describe("executeGuard — exists path", () => {
   it("calls IExistable.load() and stores the entity on context", async () => {
-    const guard: ExistsGuard = {
-      type: "exists",
-      handlerName: "test",
-      GuardClass: TestFindGuard,
-    };
-
+    const [guard] = guardsFor("replace");
     const c = createMockContext();
     await ControllerBase.executeGuard(guard, c);
 
@@ -115,40 +147,45 @@ describe("executeGuard — exists path", () => {
   });
 
   it("throws NotFoundError when load() returns null", async () => {
-    const guard: ExistsGuard = {
-      type: "exists",
-      handlerName: "test",
-      GuardClass: FailingFindGuard,
-    };
+    // A failing guard registered on a second handler
+    class FailingController {
+      @Exists(FailingFindGuard)
+      other(_: unknown) {}
+    }
+    const metadata = (FailingController as any)[Symbol.metadata];
+    const [guard] = (
+      (metadata?.[GUARDS_KEY] ?? []) as GuardDescriptor[]
+    ).filter((g) => g.handlerName === "other");
 
     const c = createMockContext();
-    await expect(ControllerBase.executeGuard(guard, c)).rejects.toThrow(NotFoundError);
+    await expect(ControllerBase.executeGuard(guard, c)).rejects.toThrow(
+      NotFoundError,
+    );
   });
 });
 
 describe("executeGuard — authorize path", () => {
   it("calls IAuthorizable.authorize()", async () => {
-    const guard: AuthorizeGuard = {
-      type: "authorize",
-      handlerName: "test",
-      GuardClass: TestAuthGuard,
-    };
-
+    const [guard] = guardsFor("authorize");
     const c = createMockContext();
     await ControllerBase.executeGuard(guard, c);
-
-    // authorize() was called (no throw = success)
+    // authorize() did not throw — waiting on the promise is the success path
   });
 
   it("propagates error thrown by authorize()", async () => {
-    const guard: AuthorizeGuard = {
-      type: "authorize",
-      handlerName: "test",
-      GuardClass: FailingAuthGuard,
-    };
+    class FailingController {
+      @Authorize(FailingAuthGuard)
+      other(_: unknown) {}
+    }
+    const metadata = (FailingController as any)[Symbol.metadata];
+    const [guard] = (
+      (metadata?.[GUARDS_KEY] ?? []) as GuardDescriptor[]
+    ).filter((g) => g.handlerName === "other");
 
     const c = createMockContext();
-    await expect(ControllerBase.executeGuard(guard, c)).rejects.toThrow(ForbiddenError);
+    await expect(ControllerBase.executeGuard(guard, c)).rejects.toThrow(
+      ForbiddenError,
+    );
   });
 });
 
@@ -159,17 +196,9 @@ describe("executeGuard — validate path", () => {
   });
 
   it("calls validate() on the request class and stores the instance", async () => {
-    const guard: ValidateGuard = {
-      type: "validate",
-      handlerName: "test",
-      RequestClass: TestRequest,
-    };
+    const [guard] = guardsFor("create");
 
-    const c = createMockContext({
-      contentType: "application/x-www-form-urlencoded",
-      parsedBody: { name: "test", value: "123" },
-    });
-
+    const c = createMockContext({ parsedBody: { name: "test", value: "123" } });
     await ControllerBase.executeGuard(guard, c);
 
     expect(TestRequest.validateWasCalled).toBe(true);
@@ -177,19 +206,13 @@ describe("executeGuard — validate path", () => {
     expect(c.set).toHaveBeenCalledWith("body", expect.any(TestRequest));
   });
 
-  it("passes the middleware-parsed body to the request class", async () => {
-    const guard: ValidateGuard = {
-      type: "validate",
-      handlerName: "test",
-      RequestClass: TestRequest,
-    };
+  it("passes the middleware-parsed body to the RequestGuard subclass", async () => {
+    const [guard] = guardsFor("create");
 
     // Unflattening already happened in the parseBody() middleware
     const c = createMockContext({
-      contentType: "application/x-www-form-urlencoded",
       parsedBody: { options: [{ title: "React" }] },
     });
-
     await ControllerBase.executeGuard(guard, c);
 
     expect(TestRequest.lastBody).toEqual({
@@ -198,18 +221,12 @@ describe("executeGuard — validate path", () => {
   });
 
   it("throws ValidationError when validate() returns valid: false", async () => {
-    const guard: ValidateGuard = {
-      type: "validate",
-      handlerName: "test",
-      RequestClass: FailingRequest,
-    };
+    const [guard] = guardsFor("fail");
 
-    const c = createMockContext({
-      contentType: "application/x-www-form-urlencoded",
-      parsedBody: { bad: "data" },
-    });
-
-    await expect(ControllerBase.executeGuard(guard, c)).rejects.toThrow(ValidationError);
+    const c = createMockContext({ parsedBody: { bad: "data" } });
+    await expect(ControllerBase.executeGuard(guard, c)).rejects.toThrow(
+      ValidationError,
+    );
 
     try {
       await ControllerBase.executeGuard(guard, c);

@@ -1,4 +1,4 @@
-import { IValidatable, ValidationResult } from "js-mvc/gaurds"
+import { RequestGuard, type ValidationResult } from "js-mvc/gaurds"
 
 export interface OptionInput {
   title: string;
@@ -7,12 +7,13 @@ export interface OptionInput {
   cons?: string;
 }
 
-export class ProposeTenetRequest implements IValidatable {
+export class ProposeTenetRequest extends RequestGuard {
   readonly title: string;
   readonly context: string;
   readonly options: OptionInput[];
 
   constructor(body: Record<string, unknown>) {
+    super(body);
     this.title = (body.title as string) ?? "";
     this.context = (body.context as string) ?? "";
 
@@ -29,18 +30,20 @@ export class ProposeTenetRequest implements IValidatable {
   }
 
   validate(): ValidationResult {
-    const errors: Record<string, string> = {};
-    if (!this.title.trim()) errors.title = "Title is required";
-    if (!this.context.trim()) errors.context = "Context is required";
+    if (!this.title.trim()) this.addError("title", "Title is required");
+    if (!this.context.trim()) this.addError("context", "Context is required");
     if (this.options.length === 0) {
-      errors.options = "At least one option is required";
+      this.addError("options", "At least one option is required");
     }
     for (let i = 0; i < this.options.length; i++) {
       if (!this.options[i].title.trim()) {
-        errors[`options.${i}.title`] = `Option ${i + 1} title is required`;
+        this.addError(
+          `options.${i}.title`,
+          `Option ${i + 1} title is required`,
+        );
       }
     }
 
-    return { valid: Object.keys(errors).length === 0, errors };
+    return { valid: this.isValid, errors: this.errors };
   }
 }

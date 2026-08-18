@@ -1,5 +1,5 @@
-import { guardDecorator } from "./guard-executor";
 import { MethodDecoratorFactory } from "./types";
+import { GuardDecorator } from "./GuardDecorator";
 
 /** Result returned by a request object's validate() method. */
 export interface ValidationResult {
@@ -19,13 +19,23 @@ export interface ValidateGuard {
   RequestClass: new (body: Record<string, unknown>) => IValidatable;
 }
 
+class ValidateDecorator extends GuardDecorator<ValidateGuard> {
+  constructor(
+    private readonly RequestClass: new (
+      body: Record<string, unknown>,
+    ) => IValidatable,
+  ) {
+    super();
+  }
+
+  protected build(): Omit<ValidateGuard, "handlerName"> {
+    return { type: "validate", RequestClass: this.RequestClass };
+  }
+}
+
 /** Register a self-validating request class. */
 export function Validate(
   RequestClass: new (body: Record<string, unknown>) => IValidatable,
 ): MethodDecoratorFactory {
-  return guardDecorator((handlerName) => ({
-    type: "validate",
-    handlerName,
-    RequestClass,
-  }));
+  return new ValidateDecorator(RequestClass).decorate();
 }

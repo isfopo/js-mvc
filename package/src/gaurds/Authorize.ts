@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 import { MethodDecoratorFactory } from "./types";
-import { guardDecorator } from "./guard-executor";
+import { GuardDecorator } from "./GuardDecorator";
 
 /** Contract for a guard that rejects unauthorized requests by throwing. */
 export interface IAuthorizable {
@@ -13,14 +13,20 @@ export interface AuthorizeGuard {
   GuardClass: new () => IAuthorizable;
 }
 
+class AuthorizeDecorator extends GuardDecorator<AuthorizeGuard> {
+  constructor(private readonly GuardClass: new () => IAuthorizable) {
+    super();
+  }
+
+  protected build(): Omit<AuthorizeGuard, "handlerName"> {
+    return { type: "authorize", GuardClass: this.GuardClass };
+  }
+}
+
 /** Register an authorization guard. */
 export function Authorize(
   GuardClass: new () => IAuthorizable,
 ): MethodDecoratorFactory {
-  return guardDecorator((handlerName) => ({
-    type: "authorize",
-    handlerName,
-    GuardClass,
-  }));
+  return new AuthorizeDecorator(GuardClass).decorate();
 }
 

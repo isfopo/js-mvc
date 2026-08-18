@@ -1,25 +1,25 @@
-import type { ValidationResult, IValidatable } from "js-mvc/gaurds";
+import { RequestGuard, type ValidationResult } from "js-mvc/gaurds";
 
-export class VoteRequest implements IValidatable {
+export class VoteRequest extends RequestGuard {
   readonly choice: string;
   readonly reason: string;
 
   constructor(body: Record<string, unknown>) {
+    super(body);
     this.choice = String(body.choice ?? "");
     this.reason = String(body.reason ?? "");
   }
 
   validate(): ValidationResult {
-    const errors: Record<string, string> = {};
     const valid = ["approve", "abstain", "block"];
 
     if (!valid.includes(this.choice)) {
-      errors.choice = "Must be approve, abstain, or block";
+      this.addError("choice", "Must be approve, abstain, or block");
     }
     if (this.choice === "block" && !this.reason.trim()) {
-      errors.reason = "Blocking requires a reason";
+      this.addError("reason", "Blocking requires a reason");
     }
 
-    return { valid: Object.keys(errors).length === 0, errors };
+    return { valid: this.isValid, errors: this.errors };
   }
 }
