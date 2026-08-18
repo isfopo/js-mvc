@@ -31,19 +31,13 @@
  * data-*, aria-*, ...) pass through untouched.
  */
 
+import { genId } from "utils/ids";
 import { HandlerConstructor } from "./types";
 import { JSX } from "react";
 
 // ---------------------------------------------------------------------------
 // Utilities
 // ---------------------------------------------------------------------------
-
-/** Generate a unique id for one rendered handler instance */
-function genId(): string {
-  return (
-    `h-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`
-  );
-}
 
 /** Module URL of the client bundle that exports hydrate() */
 const CLIENT_MODULE_URL = import.meta.env.DEV

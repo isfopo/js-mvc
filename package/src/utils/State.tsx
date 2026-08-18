@@ -31,14 +31,37 @@
  * can animate. A custom `transition` prop overrides the preset's timing.
  */
 
-import { JSX } from "hono/jsx";
-import { generateEffectCSS } from "./State.css";
-import { generateScopeId } from "./State.scope";
-import type { WrapperProps, TriggerProps, EffectProps, AnimationPresetName, BuiltInCondition } from "./State.types";
+import { JSX } from "react";
+import { generateEffectCSS } from "./css
+import { genId } from "./ids";
 
-// Re-export types for consumers
-export type { StateCondition, WrapperProps, TriggerProps, EffectProps, AnimationPresetName, BuiltInCondition } from "./State.types";
-export { _clearStateBuffer } from "./State.scope";
+export type BuiltInCondition = "valid" | "invalid" | "checked" | "unchecked" | "focused";
+export type AnimationPresetName = "fade" | "fade-in" | "slide-up" | "slide-down" | "scale" | "slide-left" | "slide-right";
+
+export type StateCondition<V extends string> = BuiltInCondition | V;
+
+export type WrapperProps = {
+  tag?: string;
+  children?: any;
+} & Record<string, any>;
+
+export type TriggerProps = {
+  value: string;
+  children?: any;
+};
+
+export type EffectProps<V extends string> = {
+  when: StateCondition<V>;
+  tag?: string;
+  animate?: AnimationPresetName;
+  transition?: string;
+  children?: any;
+} & Record<string, any>;
+
+export interface AnimationPreset {
+  hidden: Record<string, string>;
+  transition: string;
+}
 
 /**
  * Create a scoped Wrapper + Trigger + Show/Hide/Disable/Enable set for
@@ -50,8 +73,8 @@ export { _clearStateBuffer } from "./State.scope";
  * @param name  Unique name for this state group
  * @param opts  Optional configuration (e.g. fixed scope name)
  */
-export function State<E extends string, V extends string = string>(name: E, opts?: { scope?: string }) {
-  const scopeId = opts?.scope ?? generateScopeId(name);
+export function State<V extends string = string>(opts?: { scope?: string }) {
+  const scopeId = opts?.scope ?? genId();
 
   function Wrapper({ tag, children, ...rest }: WrapperProps) {
     const Tag = (tag ?? "div") as keyof JSX.IntrinsicElements;

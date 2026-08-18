@@ -7,6 +7,7 @@
  */
 
 import { JSX } from "react";
+import { genId } from "utils/ids";
 
 const CLIENT_MODULE_URL = import.meta.env.DEV
   ? "/src/client-entry.ts"
@@ -26,10 +27,6 @@ type EventCallback<E extends Event = Event> = (
 type EventProps = {
   children?: any;
 } & Record<string, any>;
-
-function genId(): string {
-  return `e-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
-}
 
 function toAttrs(props: Record<string, any>): Record<string, any> {
   const attrs: Record<string, any> = {};
@@ -62,14 +59,14 @@ function renderChild(children: any, inject: Record<string, string>): any {
   return <span {...inject}>{children}</span>;
 }
 
-function HydrateScript({
+function HydrateScript<E extends Event = Event>({
   event,
   id,
   callback,
 }: {
   event: string;
   id: string;
-  callback: EventCallback;
+  callback: EventCallback<E>;
 }) {
   const callbackSource = callback.toString();
   return (

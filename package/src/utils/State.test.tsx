@@ -1,14 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderToString } from "hono/jsx/dom/server";
-import { State, _clearStateBuffer } from "./State";
-
-beforeEach(() => {
-  _clearStateBuffer();
-});
+import { State } from "./State";
 
 describe("State", () => {
   it("renders a basic show/hide pair", () => {
-    const Plan = State("plan");
+    const Plan = State()
 
     const html = renderToString(
       <Plan>
@@ -28,8 +24,7 @@ describe("State", () => {
   });
 
   it("renders trigger with data-state-value", () => {
-    const Form = State("form");
-
+    const Form = State()
     const html = renderToString(
       <Form>
         <Form.Trigger value="valid">
@@ -42,7 +37,7 @@ describe("State", () => {
   });
 
   it("generates CSS for valid/invalid conditions", () => {
-    const Form = State("form");
+    const Form = State()
 
     const html = renderToString(
       <Form tag="form">
@@ -60,7 +55,7 @@ describe("State", () => {
   });
 
   it("generates animation CSS when animate prop is set", () => {
-    const Toggle = State("toggle");
+    const Toggle = State()
 
     const html = renderToString(
       <Toggle>
@@ -81,7 +76,7 @@ describe("State", () => {
   });
 
   it("generates disable CSS", () => {
-    const Confirm = State("confirm");
+    const Confirm = State()
 
     const html = renderToString(
       <Confirm>
@@ -98,7 +93,7 @@ describe("State", () => {
   });
 
   it("uses explicit scope from opts", () => {
-    const Nav = State("nav", { scope: "main-nav" });
+  const Nav = State({ scope: "main-nav" });
 
     const html = renderToString(
       <Nav>
@@ -110,8 +105,8 @@ describe("State", () => {
   });
 
   it("uses unique scope IDs for separate State() calls", () => {
-    const A = State("a");
-    const B = State("b");
+    const A = State()
+      const B = State()
 
     const htmlA = renderToString(<A><A.Show when="x">X</A.Show></A>);
     const htmlB = renderToString(<B><B.Show when="y">Y</B.Show></B>);
@@ -124,7 +119,7 @@ describe("State", () => {
 
   describe("condition selectors", () => {
     it('uses :focus-within for "focused" condition', () => {
-      const Field = State("field");
+      const Field = State()
       const html = renderToString(
         <Field>
           <Field.Show when="focused">Help</Field.Show>
@@ -135,7 +130,7 @@ describe("State", () => {
     });
 
     it('uses :has(:checked) for "checked" condition', () => {
-      const Tog = State("tog");
+      const Tog = State()
       const html = renderToString(
         <Tog>
           <Tog.Show when="checked">Visible when checked</Tog.Show>
@@ -146,7 +141,7 @@ describe("State", () => {
     });
 
     it('uses :not(:has(:checked)) for "unchecked" condition', () => {
-      const Tog = State("tog");
+      const Tog = State()
       const html = renderToString(
         <Tog>
           <Tog.Hide when="unchecked">Hidden when unchecked</Tog.Hide>
@@ -157,7 +152,7 @@ describe("State", () => {
     });
 
     it('uses :has([data-state-value="X"]:checked) for value-based conditions', () => {
-      const Color = State("color");
+      const Color = State()
       const html = renderToString(
         <Color>
           <Color.Trigger value="red">
@@ -176,7 +171,7 @@ describe("State", () => {
 
   describe("Hide effect", () => {
     it("renders visible by default, hides on condition (non-animated)", () => {
-      const Tog = State("tog");
+      const Tog = State()
       const html = renderToString(
         <Tog>
           <Tog.Hide when="checked">Hide me</Tog.Hide>
@@ -188,7 +183,7 @@ describe("State", () => {
     });
 
     it("renders animated Hide with transition", () => {
-      const Tog = State("tog");
+      const Tog = State()
       const html = renderToString(
         <Tog>
           <Tog.Hide when="checked" animate="fade">
@@ -206,7 +201,7 @@ describe("State", () => {
 
   describe("Enable effect", () => {
     it("renders disabled by default, enables on condition", () => {
-      const Confirm = State("confirm");
+      const Confirm = State()
       const html = renderToString(
         <Confirm>
           <Confirm.Enable when="checked">
@@ -223,7 +218,7 @@ describe("State", () => {
     });
 
     it("supports animate with Enable", () => {
-      const Confirm = State("confirm");
+      const Confirm = State()
       const html = renderToString(
         <Confirm>
           <Confirm.Enable when="checked" animate="fade">
@@ -249,7 +244,7 @@ describe("State", () => {
 
     for (const [name, expectedTransition, expectedTransform] of presets) {
       it(`generates correct CSS for "${name}" preset`, () => {
-        const Anim = State("anim");
+        const Anim = State()
         const html = renderToString(
           <Anim>
             <Anim.Show when="checked" animate={name}>
@@ -272,7 +267,7 @@ describe("State", () => {
 
   describe("custom transition", () => {
     it("overrides animation preset transition when transition prop is set", () => {
-      const Anim = State("anim");
+      const Anim = State()
       const html = renderToString(
         <Anim>
           <Anim.Show when="checked" animate="fade" transition="opacity 500ms ease-in">
@@ -289,7 +284,7 @@ describe("State", () => {
 
   describe("HTML tag support", () => {
     it("renders Wrapper as a different tag", () => {
-      const Form = State("form");
+      const Form = State()
       const html = renderToString(
         <Form tag="form">
           <Form.Show when="valid">Valid</Form.Show>
@@ -300,7 +295,7 @@ describe("State", () => {
     });
 
     it("renders Show with a different tag", () => {
-      const Tog = State("tog");
+      const Tog = State()
       const html = renderToString(
         <Tog>
           <Tog.Show when="checked" tag="span">
@@ -313,7 +308,7 @@ describe("State", () => {
     });
 
     it("uses correct display value for span tags", () => {
-      const Tog = State("tog");
+      const Tog = State()
       const html = renderToString(
         <Tog>
           <Tog.Show when="checked" tag="span">
@@ -329,7 +324,7 @@ describe("State", () => {
 
   describe("props passthrough", () => {
     it("passes extra props through Wrapper", () => {
-      const W = State("w");
+      const W = State()
       const html = renderToString(
         <W class="my-class" id="my-id" data-custom="value">
           <W.Show when="x">X</W.Show>
@@ -341,7 +336,7 @@ describe("State", () => {
     });
 
     it("passes extra props through Show", () => {
-      const W = State("w");
+      const W = State()
       const html = renderToString(
         <W>
           <W.Show when="x" class="custom-show" id="show-id">
@@ -354,7 +349,7 @@ describe("State", () => {
     });
 
     it("passes extra props through Hide", () => {
-      const W = State("w");
+      const W = State()
       const html = renderToString(
         <W>
           <W.Hide when="x" class="custom-hide">
@@ -366,7 +361,7 @@ describe("State", () => {
     });
 
     it("passes extra props through Disable", () => {
-      const W = State("w");
+      const W = State()
       const html = renderToString(
         <W>
           <W.Disable when="x" data-test="disable-me">
@@ -378,7 +373,7 @@ describe("State", () => {
     });
 
     it("passes extra props through Enable", () => {
-      const W = State("w");
+      const W = State()
       const html = renderToString(
         <W>
           <W.Enable when="x" data-test="enable-me">
@@ -394,7 +389,7 @@ describe("State", () => {
 
   describe("multiple effects", () => {
     it("supports Show + Hide + Disable + Enable in one wrapper", () => {
-      const All = State("all");
+      const All = State()
       const html = renderToString(
         <All>
           <All.Show when="valid">Show</All.Show>
@@ -415,7 +410,7 @@ describe("State", () => {
 
   describe("edge cases", () => {
     it("handles custom scope name correctly in all CSS rules", () => {
-      const Custom = State("custom", { scope: "my-custom-scope" });
+    const Custom = State({ scope: "my-custom-scope" });
       const html = renderToString(
         <Custom tag="form">
           <Custom.Show when="valid">Valid</Custom.Show>
