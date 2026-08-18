@@ -2,7 +2,7 @@
  * Project-side client entry point.
  *
  * Registers project handler classes with the hydration runtime and
- * re-exports hydrate() for the inline scripts emitted by useHandler.
+ * re-exports hydration functions for inline client behavior scripts.
  */
 
 import { register } from "js-mvc/client/main";
@@ -18,4 +18,4 @@ register(DismissHandler);
 register(StatusHandler);
 register(VoteHandler);
 
-export { hydrate } from "js-mvc/client/main";
+export { hydrate, hydrateEvent } from "js-mvc/client/main";

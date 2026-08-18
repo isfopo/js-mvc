@@ -5,4 +5,4 @@
  * that ship with each rendered handler component.
  */
 
-export { hydrate, register } from "./dispatcher";
+export { hydrate, hydrateEvent, register } from "./dispatcher";

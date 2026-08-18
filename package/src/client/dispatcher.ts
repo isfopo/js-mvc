@@ -51,6 +51,14 @@ interface ActiveHandler {
 
 const activeHandlers = new WeakMap<HTMLElement, ActiveHandler[]>();
 
+interface ActiveEvent {
+  event: string;
+  listener: EventListener;
+  cleanups: (() => void)[];
+}
+
+const activeEvents = new WeakMap<HTMLElement, ActiveEvent[]>();
+
 // --- Error handling ---
 
 /** Safely invoke a lifecycle method, catching errors and delegating to handler.error() */
@@ -97,6 +105,41 @@ export function hydrate(name: string, elementId: string): void {
     return;
   }
   connectElement(element, Ctor);
+}
+
+/**
+ * Attach a callback to an element and pass it the originating event and
+ * element. The callback may return a cleanup function.
+ */
+export function hydrateEvent(
+  eventName: string,
+  elementId: string,
+  callback: (context: { event: Event; element: HTMLElement }) => void | (() => void),
+): void {
+  ensureObserver();
+  const element = document.getElementById(elementId);
+  if (!element) {
+    console.warn(`[hydrateEvent] No element found for id "${elementId}"`);
+    return;
+  }
+
+  const listener: EventListener = (event) => {
+    try {
+      const cleanup = callback({ event, element });
+      if (typeof cleanup === "function") {
+        const events = activeEvents.get(element) ?? [];
+        const active = events.find((entry) => entry.listener === listener);
+        active?.cleanups.push(cleanup);
+      }
+    } catch (err) {
+      console.error(`[hydrateEvent] Error in "${eventName}" callback:`, err);
+    }
+  };
+
+  element.addEventListener(eventName, listener);
+  const events = activeEvents.get(element) ?? [];
+  events.push({ event: eventName, listener, cleanups: [] });
+  activeEvents.set(element, events);
 }
 
 function connectElement(element: HTMLElement, Ctor: HandlerConstructor): void {
@@ -173,7 +216,25 @@ function connectElement(element: HTMLElement, Ctor: HandlerConstructor): void {
   activeHandlers.set(element, handlers);
 }
 
+function disconnectEventElement(element: HTMLElement): void {
+  const events = activeEvents.get(element);
+  if (!events) return;
+
+  for (const { event, listener, cleanups } of events) {
+    element.removeEventListener(event, listener);
+    for (const cleanup of cleanups) {
+      try {
+        cleanup();
+      } catch (err) {
+        console.error(`[hydrateEvent] Error during "${event}" cleanup:`, err);
+      }
+    }
+  }
+  activeEvents.delete(element);
+}
+
 function disconnectElement(element: HTMLElement): void {
+  disconnectEventElement(element);
   const handlers = activeHandlers.get(element);
   if (!handlers) return;
 
