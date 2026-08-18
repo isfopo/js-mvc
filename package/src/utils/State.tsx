@@ -32,7 +32,7 @@
  */
 
 import { JSX } from "react";
-import { generateEffectCSS } from "./css
+import { generateEffectCSS } from "./css"
 import { genId } from "./ids";
 
 export type BuiltInCondition = "valid" | "invalid" | "checked" | "unchecked" | "focused";
