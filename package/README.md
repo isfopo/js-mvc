@@ -10,7 +10,7 @@ MVC framework for Cloudflare Workers built on Hono with server-side JSX
 - **Guard pipeline** — `@Exists`, `@Authorize`, `@Validate` decorators run before handlers
 - **SQL repository layer** — Generic CRUD, dynamic finders, typed `.sql` file queries, injection-safe
 - **Client-side handlers** — `useHandler()` factory wires server JSX to client controllers without manual attributes
-- **CSS-only interactivity** — `State()` factory generates scoped CSS rules for show/hide/disable based on form state
+- **CSS-only interactivity** — `useHide()`/`useDisable()` factories generate scoped CSS rules for show/hide/disable based on form state
 - **Vite plugins** — SQL transform, SQL type generation, CSS build, client bundle
 
 ---
@@ -101,12 +101,18 @@ const Dismiss = useHandler(DismissHandler)
 </Dismiss>
 ```
 
-### CSS-only state
+Handlers are registered automatically: `handlerRegistryPlugin` glob-discovers
+every `*Handler.ts` file and generates the registration module at build time,
+so you never write a `register(...)` call or enumerate handler imports.
+
+### CSS-only interactivity
 
 ```tsx
-import { State } from "js-mvc/utils/State"
+import { useHide } from "js-mvc/client/useHide"
+import { useDisable } from "js-mvc/client/useDisable"
 
-const Plan = State<"plan", "free" | "pro">("plan")
+// Show/hide content based on a condition (animate = "fade", "slide-up", ...)
+const Plan = useHide<"free" | "pro">({ scope: "plan" })
 
 <Plan>
   <Plan.Trigger value="free">
@@ -115,9 +121,21 @@ const Plan = State<"plan", "free" | "pro">("plan")
   <Plan.Trigger value="pro">
     <input type="radio" name="plan" value="pro" />
   </Plan.Trigger>
-  <Plan.Show when="free">Free tier content</Plan.Show>
-  <Plan.Show when="pro">Pro tier content</Plan.Show>
+  <Plan.Show when="free" animate="fade">Free tier content</Plan.Show>
+  <Plan.Show when="pro" animate="fade">Pro tier content</Plan.Show>
 </Plan>
+
+// Dim & block an element until a condition is met (no animation presets)
+const Confirm = useDisable({ scope: "confirm" })
+
+<Confirm>
+  <Confirm.Trigger value="agree">
+    <input type="checkbox" name="agree" />
+  </Confirm.Trigger>
+  <Confirm.Disable when="unchecked">
+    <button type="submit">Submit</button>
+  </Confirm.Disable>
+</Confirm>
 ```
 
 ---
@@ -137,7 +155,7 @@ const Plan = State<"plan", "free" | "pro">("plan")
 - **Strict MVC layers** — Controllers handle routing/rendering, services handle business rules, repositories handle data access
 - **HTML vs API controllers** — Same pattern, different output. Business logic lives in services
 - **Server vs client** — `useHandler()` generates `data-*` attributes server-side; `BaseHandler` consumes them client-side. No manual strings to keep in sync
-- **CSS-only vs JS interactivity** — `State()` generates scoped CSS rules. `useHandler()` wires JS handlers. Choose the right tool per interaction
+- **CSS-only vs JS interactivity** — `useHide()`/`useDisable()` generate scoped CSS rules. `useHandler()` wires JS handlers. Choose the right tool per interaction
 
 ### Convention Over Configuration
 
@@ -194,11 +212,12 @@ const Plan = State<"plan", "free" | "pro">("plan")
 | `js-mvc/validation/IValidatable` | `IValidatable` interface for request objects |
 | `js-mvc/errors` | `AppError`, `NotFoundError`, `ValidationError`, etc. |
 | `js-mvc/client/useHandler` | `useHandler()` factory for client handlers |
-| `js-mvc/utils/State` | `State()` factory for CSS-only interactivity |
+| `js-mvc/client/useHide` | `useHide()` factory for CSS-only show/hide (animated) |
+| `js-mvc/client/useDisable` | `useDisable()` factory for CSS-only disable/enable |
 | `js-mvc/client/BaseHandler` | `BaseHandler` for custom client controllers |
 | `js-mvc/client/dispatcher` | Client-side handler dispatcher |
 | `js-mvc/adapters/d1` | Cloudflare D1 database adapter |
-| `js-mvc/plugins` | Vite plugins (`sqlTransformPlugin`, `sqlTypesPlugin`, `cssBuildPlugin`, `clientBuildPlugin`) |
+| `js-mvc/plugins` | Vite plugins (`sqlTransformPlugin`, `sqlTypesPlugin`, `cssBuildPlugin`, `clientBuildPlugin`, `handlerRegistryPlugin`) |
 
 ---
 
@@ -267,7 +286,7 @@ async adminView(c) {
 ## Vite plugins
 
 ```ts
-import { sqlTransformPlugin, sqlTypesPlugin, cssBuildPlugin, clientBuildPlugin } from "js-mvc/plugins"
+import { sqlTransformPlugin, sqlTypesPlugin, cssBuildPlugin, clientBuildPlugin, handlerRegistryPlugin } from "js-mvc/plugins"
 
 export default {
   plugins: [
@@ -280,12 +299,23 @@ export default {
     cssBuildPlugin({
       sourceDirs: ["src/styles", "src/components"],
     }),
+    handlerRegistryPlugin({
+      // Handlers are glob-discovered (default: src/views/handlers/**/*.ts)
+      // and auto-registered; no per-handler paths in source.
+      include: "src/views/handlers/**/*Handler.ts",
+    }),
     clientBuildPlugin({
       entryPoint: "src/client-entry.ts",
     }),
   ],
 }
 ```
+
+`handlerRegistryPlugin` generates `src/.generated/handlers.ts`, which
+imports and registers every discovered `*Handler` class with the hydration
+runtime. `client-entry.ts` just imports that generated module and re-exports
+the hydration helpers — adding a new handler requires dropping a
+`*Handler.ts` file into the handlers directory and nothing else.
 
 ---
 
@@ -308,5 +338,5 @@ The package uses `noImplicitOverride: true` and Stage 3 decorators. Your `tsconf
 }
 ```
 
-> **Note:** `"DOM"` is required in `lib` for client-side features (`BaseHandler`, `useHandler`, `State`).
+> **Note:** `"DOM"` is required in `lib` for client-side features (`BaseHandler`, `useHandler`, `useHide`, `useDisable`).
 > Server-only projects can omit it, but most projects will need it.
