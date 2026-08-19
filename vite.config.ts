@@ -5,6 +5,7 @@ import { defineConfig } from "vite";
 import {
   clientBuildPlugin,
   cssBuildPlugin,
+  handlerRegistryPlugin,
   sqlTransformPlugin,
   sqlTypesPlugin,
 } from "./package/plugins/index.ts";
@@ -39,6 +40,11 @@ export default defineConfig({
       sourceDirs: ["src/views/tokens", "src/views/elements", "src/views/components", "src/views/routes"],
     }),
     clientBuildPlugin(),
+    handlerRegistryPlugin({
+      // Handlers are auto-discovered by this glob; no per-handler paths
+      // need to be maintained in source.
+      include: "src/views/handlers/**/*Handler.ts",
+    }),
     cloudflare({ inspectorPort: 9229 }),
   ],
   esbuild: {

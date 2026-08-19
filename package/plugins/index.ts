@@ -5,3 +5,7 @@ export {
   clientBuildPlugin,
   type ClientBuildPluginOptions,
 } from "./client-build-plugin";
+export {
+  handlerRegistryPlugin,
+  type HandlerRegistryPluginOptions,
+} from "./handler-registry-plugin";

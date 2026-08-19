@@ -46,7 +46,7 @@ The CSS build is **automatic** with full HMR support:
 - **Models** (`src/domains/*/model.ts`): Row types matching D1 table columns.
 - **Requests** (`src/views/routes/*/requests/`): IValidatable form objects with `validate()` method.
 - **Framework** (`package/src/`): Reusable framework code imported via `js-mvc/*` path aliases. Contains `ControllerBase`, `RepositoryBase`, `ServiceBase`, `BaseHandler`, validation decorators, error classes, and utilities.
-- **Client entry** (`src/client-entry.ts`): Registers project handler classes with the hydration runtime (`register(...)` from `js-mvc/client/main`) and re-exports `hydrate`.
+- **Client entry** (`src/client-entry.ts`): Imports the auto-generated handler registry (see below) and re-exports `hydrate`.
 - **Error handler** (`src/error-handler.tsx`): Project-specific error handling that maps `AppError` subclasses to HTML responses. Imported by controllers via `configureRendering()`.
 
 ## Routing Convention
@@ -205,14 +205,12 @@ export class DismissHandler extends BaseHandler {
 }
 ```
 
-Every new client handler must be registered once in `src/client-entry.ts`:
-
-```ts
-import { register } from "js-mvc/client/main";
-import { DismissHandler } from "./views/handlers/DismissHandler";
-
-register(DismissHandler);
-```
+New client handlers are auto-registered by `handlerRegistryPlugin` at build
+time. The plugin glob-discovers any file under `src/views/handlers/` whose
+name ends in `*Handler.ts`, generates a registration module
+(`src/.generated/handlers.ts`), and `client-entry.ts` imports it. There is no
+manual `register(...)` step — just drop a new `*Handler.ts` file in the
+handlers directory and it will be picked up automatically.
 
 ## Layout / Rendering
 

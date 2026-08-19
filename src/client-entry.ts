@@ -1,21 +1,12 @@
 /**
  * Project-side client entry point.
  *
- * Registers project handler classes with the hydration runtime and
- * re-exports hydration functions for inline client behavior scripts.
+ * Handlers are auto-discovered and registered by `handlerRegistryPlugin`
+ * during the Vite build (see the generated `src/.generated/handlers.ts`).
+ * This module just triggers that registration and re-exports hydration
+ * functions for inline client behavior scripts.
  */
 
-import { register } from "js-mvc/client/main";
-import { AddOptionHandler } from "./views/handlers/AddOptionHandler";
-import { ConfirmHandler } from "./views/handlers/ConfirmHandler";
-import { DismissHandler } from "./views/handlers/DismissHandler";
-import { StatusHandler } from "./views/handlers/StatusHandler";
-import { VoteHandler } from "./views/handlers/VoteHandler";
-
-register(AddOptionHandler);
-register(ConfirmHandler);
-register(DismissHandler);
-register(StatusHandler);
-register(VoteHandler);
+import "./.generated/handlers";
 
 export { hydrate, hydrateEvent } from "js-mvc/client/main";

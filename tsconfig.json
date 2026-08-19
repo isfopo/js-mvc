@@ -19,5 +19,6 @@
       "js-mvc/plugins/sql-types": ["./package/plugins/sql-types/index.ts"]
     }
   },
-  "include": ["src/**/*", "worker-configuration.d.ts"]
+  "include": ["src/**/*", "worker-configuration.d.ts"],
+  "exclude": ["node_modules", "src/.generated"]
 }
