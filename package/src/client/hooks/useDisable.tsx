@@ -26,7 +26,7 @@
 
 import { JSX } from "react";
 import { buildConditionSelector, cssBlock } from "utils/css";
-import { makeScope, type EffectProps } from "./shared/interactionCore";
+import { makeScope, type EffectProps } from "../shared/interactionCore";
 
 export type DisableEffectProps<V extends string> = EffectProps<V>;
 

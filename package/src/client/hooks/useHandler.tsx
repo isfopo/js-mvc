@@ -32,7 +32,7 @@
  */
 
 import { genId } from "utils/ids";
-import { HandlerConstructor } from "./types";
+import { HandlerConstructor } from "../types";
 import { JSX } from "react";
 
 // ---------------------------------------------------------------------------

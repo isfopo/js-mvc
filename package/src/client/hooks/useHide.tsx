@@ -29,9 +29,10 @@
 
 import { JSX } from "react";
 import { buildConditionSelector, cssBlock, TAG_DISPLAY } from "utils/css";
-import { makeScope, type EffectProps, type InteractionCondition } from "./shared/interactionCore";
+import { makeScope, type EffectProps, type InteractionCondition } from "../shared/interactionCore";
 
 export type AnimationPresetName =
+  | "none"
   | "fade"
   | "fade-in"
   | "slide-up"
@@ -54,6 +55,7 @@ export interface HideOptions {
   scope?: string;
   time?: `${number}${"s" | "ms"}`;
   offset?: `${number}${"px" | "em" | "rem"}`;
+  scale?: number;
 }
 
 /**
@@ -62,10 +64,13 @@ export interface HideOptions {
  * @typeParam V  Allowed condition values for `when` (defaults to `string`)
  * @param opts  Optional configuration (scope name, timing)
  */
-export function useHide<V extends string = string>(opts: HideOptions = { time: "200ms", offset: "8px" }) {
+export function useHide<V extends string = string>(
+  opts: HideOptions = { time: "200ms", offset: "8px", scale: 0.95 },
+) {
   const { scopeId, Wrapper, Trigger } = makeScope({ scope: opts.scope });
   const time = opts.time ?? "200ms";
   const offset = opts.offset ?? "8px";
+  const scale = opts.scale ?? 0.95;
 
   const HIDDEN_BASE: Record<string, string> = {
     opacity: "0",
@@ -74,6 +79,7 @@ export function useHide<V extends string = string>(opts: HideOptions = { time: "
   };
 
   const ANIMATION_PRESETS: Record<AnimationPresetName, AnimationPreset> = {
+    none: { hidden: HIDDEN_BASE, transition: "" },
     "fade": { hidden: HIDDEN_BASE, transition: `opacity ${time}` },
     "fade-in": { hidden: HIDDEN_BASE, transition: `opacity ${time}` },
     "slide-up": {
@@ -85,7 +91,7 @@ export function useHide<V extends string = string>(opts: HideOptions = { time: "
       transition: `opacity ${time}, transform ${time}`,
     },
     "scale": {
-      hidden: { ...HIDDEN_BASE, transform: "scale(0.95)" },
+      hidden: { ...HIDDEN_BASE, transform: `scale(${scale})` },
       transition: `opacity ${time}, transform ${time}`,
     },
     "slide-left": {
@@ -102,29 +108,35 @@ export function useHide<V extends string = string>(opts: HideOptions = { time: "
     type: "show" | "hide",
     when: string,
     tag: string,
-    animate?: AnimationPresetName,
-    transition?: string,
+    animate: AnimationPresetName = "none",
   ): string {
     const scopeSelector = `[data-state-scope="${scopeId}"]`;
     const condSelector = buildConditionSelector(when, scopeSelector);
     const targetAttr = `data-state-${type}`;
     const displayValue = TAG_DISPLAY[tag] ?? "block";
-    const preset = animate ? ANIMATION_PRESETS[animate] : null;
-    const transitionString = transition ?? preset?.transition ?? null;
-    const isAnimated = !!(animate ?? transition);
+    const preset = ANIMATION_PRESETS[animate];
+    const { transition } = preset;
     const lines: string[] = [];
 
     if (type === "show") {
-      if (isAnimated && preset) {
-        lines.push(`${scopeSelector} [${targetAttr}="${when}"] { ${cssBlock(preset.hidden)}; transition: ${transitionString}; }`);
-        lines.push(`${condSelector} [${targetAttr}="${when}"] { opacity: 1; pointer-events: auto; visibility: visible; transition: ${transitionString}; }`);
+      if (preset) {
+        lines.push(
+          `${scopeSelector} [${targetAttr}="${when}"] { ${cssBlock(preset.hidden)}; transition: ${transition}; }`,
+        );
+        lines.push(
+          `${condSelector} [${targetAttr}="${when}"] { opacity: 1; pointer-events: auto; visibility: visible; transition: ${transition}; }`,
+        );
       } else {
         lines.push(`${condSelector} [${targetAttr}="${when}"] { display: ${displayValue} !important; }`);
       }
     } else {
-      if (isAnimated && preset) {
-        lines.push(`${scopeSelector} [${targetAttr}="${when}"] { transition: ${transitionString}; }`);
-        lines.push(`${condSelector} [${targetAttr}="${when}"] { ${cssBlock(preset.hidden)}; transition: ${transitionString}; }`);
+      if (preset) {
+        lines.push(
+          `${scopeSelector} [${targetAttr}="${when}"] { transition: ${transition}; }`,
+        );
+        lines.push(
+          `${condSelector} [${targetAttr}="${when}"] { ${cssBlock(preset.hidden)}; transition: ${transition}; }`,
+        );
       } else {
         lines.push(`${condSelector} [${targetAttr}="${when}"] { display: none; }`);
       }
@@ -138,7 +150,7 @@ export function useHide<V extends string = string>(opts: HideOptions = { time: "
   }: HideEffectProps<V>) {
     const isAnimated = !!(animate ?? transition);
     const Tag = (tag ?? "div") as keyof JSX.IntrinsicElements;
-    const css = effectCSS("show", when, tag ?? "div", animate, transition);
+    const css = effectCSS("show", when, tag ?? "div", animate);
 
     return (
       <>
@@ -158,7 +170,7 @@ export function useHide<V extends string = string>(opts: HideOptions = { time: "
     when, tag, animate, transition, children, ...rest
   }: HideEffectProps<V>) {
     const Tag = (tag ?? "div") as keyof JSX.IntrinsicElements;
-    const css = effectCSS("hide", when, tag ?? "div", animate, transition);
+    const css = effectCSS("hide", when, tag ?? "div", animate);
 
     return (
       <>
