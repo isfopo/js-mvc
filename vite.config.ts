@@ -24,7 +24,7 @@ export default defineConfig({
       "error-handler": resolve(src, "error-handler.tsx"),
       "js-mvc": pkg,
       middleware: resolve(src, "middleware"),
-      utils: resolve(src, "utils"),
+      utils: resolve(pkg, "utils"),
       views: resolve(src, "views"),
     },
   },
