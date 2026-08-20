@@ -13,6 +13,8 @@
   "exports": {
     "./types": "./src/types.ts",
     "./controller/ControllerBase": "./src/controller/ControllerBase.tsx",
+    "./controller/Render": "./src/controller/Render.ts",
+    "./view/ViewBuilderBase": "./src/view/ViewBuilderBase.ts",
     "./repository/RepositoryBase": "./src/repository/RepositoryBase.ts",
     "./service/ServiceBase": "./src/service/ServiceBase.ts",
     "./errors": "./src/errors/index.tsx",

@@ -25,6 +25,12 @@ import { NotFoundError, ValidationError } from "../errors";
 import { parseRequestBody } from "../middleware/parseBody";
 import { GUARDS_KEY } from "../gaurds/GuardDecorator";
 import type { GuardDescriptor } from "../gaurds/types";
+import { RENDER_KEY } from "./Render";
+import type { RenderDescriptor } from "./Render";
+import { ViewBuilderBase } from "../view/ViewBuilderBase";
+
+/* Re-export the @Render decorator so it can be imported alongside Get/Post. */
+export { Render } from "./Render";
 
 /* ---------- Symbol.metadata polyfill ---------- */
 
@@ -93,6 +99,22 @@ export abstract class ControllerBase<T extends Env> {
   abstract base: string;
   renderConfig?: ControllerRenderConfig<T>;
 
+  /**
+   * Per-route view-model builder instance, resolved from the builder class
+   * declared on `@Render` by `register()` and set just before the handler
+   * runs. A handler on a `@Render`-decorated route reads it via
+   * `this.models.<method>(...)`. Routes without `@Render` never touch it.
+   *
+   * Typed pragmatically: each route may pair with a different concrete
+   * builder, so the accessor exposes the base plus any callable builder
+   * method (project usage like `this.models.index(...)` type-checks).
+   */
+  get models(): ViewBuilderBase & Record<string, (...args: any[]) => any> {
+    return this._builder as ViewBuilderBase &
+      Record<string, (...args: any[]) => any>;
+  }
+  private _builder?: ViewBuilderBase;
+
   constructor() {
     this._app = new Hono();
   }
@@ -156,6 +178,15 @@ export abstract class ControllerBase<T extends Env> {
     const metadata = (this.constructor as any)[Symbol.metadata];
     const routes: RouteDescriptor[] = metadata?.[ROUTES_KEY] ?? [];
     const guards: GuardDescriptor[] = metadata?.[GUARDS_KEY] ?? [];
+    const renders: RenderDescriptor[] = metadata?.[RENDER_KEY] ?? [];
+
+    /* Map handlerName → View component for fast lookup when wrapping routes. */
+    const renderByHandler = new Map<string, FC>();
+    const builderByHandler = new Map<string, new () => any>();
+    for (const render of renders) {
+      renderByHandler.set(render.handlerName, render.view);
+      builderByHandler.set(render.handlerName, render.builder);
+    }
 
     /* Attach a renderer that wraps every response in the shared layout.
        This is inherited by all routes registered below. */
@@ -192,7 +223,34 @@ export abstract class ControllerBase<T extends Env> {
           for (const guard of handlerGuards) {
             await ControllerBase.executeGuard(guard, c);
           }
-          return (this as any)[route.handlerName](c);
+
+          /* Resolve the paired view-builder (if any) so `this.models` returns
+             the shared instance while this handler runs. Set it before the
+             handler and clear it after so undecorated routes never see a
+             stale builder. */
+          const builderClass = builderByHandler.get(route.handlerName);
+          this._builder = builderClass
+            ? ViewBuilderBase.instance.call(builderClass)
+            : undefined;
+
+          const result = await (this as any)[route.handlerName](c);
+
+          /* If this route declared @Render and the handler returned a plain
+             view-model object (not a Response like c.redirect), render it
+             inside the declared View. Routes without @Render — and handlers
+             that return a Response — pass through untouched. */
+          const view = renderByHandler.get(route.handlerName);
+          if (
+            view &&
+            result != null &&
+            typeof result === "object" &&
+            !(result instanceof Response)
+          ) {
+            return c.render(
+              <view {...(result as Record<string, unknown>)} />,
+            );
+          }
+          return result;
         } catch (error: unknown) {
           const errorHandler = this.renderConfig?.handleError;
           if (errorHandler) {
