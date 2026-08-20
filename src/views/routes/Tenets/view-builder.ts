@@ -1,22 +1,25 @@
 import type { UserRow } from "domains/user/model";
-import type { TenetDetail, TenetSummary } from "domains/tenet/service";
+import type {
+  TenetDetail,
+  TenetSummary,
+  UserInfo,
+} from "domains/tenet/service";
 import type { TenetStatus } from "domains/tenet/model";
+import { ViewBuilderBase } from "js-mvc/view/ViewBuilderBase";
 import { TenetListViewModel } from "./views";
 import { TenetDetailViewModel } from "./views/show";
 
-function toUserInfo(user: UserRow) {
+function toUserInfo(user: UserRow): UserInfo {
   return {
-    id: user.id,
-    login: user.login,
     avatarUrl: user.avatar_url,
-    name: user.name,
+    ...user,
   };
 }
 
-export const viewBuilder = {
+export class TenetViewBuilder extends ViewBuilderBase {
   index(tenets: TenetSummary[], currentUser: UserRow): TenetListViewModel {
     return { tenets, currentUser: toUserInfo(currentUser) };
-  },
+  }
 
   show(tenet: TenetDetail, currentUser: UserRow): TenetDetailViewModel {
     const userVote =
@@ -34,8 +37,11 @@ export const viewBuilder = {
       canTransition: allowedTransitions.length > 0,
       allowedTransitions,
     };
-  },
-};
+  }
+}
+
+/** Shared singleton is provided by `ViewBuilderBase.instance()`; controllers
+    reference it via `this.models` (see @Render / ControllerBase). */
 
 const STATUS_FLOW: Record<
   TenetStatus,

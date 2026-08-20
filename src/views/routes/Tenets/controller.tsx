@@ -1,5 +1,5 @@
 import { Context, Env } from "hono";
-import { Get, Post, ControllerBase } from "js-mvc/controller/ControllerBase";
+import { Get, Post, ControllerBase, Render } from "js-mvc/controller/ControllerBase";
 import { Exists, Validate } from "js-mvc/gaurds";
 import { Layout } from "views/routes/Shared/Layout";
 import { handleError } from "error-handler";
@@ -11,12 +11,12 @@ import { FindTenetGuard } from "./guards/FindTenetGuard";
 import { View as IndexView } from "./views/index";
 import { View as ShowView } from "./views/show";
 import { View as NewView } from "./views/new";
-import { viewBuilder } from "./view-builder";
+import { TenetViewBuilder } from "./view-builder";
 import { TransitionRequest } from "./requests/TransitionRequest";
 import type { UserRow } from "domains/user/model";
 import type { TenetRow } from "domains/tenet/model";
 
-class TenetsController<T extends Env> extends ControllerBase<T> {
+export class TenetsController<T extends Env> extends ControllerBase<T> {
   override base = "tenets";
 
   constructor() {
@@ -26,10 +26,11 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
   }
 
   @Get("/")
+  @Render(IndexView, TenetViewBuilder)
   async index(c: Context) {
     const user = c.get("user") as UserRow;
     const result = await tenetService.list((c.env as CloudflareBindings).DB);
-    return c.render(<IndexView {...viewBuilder.index(result.tenets, user)} />);
+    return this.models.index(result.tenets, user);
   }
 
   @Get("/new")
@@ -52,6 +53,7 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
 
   @Get("/:slug")
   @Exists(FindTenetGuard)
+  @Render(ShowView, TenetViewBuilder)
   async show(c: Context) {
     const user = c.get("user") as UserRow;
     const tenetRow = c.get("tenet") as TenetRow;
@@ -59,7 +61,7 @@ class TenetsController<T extends Env> extends ControllerBase<T> {
       (c.env as CloudflareBindings).DB,
       tenetRow.slug,
     );
-    return c.render(<ShowView {...viewBuilder.show(detail, user)} />);
+    return this.models.show(detail, user);
   }
 
   @Post("/:slug/vote")
