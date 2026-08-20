@@ -305,17 +305,19 @@ export default {
       include: "src/views/handlers/**/*Handler.ts",
     }),
     clientBuildPlugin({
-      entryPoint: "src/client-entry.ts",
+      entryPoint: "src/.generated/client-entry.ts",
     }),
   ],
 }
 ```
 
-`handlerRegistryPlugin` generates `src/.generated/handlers.ts`, which
-imports and registers every discovered `*Handler` class with the hydration
-runtime. `client-entry.ts` just imports that generated module and re-exports
-the hydration helpers — adding a new handler requires dropping a
-`*Handler.ts` file into the handlers directory and nothing else.
+`handlerRegistryPlugin` generates `src/.generated/handlers.ts` — which imports
+and registers every discovered `*Handler` class with the hydration runtime —
+and also generates `src/.generated/client-entry.ts`, the module the browser
+loads: it imports those handlers and re-exports the framework's hydration
+helpers. There is no hand-written client entry file; adding a new handler
+requires dropping a `*Handler.ts` file into the handlers directory and nothing
+else.
 
 ---
 

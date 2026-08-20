@@ -6,7 +6,11 @@ import { mkdirSync } from "node:fs";
 export interface ClientBuildPluginOptions {
   /**
    * Entry point for the client bundle (relative to project root or absolute).
-   * @default "src/client-entry.ts"
+   * This is the generated client entry written by `handlerRegistryPlugin` —
+   * the module that imports the generated handler registration and re-exports
+   * the framework's hydration functions.
+   *
+   * @default "src/.generated/client-entry.ts"
    */
   entryPoint?: string;
 
@@ -31,7 +35,7 @@ export interface ClientBuildPluginOptions {
  */
 export function clientBuildPlugin(options: ClientBuildPluginOptions = {}): Plugin {
   const {
-    entryPoint = "src/client-entry.ts",
+    entryPoint = "src/.generated/client-entry.ts",
     outfile = "public/.generated/client/main.js",
     esbuildOptions = {},
   } = options;

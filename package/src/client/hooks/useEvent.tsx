@@ -10,7 +10,7 @@ import { JSX } from "react";
 import { genId } from "utils/ids";
 
 const CLIENT_MODULE_URL = import.meta.env.DEV
-  ? "/src/client-entry.ts"
+  ? "/src/.generated/client-entry.ts"
   : "/.generated/client/main.js";
 
 const HTML_ATTRS = new Set(["class", "style", "role", "title", "hidden", "name"]);

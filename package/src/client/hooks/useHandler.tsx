@@ -41,7 +41,7 @@ import { JSX } from "react";
 
 /** Module URL of the client bundle that exports hydrate() */
 const CLIENT_MODULE_URL = import.meta.env.DEV
-  ? "/src/client-entry.ts"
+  ? "/src/.generated/client-entry.ts"
   : "/.generated/client/main.js";
 
 /** Inline script that hydrates one handler instance onto its element */
