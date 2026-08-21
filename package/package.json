@@ -12,6 +12,9 @@
   },
   "exports": {
     "./types": "./src/types.ts",
+    "./data/applySql": "./src/data/applySql.ts",
+    "./data/applySchema": "./src/data/applySchema.ts",
+    "./schema": "./src/schema/index.ts",
     "./controller/ControllerBase": "./src/controller/ControllerBase.tsx",
     "./controller/Render": "./src/controller/Render.ts",
     "./view/ViewBuilderBase": "./src/view/ViewBuilderBase.ts",
