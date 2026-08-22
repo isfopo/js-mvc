@@ -2,7 +2,18 @@
 
 ## Status
 
-Design proposal — approved in principle March 2025 session, pending review.
+Implemented on the `ts-to-sql` branch (Aug 2026):
+
+- `schemaPlugin` generates `db-types.d.ts`, a derived `schema.sql`
+  (gitignored), and the runtime schema module from `src/domains/schema.ts`.
+- `applySchema()` reconciles the live D1 DB against the desired state
+  (add/rename/rebuild/index sync) on first request; the additive-only
+  `applySql` schema path is gone.
+- `sqlTypesPlugin` query barrels key off the generated schema module;
+  the SQL-parse→types path and the `local.db` generator are removed.
+- DSL unit tests (12) and reconciliation tests against a real D1 pool
+  binding (5) pass — 106 total. Dev-seed smoke test is the remaining
+  verification item.
 
 ## Problem
 
