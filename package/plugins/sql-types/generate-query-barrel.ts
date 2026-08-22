@@ -8,7 +8,7 @@
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative, dirname, basename } from "node:path";
 import { parseFrontMatter, type SqlFrontMatter } from "./parse-front-matter";
-import { tableNameToTypeName } from "./generate-db-types";
+import { tableNameToTypeName } from "../../src/schema/generate-types";
 import { validateSql } from "./validate-sql";
 import { extractTypeReferences } from "./utils";
 

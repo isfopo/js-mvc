@@ -85,7 +85,13 @@ export function renderCreateIndex(index: IndexLike, ifNotExists = true): string 
     ? "CREATE UNIQUE INDEX"
     : "CREATE INDEX";
   const guard = ifNotExists ? "IF NOT EXISTS " : "";
-  const cols = index.columns.join(", ");
+  const cols = index.columns
+    .map((c) => {
+      // Preserve a sort-direction suffix like `created_at DESC`.
+      const [ident, ...rest] = c.trim().split(/\s+/);
+      return [quoteIdent(ident), ...rest].join(" ");
+    })
+    .join(", ");
   return `${prefix} ${guard}${quoteIdent(index.name)} ON ${quoteIdent(index.table)}(${cols});`;
 }
 
