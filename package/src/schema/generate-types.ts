@@ -65,7 +65,7 @@ function sqliteTypeToTs(sqliteType: SqliteType): string {
 }
 
 /** Determine the TypeScript type for a column. */
-function columnToTsType(col: ColumnDef): string {
+export function columnToTsType(col: ColumnDef): string {
   if (col.checkValues && col.checkValues.length > 0) {
     const union = col.checkValues.map((v) => `"${v}"`).join(" | ");
     // CHECK columns are always NOT NULL in practice (the CHECK constrains them).

@@ -16,8 +16,7 @@
       "js-mvc/*": ["./package/src/*"],
       "utils/*": ["./package/src/utils/*"],
       "domains/*": ["./src/domains/*"],
-      "js-mvc/plugins": ["./package/plugins/index.ts"],
-      "js-mvc/plugins/sql-types": ["./package/plugins/sql-types/index.ts"]
+      "js-mvc/plugins": ["./package/plugins/index.ts"]
     }
   },
   "include": ["src/**/*", "worker-configuration.d.ts"],

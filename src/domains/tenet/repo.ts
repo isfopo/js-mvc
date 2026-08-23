@@ -1,14 +1,14 @@
 import { RepositoryBase } from "js-mvc/repository/RepositoryBase";
-import { queries, type QueryMap } from "./queries/queries.generated";
+import { procs, type ProcMap } from "./procs.generated";
 import type { Tenet } from "domains/db-types";
 import type { TenetStatus } from "./model";
 
-export class TenetsRepository extends RepositoryBase<Tenet, QueryMap> {
+export class TenetsRepository extends RepositoryBase<Tenet, ProcMap> {
   override readonly tableName = "tenets";
-  protected override readonly queries = queries;
+  protected override readonly queries = procs;
 
   async getOptions(tenetId: number) {
-    return this.queryAll("getOptions", { tenetId });
+    return this.queryAll("getOptions", { tenet_id: tenetId });
   }
 
   async listWithProposer() {
@@ -38,12 +38,12 @@ export class TenetsRepository extends RepositoryBase<Tenet, QueryMap> {
     for (let i = 0; i < options.length; i++) {
       const opt = options[i];
       await this.execute("insertOption", {
-        tenetId: row.id,
+        tenet_id: row.id,
         title: opt.title,
         description: opt.description ?? null,
         pros: opt.pros ?? null,
         cons: opt.cons ?? null,
-        sortOrder: i,
+        sort_order: i,
       });
     }
 

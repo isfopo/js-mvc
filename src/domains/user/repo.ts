@@ -1,10 +1,10 @@
 import { RepositoryBase } from "js-mvc/repository/RepositoryBase";
 import type { UserRow } from "./model";
-import { queries, type QueryMap } from "./queries/queries.generated";
+import { procs, type ProcMap } from "./procs.generated";
 
-export class UsersRepository extends RepositoryBase<UserRow, QueryMap> {
+export class UsersRepository extends RepositoryBase<UserRow, ProcMap> {
   override readonly tableName = "users";
-  protected override readonly queries = queries;
+  protected override readonly queries = procs;
 
   /**
    * Upsert a user from GitHub profile data.
@@ -22,7 +22,7 @@ export class UsersRepository extends RepositoryBase<UserRow, QueryMap> {
       await this.execute("updateFromGithub", {
         id: existing.id,
         login: githubUser.login,
-        avatarUrl: githubUser.avatar_url,
+        avatar_url: githubUser.avatar_url,
         name: githubUser.name,
       });
       return (await this.findById(existing.id))!;

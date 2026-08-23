@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "gray-matter": "^4.0.3",
     "hono": "^4.12.16"
   },
   "devDependencies": {
@@ -16,6 +15,7 @@
     "./data/applySchema": "./src/data/applySchema.ts",
     "./schema": "./src/schema/index.ts",
     "./seed": "./src/seed/index.ts",
+    "./sql": "./src/sql/index.ts",
     "./controller/ControllerBase": "./src/controller/ControllerBase.tsx",
     "./controller/Render": "./src/controller/Render.ts",
     "./view/ViewBuilderBase": "./src/view/ViewBuilderBase.ts",
@@ -39,10 +39,9 @@
     "./client/useDisable": "./src/client/hooks/useDisable.tsx",
     "./adapters/d1": "./src/adapters/d1.ts",
     "./plugins": "./plugins/index.ts",
-    "./plugins/sql-types": "./plugins/sql-types/index.ts",
     "./plugins/css-build-plugin": "./plugins/css-build-plugin.ts",
-    "./plugins/sql-types-plugin": "./plugins/sql-types-plugin.ts",
     "./plugins/seed-plugin": "./plugins/seed-plugin.ts",
+    "./plugins/sql-plugin": "./plugins/sql-plugin.ts",
     "./plugins/client-build-plugin": "./plugins/client-build-plugin.ts"
   }
 }

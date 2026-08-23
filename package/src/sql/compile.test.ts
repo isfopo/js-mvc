@@ -1,0 +1,201 @@
+/**
+ * js-mvc/sql compiler unit tests — SQL rendering + schema-driven type
+ * inference, exercised against the same query shapes the app uses.
+ */
+
+import { describe, it, expect } from "vitest";
+import { defineSchema, table, col } from "../schema";
+import { def, lookup, action, param, sql } from "./index";
+import { compileProcs } from "./compile";
+
+const schema = defineSchema({
+  tables: {
+    users: table({
+      id: col.integer("id").primaryKey().autoIncrement(),
+      github_id: col.integer("github_id").notNull().unique(),
+      login: col.text("login").notNull(),
+      avatar_url: col.text("avatar_url").nullable(),
+      name: col.text("name").nullable(),
+      created_at: col.text("created_at").notNull().default("(datetime('now'))"),
+      last_login_at: col.text("last_login_at").notNull().default("(datetime('now'))"),
+    }),
+    tenets: table({
+      id: col.integer("id").primaryKey().autoIncrement(),
+      title: col.text("title").notNull(),
+      slug: col.text("slug").notNull().unique(),
+      status: col
+        .text("status")
+        .check(["draft", "voting", "accepted", "rejected", "implemented", "superseded"])
+        .notNull()
+        .default("'draft'"),
+      context: col.text("context").notNull(),
+      proposed_by_id: col.integer("proposed_by_id").notNull().references("users", "id"),
+      created_at: col.text("created_at").notNull().default("(datetime('now'))"),
+      updated_at: col.text("updated_at").notNull().default("(datetime('now'))"),
+    }),
+    tenet_options: table({
+      id: col.integer("id").primaryKey().autoIncrement(),
+      tenet_id: col.integer("tenet_id").notNull().references("tenets", "id"),
+      title: col.text("title").notNull(),
+      description: col.text("description").nullable(),
+      sort_order: col.integer("sort_order").notNull(),
+    }),
+    votes: table({
+      id: col.integer("id").primaryKey().autoIncrement(),
+      tenet_id: col.integer("tenet_id").notNull().references("tenets", "id"),
+      user_id: col.integer("user_id").notNull().references("users", "id"),
+      choice: col.text("choice").check(["approve", "abstain", "block"]).notNull(),
+      reason: col.text("reason").nullable(),
+      created_at: col.text("created_at").notNull().default("(datetime('now'))"),
+    }),
+  },
+  indexes: {},
+});
+
+const procs = def({
+  listWithProposer: lookup({
+    select: ["t.*", "u.login AS proposer_login", "u.avatar_url AS proposer_avatar"],
+    from: [
+      { table: "tenets", as: "t" },
+      { join: "users", as: "u", on: sql`u.id = t.proposed_by_id` },
+    ],
+    orderBy: sql`t.created_at DESC`,
+  }),
+  getWithProposer: lookup({
+    select: ["t.*", "u.login AS proposer_login"],
+    from: [
+      { table: "tenets", as: "t" },
+      { join: "users", as: "u", on: sql`u.id = t.proposed_by_id` },
+    ],
+    where: { "t.slug": param() },
+  }),
+  getOptions: lookup({
+    select: ["*"],
+    from: [{ table: "tenet_options" }],
+    where: { tenet_id: param() },
+    orderBy: sql`sort_order`,
+  }),
+  insertOption: action({
+    into: "tenet_options",
+    values: {
+      tenet_id: param(),
+      title: param(),
+      description: param(),
+      sort_order: param(),
+    },
+    returning: ["id"],
+  }),
+  updateStatus: action({
+    into: "tenets",
+    set: { status: param(), updated_at: sql`datetime('now')` },
+    where: { id: param() },
+  }),
+  listVoteChoices: lookup({
+    select: ["v.*", "u.login AS user_login"],
+    from: [
+      { table: "votes", as: "v" },
+      { join: "users", as: "u", on: sql`u.id = v.user_id` },
+    ],
+    where: { "v.tenet_id": param() },
+    orderBy: ["v.created_at", sql`v.id`],
+    limit: 10,
+  }),
+});
+
+const out = compileProcs(schema, procs, {}, { sourcePath: "src/domains/test/procs.ts" });
+
+describe("compileProcs SQL rendering", () => {
+  it("renders a parameterless lookup with joins and ordering", () => {
+    expect(out.queries.listWithProposer).toBe(
+      "SELECT t.*, u.login AS proposer_login, u.avatar_url AS proposer_avatar\nFROM tenets t INNER JOIN users u ON u.id = t.proposed_by_id ORDER BY t.created_at DESC",
+    );
+  });
+
+  it("renders a parameterized lookup with @name placeholders", () => {
+    expect(out.queries.getWithProposer).toContain("WHERE t.slug = @slug");
+  });
+
+  it("renders INSERT with typed params and RETURNING", () => {
+    expect(out.queries.insertOption).toBe(
+      "INSERT INTO tenet_options (tenet_id, title, description, sort_order)\nVALUES (@tenet_id, @title, @description, @sort_order) RETURNING id",
+    );
+  });
+
+  it("renders UPDATE with a raw sql fragment value", () => {
+    expect(out.queries.updateStatus).toBe(
+      "UPDATE tenets\nSET status = @status, updated_at = datetime('now')\nWHERE id = @id",
+    );
+  });
+
+  it("renders ORDER BY arrays and LIMIT", () => {
+    expect(out.queries.listVoteChoices).toContain("ORDER BY v.created_at, v.id LIMIT 10");
+  });
+});
+
+describe("compileProcs type inference", () => {
+  it("merges wildcard model type with aliased column types", () => {
+    expect(out.moduleText).toContain(
+      "listWithProposer: { params: {}; result: Tenet & { proposer_login: string; proposer_avatar: string | null } };",
+    );
+  });
+
+  it("infers param types from the bound columns", () => {
+    expect(out.moduleText).toContain("getWithProposer: { params: { slug: string }");
+    expect(out.moduleText).toContain("insertOption: { params: { tenet_id: number; title: string; description: string | null; sort_order: number }");
+  });
+
+  it("types RETURNING rows and leaves void actions alone", () => {
+    expect(out.moduleText).toContain("updateStatus: { params: { status: \"draft\" | \"voting\" | \"accepted\" | \"rejected\" | \"implemented\" | \"superseded\"; id: number }; result: void };");
+  });
+
+  it("imports referenced model types from db-types", () => {
+    expect(out.moduleText).toContain('import type { Tenet, TenetOption, Vote } from "../db-types";');
+  });
+
+  it("emits a procs const with the SQL as template literals", () => {
+    expect(out.moduleText).toContain("export const procs = {");
+    expect(out.moduleText).toContain("listWithProposer: `SELECT t.*, u.login AS proposer_login, u.avatar_url AS proposer_avatar");
+  });
+});
+
+describe("compileProcs errors", () => {
+  it("rejects unknown tables", () => {
+    expect(() =>
+      compileProcs(schema, def({ bad: lookup({ select: ["*"], from: [{ table: "ghosts" }] }) })),
+    ).toThrow(/unknown table "ghosts"/);
+  });
+
+  it("rejects unknown columns", () => {
+    expect(() =>
+      compileProcs(schema, def({ bad: action({ into: "tenets", set: { nope: param() }, where: { id: param() } }) })),
+    ).toThrow(/has no column "nope"/);
+  });
+
+  it("rejects duplicate bare param names", () => {
+    expect(() =>
+      compileProcs(
+        schema,
+        def({
+          bad: lookup({
+            select: ["*"],
+            from: [
+              { table: "tenets", as: "t" },
+              { table: "users", as: "u" },
+            ],
+            where: { "t.id": param(), "u.id": param() },
+          }),
+        }),
+      ),
+    ).toThrow(/duplicate parameter name "@id"/);
+  });
+
+  it("rejects sql() interpolation", () => {
+    expect(() => sql`u.id = ${"x"}`).toThrow(/interpolation/);
+  });
+
+  it("rejects UPDATE without where", () => {
+    expect(() =>
+      action({ into: "tenets", set: { status: param() } }),
+    ).toThrow(/requires a where/);
+  });
+});

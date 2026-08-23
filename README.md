@@ -58,10 +58,11 @@ Standalone build scripts (`scripts/build-css.ts`, `scripts/build-client.ts`) hav
 
 | Plugin | Purpose |
 |---|---|
+| `schemaPlugin` | Generates db-types, derived `schema.sql`, and the runtime schema module from `src/domains/schema.ts` |
+| `seedPlugin` | Compiles TS-authored `src/domains/seed.ts` (faker, dev-only) into a pure-data module |
+| `sqlPlugin` | Compiles TS-authored `procs.ts` stored queries into typed SQL modules |
 | `cssBuildPlugin` | Combines, scopes, inlines SVGs, and minifies CSS |
 | `clientBuildPlugin` | Bundles client-side TypeScript via esbuild |
-| `sqlTypesPlugin` | Parses migrations and generates typed query barrels |
-| `sqlTransformPlugin` | Strips YAML front matter from `.sql` files |
 
 All plugins are configured in `vite.config.ts` and run automatically during `npm run dev` and `npm run build`.
 

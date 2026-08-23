@@ -8,8 +8,7 @@ import {
   handlerRegistryPlugin,
   schemaPlugin,
   seedPlugin,
-  sqlTransformPlugin,
-  sqlTypesPlugin,
+  sqlPlugin,
 } from "./package/plugins/index.ts";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -39,15 +38,9 @@ export default defineConfig({
     },
   },
   plugins: [
-    sqlTransformPlugin(),
     schemaPlugin(),
     seedPlugin(),
-    sqlTypesPlugin({
-      tableNameOverrides: {
-        // Add overrides here, e.g.:
-        people: "Person",
-      },
-    }),
+    sqlPlugin(),
     cssBuildPlugin({
       sourceDirs: ["src/views/tokens", "src/views/elements", "src/views/components", "src/views/routes"],
     }),

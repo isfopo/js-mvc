@@ -68,14 +68,18 @@ function resolvePaths(projectRoot: string, options: SchemaPluginOptions): Resolv
 // ---------------------------------------------------------------------------
 
 /**
- * Bundle the schema module to a temp ESM file (resolving the js-mvc/schema
- * import to the framework DSL), then import it and return the exported SchemaDef.
+ * Load the app's schema module: bundle the TS source (resolving the
+ * js-mvc/schema import to the framework DSL) and execute it for the SchemaDef.
+ * Shared with sqlPlugin, which needs the same schema for type inference.
  */
-async function loadSchemaModule(paths: ResolvedPaths): Promise<SchemaDef> {
-  const frameworkIndex = resolve(paths.projectRoot, "package/src/schema/index.ts");
+export async function loadSchemaModule(
+  projectRoot: string,
+  schemaPath: string,
+): Promise<SchemaDef> {
+  const frameworkIndex = resolve(projectRoot, "package/src/schema/index.ts");
 
   const result = await esbuild({
-    entryPoints: [paths.schemaPath],
+    entryPoints: [schemaPath],
     bundle: true,
     write: false,
     format: "esm",
@@ -96,7 +100,7 @@ async function loadSchemaModule(paths: ResolvedPaths): Promise<SchemaDef> {
   const code = result.outputFiles[0].text;
   const tmpFile = join(
     tmpdir(),
-    `js-mvc-schema-${createHash("sha1").update(paths.schemaPath).digest("hex").slice(0, 12)}-${Date.now()}.mjs`,
+    `js-mvc-schema-${createHash("sha1").update(schemaPath).digest("hex").slice(0, 12)}-${Date.now()}.mjs`,
   );
   await writeFile(tmpFile, code, "utf-8");
   try {
@@ -115,7 +119,7 @@ async function loadSchemaModule(paths: ResolvedPaths): Promise<SchemaDef> {
 // ---------------------------------------------------------------------------
 
 async function generateSchemaOutputs(paths: ResolvedPaths): Promise<void> {
-  const schema = await loadSchemaModule(paths);
+  const schema = await loadSchemaModule(paths.projectRoot, paths.schemaPath);
 
   // 1. Model types.
   await mkdir(dirname(paths.dbTypesPath), { recursive: true });
@@ -143,7 +147,8 @@ async function generateSchemaOutputs(paths: ResolvedPaths): Promise<void> {
  *   - generated model types (src/domains/db-types.d.ts)
  *   - a derived schema.sql for tooling
  *   - a runtime schema module (src/.generated/schema.ts) for applySchema()
- * Replaces the SQL-parse→types role of sqlTypesPlugin for schema shape.
+ * Replaces the SQL-parse→types role entirely: the schema shape is now derived
+ * from the TS definition, and stored queries (sqlPlugin) feed off the same IR.
  */
 export function schemaPlugin(options: SchemaPluginOptions = {}): Plugin {
   let projectRoot: string;

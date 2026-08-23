@@ -24,7 +24,6 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "clean-css": "^5.3.3",
-    "gray-matter": "^4.0.3",
     "node-sql-parser": "^5.4.0",
     "tsx": "^4.21.0",
     "typescript-plugin-css-modules": "^5.2.0",
