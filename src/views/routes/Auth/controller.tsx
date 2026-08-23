@@ -5,6 +5,7 @@ import { handleError } from "error-handler";
 import { buildAuthorizeUrl, exchangeCode, fetchUser } from "./github";
 import { usersRepo } from "domains/user/repo";
 import { createSession, destroySession } from "middleware/auth";
+import { DevLoginView } from "./views/dev-login";
 
 const DEFAULT_REDIRECT = "/tenets";
 
@@ -27,6 +28,36 @@ class AuthController<T extends Env> extends ControllerBase<T> {
 
     const url = buildAuthorizeUrl(clientId, redirectUri, state);
     return c.redirect(url);
+  }
+
+  @Get("/dev")
+  async devLogin(c: Context) {
+    // Strictly local-development: never available in production builds.
+    if (!import.meta.env.DEV) return c.text("Not found", 404);
+
+    const env = c.env as CloudflareBindings;
+
+    // ?as=<login> → sign in as that seeded user (real session cookie).
+    const as = c.req.query("as");
+    if (as) {
+      const user = await usersRepo(env.DB).findOneBy({ login: as });
+      if (!user) return c.redirect("/auth/dev");
+      c.header("Set-Cookie", await createSession(env.SESSIONS, user.id));
+      const dest = c.req.query("redirect") ?? DEFAULT_REDIRECT;
+      return c.redirect(dest);
+    }
+
+    const users = await usersRepo(env.DB).findAll({ orderBy: "id", limit: 50 });
+    return c.render(
+      <DevLoginView
+        users={users.map((u) => ({
+          login: u.login,
+          name: u.name,
+          avatar_url: u.avatar_url,
+        }))}
+        redirect={c.req.query("redirect") ?? undefined}
+      />,
+    );
   }
 
   @Get("/callback")
