@@ -108,9 +108,10 @@ async function generateSeedOutput(paths: ResolvedPaths): Promise<void> {
   const content = `${header}import type { CompiledSeed } from "js-mvc/seed";\n\nexport const seedDef: CompiledSeed = ${JSON.stringify(compiled, null, 2)};\n`;
 
   await mkdir(dirname(paths.outputPath), { recursive: true });
-  // Write to a temp file and rename so concurrent builds/tests never observe
-  // a partially-written module (Windows rename is atomic-replace).
-  const tmpPath = `${paths.outputPath}.tmp`;
+  // Unique temp name: concurrent generators (e.g. a running dev server and a
+  // build/test run) can collide on a fixed `.tmp` path. Last writer wins on
+  // the final rename, which is safe — content is identical or newer.
+  const tmpPath = `${paths.outputPath}.tmp-${process.pid}-${Date.now()}`;
   await writeFile(tmpPath, content, "utf-8");
   await rename(tmpPath, paths.outputPath);
 }
