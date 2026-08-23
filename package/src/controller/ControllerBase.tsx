@@ -239,16 +239,14 @@ export abstract class ControllerBase<T extends Env> {
              view-model object (not a Response like c.redirect), render it
              inside the declared View. Routes without @Render — and handlers
              that return a Response — pass through untouched. */
-          const view = renderByHandler.get(route.handlerName);
+          const View = renderByHandler.get(route.handlerName);
           if (
-            view &&
+            View &&
             result != null &&
             typeof result === "object" &&
             !(result instanceof Response)
           ) {
-            return c.render(
-              <view {...(result as Record<string, unknown>)} />,
-            );
+            return c.render(<View {...(result as Record<string, unknown>)} />);
           }
           return result;
         } catch (error: unknown) {
