@@ -15,6 +15,7 @@
     "./data/applySql": "./src/data/applySql.ts",
     "./data/applySchema": "./src/data/applySchema.ts",
     "./schema": "./src/schema/index.ts",
+    "./seed": "./src/seed/index.ts",
     "./controller/ControllerBase": "./src/controller/ControllerBase.tsx",
     "./controller/Render": "./src/controller/Render.ts",
     "./view/ViewBuilderBase": "./src/view/ViewBuilderBase.ts",
@@ -41,6 +42,7 @@
     "./plugins/sql-types": "./plugins/sql-types/index.ts",
     "./plugins/css-build-plugin": "./plugins/css-build-plugin.ts",
     "./plugins/sql-types-plugin": "./plugins/sql-types-plugin.ts",
+    "./plugins/seed-plugin": "./plugins/seed-plugin.ts",
     "./plugins/client-build-plugin": "./plugins/client-build-plugin.ts"
   }
 }

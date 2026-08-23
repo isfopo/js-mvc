@@ -25,10 +25,3 @@ export async function applySql(
     await db.prepare(sql).run();
   }
 }
-
-/** Clear application data before reseeding the local development database. */
-export async function clearSeedData(db: Database, tables: string[]): Promise<void> {
-  for (const table of tables) {
-    await db.prepare(`DELETE FROM ${table}`).run();
-  }
-}

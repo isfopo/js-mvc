@@ -7,6 +7,7 @@ import {
   cssBuildPlugin,
   handlerRegistryPlugin,
   schemaPlugin,
+  seedPlugin,
   sqlTransformPlugin,
   sqlTypesPlugin,
 } from "./package/plugins/index.ts";
@@ -40,6 +41,7 @@ export default defineConfig({
   plugins: [
     sqlTransformPlugin(),
     schemaPlugin(),
+    seedPlugin(),
     sqlTypesPlugin({
       tableNameOverrides: {
         // Add overrides here, e.g.:
