@@ -200,6 +200,77 @@ describe("applySchema", () => {
     expect(login).toBe("carol");
   });
 
+  it("does not rebuild for defaults that differ only in parens (idempotent boot)", async () => {
+    // SQLite un-parenthesizes stored DEFAULT expressions, so a desired
+    // `(datetime('now'))` must compare equal to the live `datetime('now')` —
+    // otherwise every boot rebuilds the table (and DROPs wedged parents).
+    const withDefaults = defineSchema({
+      tables: {
+        events: table({
+          id: col.integer("id").primaryKey().autoIncrement(),
+          name: col.text("name").notNull(),
+          created_at: col
+            .text("created_at")
+            .notNull()
+            .default("(datetime('now'))"),
+        }),
+      },
+      indexes: {},
+    });
+
+    await applySchema(env.DB, withDefaults);
+    await env.DB.prepare(
+      `INSERT INTO events (name) VALUES ('first')`,
+    ).run();
+
+    // Re-apply: must be a no-op (no rebuild), not "FOREIGN KEY / already exists".
+    await applySchema(env.DB, withDefaults);
+
+    const name = await scalar<string>(`SELECT name AS name FROM events`);
+    expect(name).toBe("first");
+    const staging = await scalar<number>(
+      `SELECT count(*) AS c FROM sqlite_master WHERE type='table' AND name='events__new'`,
+    );
+    expect(staging).toBe(0);
+  });
+
+  it("recovers from a stale staging table left by an interrupted rebuild", async () => {
+    await applySchema(env.DB, baseSchema);
+    await env.DB.prepare(
+      `INSERT INTO users (login, name) VALUES ('dana', 'Dana')`,
+    ).run();
+
+    // Simulate a crashed rebuild: the __new staging table is left behind.
+    await env.DB.prepare(
+      `CREATE TABLE "users__new" (id INTEGER PRIMARY KEY AUTOINCREMENT, login TEXT NOT NULL)`,
+    ).run();
+
+    // The change forces a rebuild; applySchema must drop the stale staging
+    // table first instead of failing with "table users__new already exists".
+    const next = defineSchema({
+      tables: {
+        users: table({
+          id: col.integer("id").primaryKey().autoIncrement(),
+          login: col.text("login").notNull(),
+          name: col.text("name").notNull(),
+        }),
+        posts: baseSchema.tables.find((t) => t.name === "posts")!,
+      },
+      indexes: baseSchema.indexes,
+    });
+
+    await applySchema(env.DB, next);
+
+    const login = await scalar<string>(`SELECT login AS login FROM users`);
+    expect(login).toBe("dana");
+
+    // The staging table is gone after the rebuild.
+    const leftover = await scalar<number>(
+      `SELECT count(*) AS c FROM sqlite_master WHERE type='table' AND name='users__new'`,
+    );
+    expect(leftover).toBe(0);
+  });
+
   it("creates missing indexes and drops extra ones", async () => {
     await applySchema(env.DB, baseSchema);
     await env.DB.prepare(`CREATE INDEX idx_legacy_extra ON users(login)`).run();

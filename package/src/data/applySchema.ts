@@ -96,6 +96,21 @@ async function liveIndexes(
 // Reconciliation helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Normalize a DEFAULT expression for comparison. SQLite stores the expression
+ * text with one level of grouping parens stripped (e.g. `(datetime('now'))` →
+ * `datetime('now')`), so both sides must be normalized before comparing —
+ * otherwise every boot sees a difference and rebuilds the table forever.
+ */
+function normalizeDefault(value: string | null): string | null {
+  if (value === null) return null;
+  let s = value.trim();
+  while (s.startsWith("(") && s.endsWith(")")) {
+    s = s.slice(1, -1).trim();
+  }
+  return s;
+}
+
 /** Does a desired column reconcile cleanly against an identically-named live column? */
 function columnMatches(
   desired: ColumnDef,
@@ -104,9 +119,8 @@ function columnMatches(
   if (desired.sqliteType.toUpperCase() !== live.type) return false;
   if (desired.notNull !== live.notNull) return false;
   if (desired.primaryKey !== live.pk) return false;
-  // Defaults: normalize null/undefined to the same sentinel.
-  const desiredDefault = desired.default ?? null;
-  if (desiredDefault !== live.default) return false;
+  // Defaults: normalize null/undefined and parenthesization before comparing.
+  if (normalizeDefault(desired.default ?? null) !== normalizeDefault(live.default)) return false;
   return true;
 }
 
@@ -157,6 +171,10 @@ function renderTableRebuild(
   const pairs = buildCopyPairs(table, liveMap);
 
   const sql: string[] = [];
+
+  // 0. Clear a stale staging table from an interrupted previous rebuild —
+  //    otherwise a wedged boot (CREATE ... already exists) can never recover.
+  sql.push(`DROP TABLE IF EXISTS ${quoteIdent(tempName)};`);
 
   // 1. Create the new table with the desired definition.
   sql.push(renderCreateTable({ ...table, name: tempName }, false));
