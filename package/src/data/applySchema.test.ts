@@ -26,9 +26,11 @@ async function resetDb(): Promise<void> {
     await env.DB.prepare(
       `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'`,
     ).all<{ name: string }>()
-  ).results;
-  for (const t of tables) {
-    await env.DB.prepare(`DROP TABLE IF EXISTS "${t.name}"`).run();
+  ).results.map((t) => t.name);
+  // sqlite_master lists creation order (parents first), so drop in reverse —
+  // children before parents — to satisfy D1's foreign-key enforcement.
+  for (const name of [...tables].reverse()) {
+    await env.DB.prepare(`DROP TABLE IF EXISTS "${name}"`).run();
   }
 }
 
@@ -230,6 +232,42 @@ describe("applySchema", () => {
     expect(name).toBe("first");
     const staging = await scalar<number>(
       `SELECT count(*) AS c FROM sqlite_master WHERE type='table' AND name='events__new'`,
+    );
+    expect(staging).toBe(0);
+  });
+
+  it("rebuilds a referenced table without tripping FK enforcement", async () => {
+    await applySchema(env.DB, baseSchema);
+    await env.DB.prepare(
+      `INSERT INTO users (id, login, name) VALUES (1, 'erin', 'Erin')`,
+    ).run();
+    await env.DB.prepare(
+      `INSERT INTO posts (user_id, title) VALUES (1, 'FK post')`,
+    ).run();
+
+    // Force a rebuild of users (name: nullable → NOT NULL) while posts rows
+    // still reference it — this used to fail on DROP users with an FK error.
+    const next = defineSchema({
+      tables: {
+        users: table({
+          id: col.integer("id").primaryKey().autoIncrement(),
+          login: col.text("login").notNull(),
+          name: col.text("name").notNull(),
+        }),
+        posts: baseSchema.tables.find((t) => t.name === "posts")!,
+      },
+      indexes: baseSchema.indexes,
+    });
+
+    await applySchema(env.DB, next);
+
+    const post = await env.DB
+      .prepare(`SELECT p.user_id AS uid, u.login AS login FROM posts p JOIN users u ON u.id = p.user_id LIMIT 1`)
+      .first<{ uid: number; login: string }>();
+    expect(post).toMatchObject({ uid: 1, login: "erin" });
+
+    const staging = await scalar<number>(
+      `SELECT count(*) AS c FROM sqlite_master WHERE type='table' AND name='users__new'`,
     );
     expect(staging).toBe(0);
   });

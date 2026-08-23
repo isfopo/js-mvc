@@ -260,8 +260,20 @@ export async function applySchema(
     if (remainingLive.length > 0) needRebuild = true;
 
     if (needRebuild) {
-      for (const s of renderTableRebuild(table, live)) {
-        await feed(s);
+      const statements = renderTableRebuild(table, live);
+      if (db.batch) {
+        // D1 runs every query in an implicit transaction and ignores
+        // `foreign_keys=OFF`, so a DROP of a referenced parent would trip FK
+        // enforcement. Defer connections within this one atomic batch instead:
+        // checks are re-validated at commit, by which time the renamed table
+        // (with preserved ids) backs every child reference again.
+        await db.batch([
+          db.prepare("PRAGMA defer_foreign_keys = on"),
+          ...statements.map((s) => db.prepare(s)),
+          db.prepare("PRAGMA defer_foreign_keys = off"),
+        ]);
+      } else {
+        for (const s of statements) await feed(s);
       }
       continue;
     }
