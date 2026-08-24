@@ -7,7 +7,7 @@
  * each hook only adds its own effect components.
  */
 
-import type { JSX } from "hono/jsx";
+import type { JSX } from "react";
 import { genId } from "utils/ids";
 
 export type BuiltInCondition =

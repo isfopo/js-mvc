@@ -1,14 +1,18 @@
 /**
  * Tenet stored queries — compiled once by sqlPlugin into static SQL with
  * schema-derived types (procs.generated.ts). Columns without an explicit
- * param tag infer their type from the schema.
+ * param tag infer their type from the schema. The `Database` type parameter
+ * on defineSql also type-checks select/where/action column strings.
  */
-import { def, lookup, action, param, sql } from "js-mvc/sql";
+import { defineSql } from "js-mvc/sql";
+import type { Database } from "domains/db-types";
+
+const { def, lookup, action, param, sql } = defineSql<Database>();
 
 export const procs = def({
   getOptions: lookup({
     select: ["*"],
-    from: [{ table: "tenet_options" }],
+    from: [{ table: "tenet_options" }] as const,
     where: { tenet_id: param() },
     orderBy: sql`sort_order`,
   }),
@@ -22,7 +26,7 @@ export const procs = def({
     from: [
       { table: "tenets", as: "t" },
       { join: "users", as: "u", on: sql`u.id = t.proposed_by_id` },
-    ],
+    ] as const,
     orderBy: sql`t.created_at DESC`,
   }),
 
@@ -35,12 +39,12 @@ export const procs = def({
     from: [
       { table: "tenets", as: "t" },
       { join: "users", as: "u", on: sql`u.id = t.proposed_by_id` },
-    ],
+    ] as const,
     where: { "t.slug": param() },
   }),
 
   insertOption: action({
-    into: "tenet_options",
+    into: "tenet_options" as const,
     values: {
       tenet_id: param(),
       title: param(),
@@ -53,7 +57,7 @@ export const procs = def({
   }),
 
   updateStatus: action({
-    into: "tenets",
+    into: "tenets" as const,
     set: { status: param(), updated_at: sql`datetime('now')` },
     where: { id: param() },
   }),

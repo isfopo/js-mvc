@@ -8,7 +8,7 @@
  * barrels: same @name binding, same queryOne/queryAll/execute helpers.
  */
 
-export { def, lookup, action, param, sql, isParam, isSql } from "./spec";
+export { def, lookup, action, param, sql, isParam, isSql, defineSql } from "./spec";
 export type {
   ProcDefs,
   ProcConfig,
@@ -19,6 +19,10 @@ export type {
   ParamSpec,
   SqlFragment,
   ValueSlots,
+  SchemaIndex,
+  TypedLookupConfig,
+  TypedActionConfig,
+  TypedSelect,
 } from "./spec";
 export { compileProcs } from "./compile";
 export type { CompiledProcs } from "./compile";

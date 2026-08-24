@@ -2,11 +2,14 @@
  * User stored queries — compiled once by sqlPlugin into static SQL with
  * schema-derived types (procs.generated.ts).
  */
-import { def, action, param, sql } from "js-mvc/sql";
+import { defineSql } from "js-mvc/sql";
+import type { Database } from "domains/db-types";
+
+const { def, action, param, sql } = defineSql<Database>();
 
 export const procs = def({
   updateFromGithub: action({
-    into: "users",
+    into: "users" as const,
     set: {
       login: param(),
       avatar_url: param(),

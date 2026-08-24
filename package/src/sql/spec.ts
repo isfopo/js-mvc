@@ -140,3 +140,140 @@ export function action(config: ActionConfig): ProcConfig {
 export function def(procs: ProcDefs): ProcDefs {
   return procs;
 }
+
+// ---------------------------------------------------------------------------
+// Type-level validation (spike) — editor-time checking of select/where/
+// action columns against a schema index type (e.g. the generated `Database`
+// interface in db-types.d.ts). `defineSql<Db>()` binds the DSL to that type.
+// ---------------------------------------------------------------------------
+
+/** Minimal shape of the schema index: table name → row interface.
+ *  Ergonomic constraint only — the generated `Database` interface satisfies
+ *  `object`; the machinery resolves columns from the bound concrete type. */
+export type SchemaIndex = object;
+
+/** alias → table pair for one FROM entry. */
+type FromPair<R> = R extends { as: infer A; table: infer T }
+  ? [A, T]
+  : R extends { as: infer A; join: infer J }
+    ? [A, J]
+    : R extends { table: infer T }
+      ? [T, T]
+      : R extends { join: infer J }
+        ? [J, J]
+        : never;
+
+type Distribute<U> = U extends unknown ? U : never;
+
+/** All aliases (or bare table names) used in a FROM array. */
+export type AllAliases<F> = F extends readonly (infer R)[]
+  ? Distribute<FromPair<R>[0]>
+  : never;
+
+type TableForOne<A, R> = FromPair<R> extends [infer Al, infer T]
+  ? (Al extends A ? T : never)
+  : never;
+
+/** Table name(s) behind alias A in FROM array F. */
+type TableFor<A, F> = F extends readonly (infer R)[] ? Distribute<TableForOne<A, R>> : never;
+
+/** Columns of the row type behind alias A. */
+type ColsFor<A, F, Db extends SchemaIndex> = keyof Db[TableFor<A, F> & keyof Db];
+
+/** Columns of the FIRST table in F (bare, unqualified projections). */
+type FirstCols<F, Db extends SchemaIndex> = F extends readonly [infer H, ...unknown[]]
+  ? keyof Db[FromPair<H>[1] & keyof Db]
+  : never;
+
+/** One valid select projection for each FROM entry (single element). */
+type OneProj<R, Db extends SchemaIndex> = FromPair<R> extends [infer A, infer T]
+  ? [A, T] extends [string, string]
+    ? `*`
+      | `${A & string}.*`
+      | `${A & string}.${Extract<keyof Db[T & keyof Db], string>}`
+      | `${A & string}.${Extract<keyof Db[T & keyof Db], string>} AS ${string}`
+    : never
+  : never;
+
+/** Distribute OneProj over each FROM element (keeps alias/table literals). */
+type DistributeProj<R, Db extends SchemaIndex> = R extends unknown
+  ? OneProj<R, Db>
+  : never;
+
+/** Union of valid select projections for FROM array F. */
+export type TypedSelect<F, Db extends SchemaIndex> = F extends readonly (infer R)[]
+  ? DistributeProj<R, Db>
+    | Extract<FirstCols<F, Db>, string>
+    | `${Extract<FirstCols<F, Db>, string>} AS ${string}`
+  : never;
+
+/** One valid qualified WHERE key for a single FROM element. */
+type OneQualifiedKey<R, Db extends SchemaIndex> = FromPair<R> extends [infer A, infer T]
+  ? [A, T] extends [string, string]
+    ? `${A & string}.${Extract<keyof Db[T & keyof Db], string>}`
+    : never
+  : never;
+
+/** Valid qualified WHERE keys (alias.column), e.g. `t.slug`. */
+export type TypedQualifiedKey<F, Db extends SchemaIndex> = F extends readonly (infer R)[]
+  ? (R extends unknown ? OneQualifiedKey<R, Db> : never)
+  : never;
+
+/** Valid WHERE keys for FROM F: qualified, or bare if F is single-table. */
+export type TypedWhereKey<F, Db extends SchemaIndex> =
+  F extends readonly [unknown] ? FirstCols<F, Db> : TypedQualifiedKey<F, Db>;
+
+/** Typed lookup config: from + select (+ where keys) validated against Db. */
+export type TypedLookupConfig<F, Db extends SchemaIndex> = {
+  from: F;
+  select: readonly (TypedSelect<F, Db> | SqlFragment)[];
+  where?: Partial<Record<TypedWhereKey<F, Db>, ValueSlots>>;
+  groupBy?: (string | SqlFragment)[];
+  orderBy?: string | SqlFragment | (string | SqlFragment)[];
+  limit?: number | ParamSpec;
+  offset?: number | ParamSpec;
+};
+
+/** Typed action config: into/values/set/where keys validated against Db. */
+export type TypedActionConfig<I extends string, Db extends SchemaIndex> = {
+  into: I;
+  values?: Partial<Record<keyof Db[I & keyof Db] & string, ValueSlots>>;
+  set?: Partial<Record<keyof Db[I & keyof Db] & string, ValueSlots>>;
+  where?: Partial<Record<keyof Db[I & keyof Db] & string, ValueSlots>>;
+  returning?: ("*" | string)[];
+};
+
+/**
+ * Bind the SQL DSL to a schema index type so lookups/actions validate their
+ * column strings at compile time. Runtime no-op — returns the same functions.
+ *
+ *   const { def, lookup, action, param, sql } = defineSql<Database>();
+ */
+export function defineSql<Db extends SchemaIndex>() {
+  return {
+    def,
+    lookup<F extends readonly (TableRef | JoinRef)[]>(
+      cfg: TypedLookupConfig<F, Db>,
+    ): LookupProc {
+      return { kind: "lookup", config: cfg as unknown as LookupConfig };
+    },
+    action<I extends string>(cfg: TypedActionConfig<I, Db>): ActionProc {
+      const runtime: ActionConfig = {
+        into: cfg.into,
+        ...(cfg.values ? { values: cfg.values as Record<string, ValueSlots> } : {}),
+        ...(cfg.set ? { set: cfg.set as Record<string, ValueSlots> } : {}),
+        ...(cfg.where ? { where: cfg.where as Record<string, ValueSlots> } : {}),
+        ...(cfg.returning ? { returning: cfg.returning } : {}),
+      };
+      if (!runtime.values && !runtime.set) {
+        throw new Error("action() requires either values (INSERT) or set (UPDATE)");
+      }
+      if (runtime.set && !runtime.where) {
+        throw new Error("action() UPDATE requires a where clause");
+      }
+      return { kind: "action", config: runtime };
+    },
+    param,
+    sql,
+  };
+}
