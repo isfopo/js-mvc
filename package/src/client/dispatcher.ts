@@ -17,7 +17,7 @@
  *   appear / disappear (IntersectionObserver-driven)
  */
 
-import type { ActionDescriptor, Handler, HandlerConstructor, LifecycleName } from "./types";
+import type { ActionDescriptor, Handler, HandlerConstructor, LifecycleName } from "./hooks/useHandler";
 
 // --- Registry ---
 

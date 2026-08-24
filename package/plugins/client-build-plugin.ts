@@ -16,7 +16,7 @@ export interface ClientBuildPluginOptions {
 
   /**
    * Output file path for the bundled client JS (relative to project root or absolute).
-   * @default "public/.generated/client/main.js"
+   * @default "public/.generated/client/index.js"
    */
   outfile?: string;
 
@@ -36,7 +36,7 @@ export interface ClientBuildPluginOptions {
 export function clientBuildPlugin(options: ClientBuildPluginOptions = {}): Plugin {
   const {
     entryPoint = "src/.generated/client-entry.ts",
-    outfile = "public/.generated/client/main.js",
+    outfile = "public/.generated/client/index.js",
     esbuildOptions = {},
   } = options;
 

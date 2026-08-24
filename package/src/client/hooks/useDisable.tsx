@@ -26,7 +26,7 @@
 
 import { JSX } from "react";
 import { buildConditionSelector, cssBlock } from "utils/css";
-import { makeScope, type EffectProps } from "../shared/interactionCore";
+import { makeScope, type EffectProps } from "./shared/interactionCore";
 
 export type DisableEffectProps<V extends string> = EffectProps<V>;
 
@@ -78,8 +78,7 @@ export function useDisable<V extends string = string>(opts: DisableOptions = { t
     );
   }
 
-  Wrapper.Trigger = Trigger;
-  Wrapper.Disable = Disable;
-
-  return Wrapper;
+  // Object.assign yields the Wrapper type intersected with its statics, so
+  // consumers see <Field.Trigger> / <Field.Disable> as members.
+  return Object.assign(Wrapper, { Trigger, Disable });
 }

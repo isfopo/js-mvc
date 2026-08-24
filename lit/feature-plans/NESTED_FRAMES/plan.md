@@ -175,10 +175,10 @@ export const FrameShell: FC<FrameShellProps> = ({ children, depth }) => (
       {import.meta.env.DEV ? (
         <>
           <script type="module" src="/@vite/client"></script>
-          <script type="module" src="/src/infrastructure/client/main.ts"></script>
+          <script type="module" src="/src/infrastructure/client/index.ts"></script>
         </>
       ) : (
-        <script type="module" src="/.generated/client/main.js"></script>
+        <script type="module" src="/.generated/client/index.js"></script>
       )}
     </head>
     <body>
@@ -941,10 +941,10 @@ export const FrameShell: FC<FrameShellProps> = ({ children, depth }) => (
       {import.meta.env.DEV ? (
         <>
           <script type="module" src="/@vite/client"></script>
-          <script type="module" src="/src/infrastructure/client/main.ts"></script>
+          <script type="module" src="/src/infrastructure/client/index.ts"></script>
         </>
       ) : (
-        <script type="module" src="/.generated/client/main.js"></script>
+        <script type="module" src="/.generated/client/index.js"></script>
       )}
       {/* Announce navigation to parent frame for history management */}
       {import.meta.env.DEV ? (
@@ -997,11 +997,11 @@ Add the frame-router script to the `<head>` section, after the existing scripts:
 
 ---
 
-### Task 2.5 — Modify `main.ts` — conditional init based on depth
+### Task 2.5 — Modify `index.ts` — conditional init based on depth
 
-**File:** `src/infrastructure/client/main.ts` (modify)
+**File:** `src/infrastructure/client/index.ts` (modify)
 
-**What:** Import the frame-child script so it gets bundled with the main client JS. The frame-router is a separate concern that initializes itself.
+**What:** Import the frame-child script so it gets bundled with the index client JS. The frame-router is a separate concern that initializes itself.
 
 The approach: Instead of separate script tags for frame-child and frame-router, we'll import frame-child from main.ts and have it self-initialize. The frame-router will also be imported and self-initialize only at depth 0.
 
@@ -1010,7 +1010,7 @@ The approach: Instead of separate script tags for frame-child and frame-router, 
 ```ts
 /**
  * Client-side entry point for js-mvc.
- * Compiled to public/.generated/client/main.js and loaded by the server-rendered layout.
+ * Compiled to public/.generated/client/index.js and loaded by the server-rendered layout.
  */
 
 // Import each handler to trigger its side-effect registration with the dispatcher
@@ -1546,9 +1546,9 @@ async index(c: Context) {
 ### Phase 2 — Modified Files
 | File | Change |
 |---|---|
-| `src/infrastructure/client/main.ts` | Import frame-router and frame-child |
-| `src/views/pages/Shared/Layout.tsx` | (Script tag removed — bundled via main.ts) |
-| `src/views/pages/Shared/FrameShell.tsx` | (Script tag removed — bundled via main.ts) |
+| `src/infrastructure/client/index.ts` | Import frame-router and frame-child |
+| `src/views/pages/Shared/Layout.tsx` | (Script tag removed — bundled via index.ts) |
+| `src/views/pages/Shared/FrameShell.tsx` | (Script tag removed — bundled via index.ts) |
 
 ### Phase 3 — Modified Files
 | File | Change |

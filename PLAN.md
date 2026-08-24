@@ -1290,7 +1290,7 @@ interface CloudflareBindings extends Cloudflare.Env {
 | `worker-configuration.d.ts` | Regenerate after bindings |
 | `src/infrastructure/controllers/index.ts` | Register AuthController + TenetsController + TenetsApiController |
 | `src/infrastructure/ControllerBase.tsx` | Read and execute guard metadata in register() |
-| `src/infrastructure/client/main.ts` | Import VoteHandler + StatusTransitionHandler |
+| `src/infrastructure/client/index.ts` | Import VoteHandler + StatusTransitionHandler |
 | `src/utils/Action.tsx` | Add `vote` and `status` to `HandlerActions` |
 | `src/layouts/Layout.tsx` | Update nav with auth state (login/logout, user avatar) |
 | `src/index.tsx` | Update root route (currently redirects to `/home`) |
@@ -1372,7 +1372,7 @@ interface CloudflareBindings extends Cloudflare.Env {
 - Add status transition routes to TenetsController
 - Implement `handlers/StatusTransitionHandler.ts`
 - Add `vote` and `status` to HandlerActions
-- Register handlers in client/main.ts
+- Register handlers in client/index.ts
 
 ### Milestone 5 — Polish
 

@@ -7,7 +7,7 @@
  * each hook only adds its own effect components.
  */
 
-import { JSX } from "react";
+import type { JSX } from "hono/jsx";
 import { genId } from "utils/ids";
 
 export type BuiltInCondition =
@@ -37,8 +37,8 @@ export type EffectProps<V extends string> = {
 
 export interface Scope {
   scopeId: string;
-  Wrapper: (props: WrapperProps) => ReturnType<typeof JSX.Element>;
-  Trigger: (props: TriggerProps) => ReturnType<typeof JSX.Element>;
+  Wrapper: (props: WrapperProps) => any;
+  Trigger: (props: TriggerProps) => any;
 }
 
 /**

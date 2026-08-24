@@ -32,7 +32,7 @@
     "./validation/unflatten-form-body": "./src/validation/unflatten-form-body.ts",
     "./client/BaseHandler": "./src/client/BaseHandler.ts",
     "./client/dispatcher": "./src/client/dispatcher.ts",
-    "./client/main": "./src/client/main.ts",
+    "./client/index": "./src/client/index.ts",
     "./client/useHandler": "./src/client/hooks/useHandler.tsx",
     "./client/useEvent": "./src/client/hooks/useEvent.tsx",
     "./client/useHide": "./src/client/hooks/useHide.tsx",

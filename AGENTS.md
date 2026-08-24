@@ -168,7 +168,7 @@ await repo.deleteBy({});
 **Never write `data-controller`, `data-action`, or hydration scripts by hand.** Always use the `useHandler()` component factory from `js-mvc/client/useHandler`. It renders the element, generates a unique id, and emits an inline `<script type="module">` that hydrates the handler onto that element — the handler ships with its HTML, and no handler name appears in the markup.
 
 ```tsx
-import { useHandler } from "js-mvc/client/useHandler";
+import { useHandler } from "js-mvc/client";
 import { AddOptionHandler } from "views/handlers/AddOptionHandler";
 
 const AddOption = useHandler(AddOptionHandler);
@@ -195,7 +195,7 @@ Extra props passed to `Wrapper` or `Trigger` are automatically converted to `dat
 Handlers extend `BaseHandler`. The name is derived from the class name (`DismissHandler` → `"dismiss"`) at runtime — no decorator or static declaration is needed:
 
 ```ts
-import { BaseHandler } from "js-mvc/client/BaseHandler";
+import { BaseHandler } from "js-mvc/client";
 
 export class DismissHandler extends BaseHandler {
   override connect(): void {
