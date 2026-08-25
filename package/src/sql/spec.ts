@@ -83,6 +83,38 @@ export interface JoinRef {
   kind?: "inner" | "left" | "right" | "cross";
 }
 
+/**
+ * Literal-typed helpers for FROM entries. Function arguments keep their
+ * literal types (object-literal properties widen, which would disarm the
+ * type-level column checks), so procs can write:
+ *
+ *   from: [from("tenets", "t"), join("users", "u", sql`u.id = t.proposed_by_id`)],
+ *   from: [from("tenets"), tbl("tenet_options")],
+ *
+ * `as` is optional — without it the table's own name is the alias, which also
+ * enables bare (unqualified) column keys for that entry.
+ */
+export function tbl<T extends string>(table: T): { table: T } {
+  return { table };
+}
+
+export function from<T extends string>(table: T): { table: T };
+export function from<T extends string, A extends string>(table: T, as: A): { table: T; as: A };
+export function from<T extends string, A extends string>(
+  table: T,
+  as?: A,
+): { table: T; as?: A } {
+  return as === undefined ? { table } : { table, as };
+}
+
+export function join<J extends string, A extends string>(
+  join: J,
+  as: A,
+  on: SqlFragment,
+): { join: J; as: A; on: SqlFragment } {
+  return { join, as, on };
+}
+
 /** A value slot: a parameter, a raw SQL fragment, or an inline literal. */
 export type ValueSlots = ParamSpec | SqlFragment | string | number | boolean | null;
 
@@ -180,12 +212,7 @@ type TableFor<A, F> = F extends readonly (infer R)[] ? Distribute<TableForOne<A,
 /** Columns of the row type behind alias A. */
 type ColsFor<A, F, Db extends SchemaIndex> = keyof Db[TableFor<A, F> & keyof Db];
 
-/** Columns of the FIRST table in F (bare, unqualified projections). */
-type FirstCols<F, Db extends SchemaIndex> = F extends readonly [infer H, ...unknown[]]
-  ? keyof Db[FromPair<H>[1] & keyof Db]
-  : never;
-
-/** One valid select projection for each FROM entry (single element). */
+/** One valid select projection for a single FROM element. */
 type OneProj<R, Db extends SchemaIndex> = FromPair<R> extends [infer A, infer T]
   ? [A, T] extends [string, string]
     ? `*`
@@ -202,9 +229,19 @@ type DistributeProj<R, Db extends SchemaIndex> = R extends unknown
 
 /** Union of valid select projections for FROM array F. */
 export type TypedSelect<F, Db extends SchemaIndex> = F extends readonly (infer R)[]
-  ? DistributeProj<R, Db>
-    | Extract<FirstCols<F, Db>, string>
-    | `${Extract<FirstCols<F, Db>, string>} AS ${string}`
+  ? DistributeProj<R, Db> | BareKeys<F, Db> | `${BareKeys<F, Db>} AS ${string}`
+  : never;
+
+/** Bare (unqualified) column keys of UNALIASED from entries — unambiguous
+ *  only when an entry is referenced by its own table name. */
+export type BareKeys<F, Db extends SchemaIndex> = F extends readonly (infer R)[]
+  ? (R extends unknown
+      ? FromPair<R> extends [infer A, infer T]
+        ? [A, T] extends [string, string]
+          ? (A extends T ? Extract<keyof Db[T & keyof Db], string> : never)
+          : never
+        : never
+      : never)
   : never;
 
 /** One valid qualified WHERE key for a single FROM element. */
@@ -219,9 +256,10 @@ export type TypedQualifiedKey<F, Db extends SchemaIndex> = F extends readonly (i
   ? (R extends unknown ? OneQualifiedKey<R, Db> : never)
   : never;
 
-/** Valid WHERE keys for FROM F: qualified, or bare if F is single-table. */
+/** Valid WHERE keys for FROM F: qualified, plus bare columns of unaliased
+ *  entries (e.g. a single-tbl(`tenet_options`) lookup). */
 export type TypedWhereKey<F, Db extends SchemaIndex> =
-  F extends readonly [unknown] ? FirstCols<F, Db> : TypedQualifiedKey<F, Db>;
+  TypedQualifiedKey<F, Db> | BareKeys<F, Db>;
 
 /** Typed lookup config: from + select (+ where keys) validated against Db. */
 export type TypedLookupConfig<F, Db extends SchemaIndex> = {
@@ -252,6 +290,9 @@ export type TypedActionConfig<I extends string, Db extends SchemaIndex> = {
 export function defineSql<Db extends SchemaIndex>() {
   return {
     def,
+    tbl,
+    from,
+    join,
     lookup<F extends readonly (TableRef | JoinRef)[]>(
       cfg: TypedLookupConfig<F, Db>,
     ): LookupProc {

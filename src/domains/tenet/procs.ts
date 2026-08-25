@@ -7,44 +7,30 @@
 import { defineSql } from "js-mvc/sql";
 import type { Database } from "domains/db-types";
 
-const { def, lookup, action, param, sql } = defineSql<Database>();
+const { def, lookup, action, param, sql, from, join, tbl } = defineSql<Database>();
 
 export const procs = def({
   getOptions: lookup({
     select: ["*"],
-    from: [{ table: "tenet_options" }] as const,
+    from: [tbl("tenet_options")],
     where: { tenet_id: param() },
     orderBy: sql`sort_order`,
   }),
 
   listWithProposer: lookup({
-    select: [
-      "t.*",
-      "u.login AS proposer_login",
-      "u.avatar_url AS proposer_avatar",
-    ],
-    from: [
-      { table: "tenets", as: "t" },
-      { join: "users", as: "u", on: sql`u.id = t.proposed_by_id` },
-    ] as const,
+    select: ["t.*", "u.login AS proposer_login", "u.avatar_url AS proposer_avatar"],
+    from: [from("tenets", "t"), join("users", "u", sql`u.id = t.proposed_by_id`)],
     orderBy: sql`t.created_at DESC`,
   }),
 
   getWithProposer: lookup({
-    select: [
-      "t.*",
-      "u.login AS proposer_login",
-      "u.avatar_url AS proposer_avatar",
-    ],
-    from: [
-      { table: "tenets", as: "t" },
-      { join: "users", as: "u", on: sql`u.id = t.proposed_by_id` },
-    ] as const,
+    select: ["t.*", "u.login AS proposer_login", "u.avatar_url AS proposer_avatar"],
+    from: [from("tenets", "t"), join("users", "u", sql`u.id = t.proposed_by_id`)],
     where: { "t.slug": param() },
   }),
 
   insertOption: action({
-    into: "tenet_options" as const,
+    into: "tenet_options",
     values: {
       tenet_id: param(),
       title: param(),
@@ -57,7 +43,7 @@ export const procs = def({
   }),
 
   updateStatus: action({
-    into: "tenets" as const,
+    into: "tenets",
     set: { status: param(), updated_at: sql`datetime('now')` },
     where: { id: param() },
   }),

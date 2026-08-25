@@ -9,7 +9,7 @@ const { def, action, param, sql } = defineSql<Database>();
 
 export const procs = def({
   updateFromGithub: action({
-    into: "users" as const,
+    into: "users",
     set: {
       login: param(),
       avatar_url: param(),

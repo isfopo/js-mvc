@@ -140,6 +140,13 @@ async function generateForFile(paths: ResolvedPaths, procsPath: string): Promise
 
   const outputPath = join(dirname(procsPath), "procs.generated.ts");
   await mkdir(dirname(outputPath), { recursive: true });
+  // Sweep orphaned temp files from interrupted writers, then write atomically.
+  const dir = dirname(outputPath);
+  for (const entry of await readdir(dir)) {
+    if (entry.startsWith("procs.generated.ts.tmp-")) {
+      await unlink(join(dir, entry)).catch(() => {});
+    }
+  }
   const tmp = `${outputPath}.tmp-${process.pid}-${Date.now()}`;
   await writeFile(tmp, compiled.moduleText, "utf-8");
   await rename(tmp, outputPath);
