@@ -222,4 +222,33 @@ describe("compileSeed", () => {
       expect(score).toBeLessThanOrEqual(10);
     }
   });
+
+  it("samples a checkRef column even when it has a column default", () => {
+    const s = defineSchema({
+      tables: {
+        widgets: table({
+          id: col.integer().primaryKey().autoIncrement(),
+          status: col
+            .text()
+            .checkRef("widget_statuses")
+            .notNull()
+            .default("'draft'"),
+        }),
+        widget_statuses: table({ key: col.text().primaryKey() }),
+      },
+      indexes: {},
+    });
+    const out = compileSeed(
+      defineSeed(s, {
+        widget_statuses: rows([{ key: "draft" }, { key: "live" }, { key: "archived" }]),
+        widgets: generate(40),
+      }),
+    );
+    const statuses = out.tables
+      .find((t) => t.name === "widgets")!.rows
+      .map((r) => r.status as string);
+    // Not everything flattens to the default — the lookup is sampled.
+    expect(new Set(statuses).size).toBeGreaterThan(1);
+    expect(statuses.every((v) => ["draft", "live", "archived"].includes(v))).toBe(true);
+  });
 });

@@ -348,7 +348,6 @@ function rawGenerator(
         return () => (sawSeq ? seqCounter : 0);
     }
   }
-  if (column.default !== undefined) return null;
   if (column.primaryKey) return () => index + 1;
   const ref = column.references;
   if (ref) {
@@ -363,6 +362,10 @@ function rawGenerator(
     const range = column.check;
     return () => rangeNumberFor(range);
   }
+  // Data-driven inference wins over the column default: a references/checkRef
+  // column samples its lookups, a range column varies within bounds. The
+  // DEFAULT is only relied on for genuinely DB-owned columns (timestamps).
+  if (column.default !== undefined) return null;
   const heuristic = heuristicFor(column);
   if (heuristic) return heuristic;
   return () => randomForType(column, !column.notNull);
