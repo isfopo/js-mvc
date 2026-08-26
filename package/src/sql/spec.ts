@@ -33,6 +33,18 @@ export interface SqlFragment {
   __sql: string;
 }
 
+/**
+ * Mark an author-written SQL fragment for places the DSL leaves free-form
+ * (join conditions, ORDER BY expressions, computed SET values).
+ *
+ *   on: sql`u.id = t.proposed_by_id`
+ *   set: { updated_at: sql`datetime('now')` }
+ *
+ * Fragments must be static — interpolation is rejected so a build never
+ * assembles SQL from dynamic parts.
+ *
+ * @throws If any interpolation placeholder is present.
+ */
 export function sql(strings: TemplateStringsArray, ...parts: unknown[]): SqlFragment {
   if (parts.length > 0) {
     throw new Error(
@@ -49,10 +61,22 @@ export interface ParamSpec {
   type?: string;
 }
 
+/**
+ * Declare a bound parameter in a lookup/action.
+ *
+ * The parameter's type is inferred from the schema column it binds to —
+ * usually no type tag is needed (`where: { "t.slug": param() }` types the
+ * param as `string`). Pass an explicit tag to override:
+ *
+ *   reason: param("string | null")
+ *
+ * @param type Optional explicit TS type tag when not inferable from a column.
+ */
 export function param(type?: string): ParamSpec {
   return { __param: true, type };
 }
 
+/** Type guard: is the value a `param()` marker? */
 export function isParam(value: unknown): value is ParamSpec {
   return (
     typeof value === "object" &&
@@ -61,6 +85,7 @@ export function isParam(value: unknown): value is ParamSpec {
   );
 }
 
+/** Type guard: is the value a `sql()` fragment? */
 export function isSql(value: unknown): value is SqlFragment {
   return (
     typeof value === "object" &&
@@ -83,21 +108,24 @@ export interface JoinRef {
   kind?: "inner" | "left" | "right" | "cross";
 }
 
-/**
- * Literal-typed helpers for FROM entries. Function arguments keep their
- * literal types (object-literal properties widen, which would disarm the
- * type-level column checks), so procs can write:
- *
-*   from: [from("tenets", "t"), join("users", "u", sql`u.id = t.proposed_by_id`)],
- *   from: [from("tenets"), tbl("tenet_options")],
- *
- * `as` is optional everywhere - without it the table's own name is the
- * alias, which also enables bare (unqualified) column keys for that entry.
- */
+/** A bare, unaliased FROM entry: the table referenced by its own name. */
 export function tbl<T extends string>(table: T): { table: T } {
   return { table };
 }
 
+/**
+ * Declare the primary FROM entry, with an optional alias.
+ *
+ * Function arguments keep their literal types (object-literal properties
+ * inside the config would widen and disarm the type-level column checks), so
+ * the FROM entry is built with a call rather than written inline:
+ *
+ *   from: [from("tenets", "t")]
+ *   from: [from("tenets")]           // alias = table name → bare keys allowed
+ *
+ * @param table The table to select from (must exist in the schema).
+ * @param as    Optional alias used in projections/joins; defaults to the table name.
+ */
 export function from<T extends string>(table: T): { table: T };
 export function from<T extends string, A extends string>(table: T, as: A): { table: T; as: A };
 export function from<T extends string, A extends string>(
@@ -107,7 +135,17 @@ export function from<T extends string, A extends string>(
   return as === undefined ? { table } : { table, as };
 }
 
-/** Without an alias, the join's own table name is used in SQL. */
+/**
+ * Declare a JOIN entry. `as` is optional — without it the joined table is
+ * referenced by its own name in projections and the ON condition.
+ *
+ *   joins: [join("users", "u", sql`u.id = t.proposed_by_id`)]
+ *   joins: [join("users", sql`users.id = t.proposed_by_id`)]
+ *
+ * @param join The table to join (must exist in the schema).
+ * @param as   Optional alias; defaults to the table name.
+ * @param on   The join condition (a static `sql()` fragment).
+ */
 export function join<J extends string>(join: J, on: SqlFragment): { join: J; on: SqlFragment };
 export function join<J extends string, A extends string>(
   join: J,
@@ -128,8 +166,11 @@ export function join<J extends string, A extends string>(
 export type ValueSlots = ParamSpec | SqlFragment | string | number | boolean | null;
 
 export interface LookupConfig {
+  /** Projections, e.g. `"t.*"`, `"u.login AS proposer_login"`, or a `sql()` fragment. */
   select: (string | SqlFragment)[];
+  /** The primary FROM entry, plus any joins. */
   from: (TableRef | JoinRef)[];
+  /** Equality/param conditions (qualified keys like `"t.slug"` for joins). */
   where?: Record<string, ValueSlots>;
   groupBy?: (string | SqlFragment)[];
   orderBy?: string | SqlFragment | (string | SqlFragment)[];
@@ -163,10 +204,37 @@ export interface ActionProc {
 export type ProcConfig = LookupProc | ActionProc;
 export type ProcDefs = Record<string, ProcConfig>;
 
+/**
+ * Describe a read query: which columns to select, from which table (with
+ * optional joins), filtered/secorted within SQL so selection and filtering
+ * never happen in application memory.
+ *
+ *   lookup({
+ *     select: ["t.*", "u.login AS proposer_login"],
+ *     from: [from("tenets", "t"), join("users", "u", sql`u.id = t.proposed_by_id`)],
+ *     where: { "t.slug": param() },
+ *     orderBy: sql`t.created_at DESC`,
+ *   })
+ *
+ * Compile-time checks (when used through `defineSql`) validate projection and
+ * WHERE column names against the schema; the build-time compiler infers the
+ * result type from the projections.
+ */
 export function lookup(config: LookupConfig): ProcConfig {
   return { kind: "lookup", config };
 }
 
+/**
+ * Describe a write: an INSERT (`values`) or UPDATE (`set` + `where`).
+ *
+ *   action({ into: "votes", values: { tenet_id: param(), choice: param() } })
+ *   action({ into: "tenets", set: { status: param() }, where: { id: param() } })
+ *
+ * `returning` columns are typed from the schema; without it the result is void.
+ * UPDATE requires a `where` clause (a guard against full-table writes).
+ *
+ * @throws If neither `values` nor `set` is given, or an UPDATE lacks `where`.
+ */
 export function action(config: ActionConfig): ProcConfig {
   if (!config.values && !config.set) {
     throw new Error("action() requires either values (INSERT) or set (UPDATE)");
@@ -177,7 +245,11 @@ export function action(config: ActionConfig): ProcConfig {
   return { kind: "action", config };
 }
 
-/** Group a set of stored queries. Exported name is `procs`. */
+/**
+ * Group a set of stored queries under one name (convention: `procs`).
+ *
+ *   export const procs = def({ getOptions: lookup({ ... }), ... });
+ */
 export function def(procs: ProcDefs): ProcDefs {
   return procs;
 }

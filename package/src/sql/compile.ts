@@ -59,6 +59,19 @@ interface ParamsCollector {
   params: Map<string, string>;
 }
 
+/**
+ * Compile a ProcDefs block into a typed SQL module.
+ *
+ * Runs at dev/build time (inside sqlPlugin, or node-side in tests). For each
+ * proc it renders the SQL statements (named `@param` placeholders resolved by
+ * the repository binding) and derives `params`/`result` types from the schema,
+ * so repository method signatures can never drift from the database.
+ *
+ * @param schema              The SchemaDef serving as the type/column source.
+ * @param procs               The `def({ ... })` block to compile.
+ * @param tableNameOverrides  Optional table → model-type name overrides.
+ * @param options.sourcePath  Path to display in the generated module header.
+ */
 export function compileProcs(
   schema: SchemaDef,
   procs: ProcDefs,
