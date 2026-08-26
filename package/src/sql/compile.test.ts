@@ -11,46 +11,64 @@ import { compileProcs } from "./compile";
 const schema = defineSchema({
   tables: {
     users: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      github_id: col.integer("github_id").notNull().unique(),
-      login: col.text("login").notNull(),
-      avatar_url: col.text("avatar_url").nullable(),
-      name: col.text("name").nullable(),
-      created_at: col.text("created_at").notNull().default("(datetime('now'))"),
-      last_login_at: col.text("last_login_at").notNull().default("(datetime('now'))"),
+      id: col.integer().primaryKey().autoIncrement(),
+      github_id: col.integer().notNull().unique(),
+      login: col.text().notNull(),
+      avatar_url: col.text().nullable(),
+      name: col.text().nullable(),
+      created_at: col.text().notNull().default("(datetime('now'))"),
+      last_login_at: col.text().notNull().default("(datetime('now'))"),
     }),
+    tenet_statuses: table({ key: col.text().primaryKey() }),
+    vote_choices: table({ key: col.text().primaryKey() }),
+
     tenets: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      title: col.text("title").notNull(),
-      slug: col.text("slug").notNull().unique(),
+      id: col.integer().primaryKey().autoIncrement(),
+      title: col.text().notNull(),
+      slug: col.text().notNull().unique(),
       status: col
         .text("status")
-        .check(["draft", "voting", "accepted", "rejected", "implemented", "superseded"])
+        .checkRef("tenet_statuses")
         .notNull()
         .default("'draft'"),
-      context: col.text("context").notNull(),
-      proposed_by_id: col.integer("proposed_by_id").notNull().references("users", "id"),
-      created_at: col.text("created_at").notNull().default("(datetime('now'))"),
-      updated_at: col.text("updated_at").notNull().default("(datetime('now'))"),
+      context: col.text().notNull(),
+      proposed_by_id: col.integer().notNull().references("users", "id"),
+      created_at: col.text().notNull().default("(datetime('now'))"),
+      updated_at: col.text().notNull().default("(datetime('now'))"),
     }),
     tenet_options: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      tenet_id: col.integer("tenet_id").notNull().references("tenets", "id"),
-      title: col.text("title").notNull(),
-      description: col.text("description").nullable(),
-      sort_order: col.integer("sort_order").notNull(),
+      id: col.integer().primaryKey().autoIncrement(),
+      tenet_id: col.integer().notNull().references("tenets", "id"),
+      title: col.text().notNull(),
+      description: col.text().nullable(),
+      sort_order: col.integer().notNull(),
     }),
     votes: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      tenet_id: col.integer("tenet_id").notNull().references("tenets", "id"),
-      user_id: col.integer("user_id").notNull().references("users", "id"),
-      choice: col.text("choice").check(["approve", "abstain", "block"]).notNull(),
-      reason: col.text("reason").nullable(),
-      created_at: col.text("created_at").notNull().default("(datetime('now'))"),
+      id: col.integer().primaryKey().autoIncrement(),
+      tenet_id: col.integer().notNull().references("tenets", "id"),
+      user_id: col.integer().notNull().references("users", "id"),
+      choice: col.text().checkRef("vote_choices").notNull(),
+      reason: col.text().nullable(),
+      created_at: col.text().notNull().default("(datetime('now'))"),
     }),
   },
   indexes: {},
 });
+
+const LOOKUPS = new Map<string, Record<string, unknown>[]>([
+  [
+    "tenet_statuses",
+    [
+      { key: "draft" },
+      { key: "voting" },
+      { key: "accepted" },
+      { key: "rejected" },
+      { key: "implemented" },
+      { key: "superseded" },
+    ],
+  ],
+  ["vote_choices", [{ key: "approve" }, { key: "abstain" }, { key: "block" }]],
+]);
 
 const procs = def({
   listWithProposer: lookup({
@@ -102,7 +120,7 @@ const procs = def({
   }),
 });
 
-const out = compileProcs(schema, procs, {}, { sourcePath: "src/domains/test/procs.ts" });
+const out = compileProcs(schema, procs, {}, { sourcePath: "src/domains/test/procs.ts", lookups: LOOKUPS });
 
 describe("compileProcs SQL rendering", () => {
   it("renders a parameterless lookup with joins and ordering", () => {

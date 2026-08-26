@@ -17,22 +17,22 @@ import { applySeed } from "./applySeed";
 const schema = defineSchema({
   tables: {
     users: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      github_id: col.integer("github_id").notNull().unique(),
-      login: col.text("login").notNull().unique(),
-      name: col.text("name").nullable(),
+      id: col.integer().primaryKey().autoIncrement(),
+      github_id: col.integer().notNull().unique(),
+      login: col.text().notNull().unique(),
+      name: col.text().nullable(),
     }),
     posts: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      user_id: col.integer("user_id").notNull().references("users", "id"),
-      title: col.text("title").notNull(),
-      created_at: col.text("created_at").notNull().default("(datetime('now'))"),
+      id: col.integer().primaryKey().autoIncrement(),
+      user_id: col.integer().notNull().references("users", "id"),
+      title: col.text().notNull(),
+      created_at: col.text().notNull().default("(datetime('now'))"),
     }),
     likes: table(
       {
-        id: col.integer("id").primaryKey().autoIncrement(),
-        user_id: col.integer("user_id").notNull().references("users", "id"),
-        post_id: col.integer("post_id").notNull().references("posts", "id"),
+        id: col.integer().primaryKey().autoIncrement(),
+        user_id: col.integer().notNull().references("users", "id"),
+        post_id: col.integer().notNull().references("posts", "id"),
       },
       { unique: [["user_id", "post_id"]] },
     ),

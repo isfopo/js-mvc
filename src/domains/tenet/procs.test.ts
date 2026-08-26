@@ -62,6 +62,9 @@ describe("tenet procs", () => {
   });
 
   it("creates a tenet with options via the generated insert returning ids", async () => {
+    // Lookup tables (tenet_statuses, vote_choices) must be seeded — their rows
+    // back the checkRef foreign keys on tenets.status / votes.choice.
+    await applySeed(env.DB, schemaDef, seedDef);
     const user = await usersRepo(env.DB).create({
       github_id: 1001,
       login: "dev",

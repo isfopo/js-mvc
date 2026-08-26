@@ -17,7 +17,7 @@
  */
 
 import { faker } from "@faker-js/faker";
-import type { ColumnDef, SchemaDef, TableDef } from "../schema/schema-def";
+import type { ColumnDef, SchemaDef, TableDef, CheckDef } from "../schema/schema-def";
 import type { SeedSpec, TableGenerateSpec, TableRowsSpec } from "./spec";
 import { isStrategy, type ValueStrategy } from "./strategies";
 
@@ -359,9 +359,9 @@ function rawGenerator(
     }
     return () => sampleFromPool(ref.table, ctx, column, priorRows);
   }
-  const checkValues = column.checkValues;
-  if (checkValues && checkValues.length > 0) {
-    return () => faker.helpers.arrayElement(checkValues);
+  if (column.check?.kind === "range") {
+    const range = column.check;
+    return () => rangeNumberFor(range);
   }
   const heuristic = heuristicFor(column);
   if (heuristic) return heuristic;
@@ -424,6 +424,14 @@ function makeUnique(
   throw new Error(
     `Could not generate a unique value for "${table.name}.${column.name}"`,
   );
+}
+
+/** Random number honoring a range constraint's bounds (inclusive defaults). */
+function rangeNumberFor(check: Extract<CheckDef, { kind: "range" }>): number {
+  const { greaterThan, greaterThanEqual, lessThan, lessThanEqual } = check;
+  const min = greaterThan !== undefined ? greaterThan + 1 : (greaterThanEqual ?? 0);
+  const max = lessThan !== undefined ? lessThan - 1 : (lessThanEqual ?? 1_000_000);
+  return faker.number.int({ min, max: Math.max(max, min) });
 }
 
 function randomForType(column: ColumnDef, allowNull: boolean): unknown {

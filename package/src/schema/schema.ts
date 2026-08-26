@@ -16,9 +16,8 @@
  *   - the compiler (model types + derived schema.sql), and
  *   - the runtime reconciliation layer (applySchema).
  *
- * In the `tables` object the column *key* is the source of the column name —
- * pass an arbitrary placeholder string to the column builder (its def name is
- * overwritten from the key).
+ * In the `tables` object the column *key* is the default column name — an
+ * explicit builder arg overrides it.
  */
 
 import type { SchemaDef, TableDef } from "./schema-def";
@@ -41,7 +40,8 @@ export function defineSchema(input: SchemaInput): SchemaDef {
     name,
   }));
 
-  // Validate references point at known tables (best-effort, catches typos).
+  // Validate references point at known tables (best-effort, catches typos),
+  // and resolve checkRef columns to their lookup table's primary key.
   const known = new Set(tableNames);
   for (const table of tables) {
     for (const col of table.columns) {
@@ -49,6 +49,27 @@ export function defineSchema(input: SchemaInput): SchemaDef {
         throw new Error(
           `Table "${table.name}" references unknown table "${col.references.table}"`,
         );
+      }
+      if (col.check?.kind === "ref") {
+        const check = col.check;
+        const lookup = tables.find((t) => t.name === check.table);
+        if (!lookup) {
+          throw new Error(
+            `Table "${table.name}" column "${col.name}" references unknown lookup table "${check.table}"`,
+          );
+        }
+        const pk = lookup.columns.find((c) => c.primaryKey);
+        if (!pk) {
+          throw new Error(
+            `Lookup table "${check.table}" has no primary key for checkRef on "${table.name}.${col.name}"`,
+          );
+        }
+        col.check = { kind: "ref", table: check.table, column: pk.name };
+        // A checkRef is also a foreign key — seed sampling, DDL and the
+        // reconciler all consume it through `references`.
+        if (!col.references) {
+          col.references = { table: check.table, column: pk.name };
+        }
       }
     }
   }

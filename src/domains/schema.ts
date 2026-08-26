@@ -12,92 +12,95 @@ import { defineSchema, table, index, col } from "js-mvc/schema";
 export const schema = defineSchema({
   tables: {
     users: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      github_id: col.integer("github_id").notNull().unique(),
-      login: col.text("login").notNull(),
-      avatar_url: col.text("avatar_url").nullable(),
-      name: col.text("name").nullable(),
+      id: col.integer().primaryKey().autoIncrement(),
+      github_id: col.integer().notNull().unique(),
+      login: col.text().notNull(),
+      avatar_url: col.text().nullable(),
+      name: col.text().nullable(),
       created_at: col
-        .text("created_at")
+        .text()
         .notNull()
         .default("(datetime('now'))"),
       last_login_at: col
-        .text("last_login_at")
+        .text()
         .notNull()
         .default("(datetime('now'))"),
     }),
 
+    tenet_statuses: table({
+      key: col.text().primaryKey(),
+      label: col.text().nullable(),
+    }),
+
+    vote_choices: table({
+      key: col.text().primaryKey(),
+      label: col.text().nullable(),
+    }),
+
     tenets: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      title: col.text("title").notNull(),
-      slug: col.text("slug").notNull().unique(),
+      id: col.integer().primaryKey().autoIncrement(),
+      title: col.text().notNull(),
+      slug: col.text().notNull().unique(),
       status: col
-        .text("status")
-        .check([
-          "draft",
-          "voting",
-          "accepted",
-          "rejected",
-          "implemented",
-          "superseded",
-        ])
+        .text()
+        .checkRef("tenet_statuses")
         .notNull()
         .default("'draft'"),
-      context: col.text("context").notNull(),
-      decision: col.text("decision").nullable(),
-      rationale: col.text("rationale").nullable(),
+      context: col.text().notNull(),
+      decision: col.text().nullable(),
+      rationale: col.text().nullable(),
       proposed_by_id: col
-        .integer("proposed_by_id")
+        .integer()
         .notNull()
         .references("users", "id"),
       created_at: col
-        .text("created_at")
+        .text()
         .notNull()
         .default("(datetime('now'))"),
       updated_at: col
-        .text("updated_at")
+        .text()
         .notNull()
         .default("(datetime('now'))"),
       superseded_by_id: col
-        .integer("superseded_by_id")
+        .integer()
         .references("tenets", "id"),
     }),
 
     tenet_options: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
+      id: col.integer().primaryKey().autoIncrement(),
       tenet_id: col
-        .integer("tenet_id")
+        .integer()
         .notNull()
         .references("tenets", "id", { onDelete: "CASCADE" }),
-      title: col.text("title").notNull(),
-      description: col.text("description").nullable(),
-      pros: col.text("pros").nullable(),
-      cons: col.text("cons").nullable(),
-      sort_order: col.integer("sort_order").notNull(),
+      title: col.text().notNull(),
+      description: col.text().nullable(),
+      pros: col.text().nullable(),
+      cons: col.text().nullable(),
+      sort_order: col.integer().notNull(),
     }),
 
     votes: table(
       {
-        id: col.integer("id").primaryKey().autoIncrement(),
+        id: col.integer().primaryKey().autoIncrement(),
         tenet_id: col
-          .integer("tenet_id")
+          .integer()
           .notNull()
           .references("tenets", "id", { onDelete: "CASCADE" }),
         user_id: col
-          .integer("user_id")
+          .integer()
           .notNull()
           .references("users", "id"),
         choice: col
-          .text("choice")
-          .check(["approve", "abstain", "block"])
+          .text()
+          .checkRef("vote_choices")
           .notNull(),
-        reason: col.text("reason").nullable(),
+        reason: col.text().nullable(),
         created_at: col
-          .text("created_at")
+          .text()
           .notNull()
           .default("(datetime('now'))"),
         updated_at: col
-          .text("updated_at")
+          .text()
           .notNull()
           .default("(datetime('now'))"),
       },

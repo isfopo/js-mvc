@@ -9,13 +9,32 @@
  *   - id (PK)                   → deterministic sequence
  *   - github_id / slug (unique) → unique generated values
  *   - proposed_by_id etc. (FK)  → sampled from the referenced table's rows
+ *   - status / choice (checkRef)→ sampled from the lookup table's rows
  *   - created_at (DEFAULT)      → left to the column default
  *   - context, avatar_url, ...  → column-name heuristics (faker)
+ *
+ * Lookup tables use literal `rows()` — stable, content-like data that also
+ * types checkRef columns as unions of their primary-key values.
  */
-import { defineSeed, generate, fake, pick, seq } from "js-mvc/seed";
+import { defineSeed, generate, rows, fake, seq } from "js-mvc/seed";
 import { schemaDef } from "../.generated/schema";
 
 export const seed = defineSeed(schemaDef, {
+  tenet_statuses: rows([
+    { key: "draft" },
+    { key: "voting" },
+    { key: "accepted" },
+    { key: "rejected" },
+    { key: "implemented" },
+    { key: "superseded" },
+  ]),
+
+  vote_choices: rows([
+    { key: "approve" },
+    { key: "abstain" },
+    { key: "block" },
+  ]),
+
   users: generate(24, {
     login: fake("internet.username"),
     name: fake("person.fullName"),
@@ -23,14 +42,6 @@ export const seed = defineSeed(schemaDef, {
 
   tenets: generate(12, {
     title: fake("lorem.sentence"),
-    status: pick([
-      "draft",
-      "voting",
-      "accepted",
-      "implemented",
-      "rejected",
-      "superseded",
-    ]),
   }),
 
   tenet_options: generate(36, {
@@ -38,9 +49,7 @@ export const seed = defineSeed(schemaDef, {
     sort_order: seq(),
   }),
 
-  votes: generate(48, {
-    choice: pick(["approve", "abstain", "block"]),
-  }),
+  votes: generate(48),
 });
 
 export default seed;

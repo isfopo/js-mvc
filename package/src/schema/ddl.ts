@@ -29,9 +29,17 @@ export function renderColumnDef(col: ColumnDef): string {
   if (col.notNull) parts.push("NOT NULL");
   if (col.default !== undefined) parts.push(`DEFAULT ${col.default}`);
 
-  if (col.checkValues && col.checkValues.length > 0) {
-    const quoted = col.checkValues.map(quoteLiteral);
-    parts.push(`CHECK(${quoteIdent(col.name)} IN (${quoted.join(",")}))`);
+  if (col.check) {
+    if (col.check.kind === "range") {
+      const bounds: string[] = [];
+      const n = quoteIdent(col.name);
+      if (col.check.greaterThan !== undefined) bounds.push(`${n} > ${col.check.greaterThan}`);
+      if (col.check.greaterThanEqual !== undefined) bounds.push(`${n} >= ${col.check.greaterThanEqual}`);
+      if (col.check.lessThan !== undefined) bounds.push(`${n} < ${col.check.lessThan}`);
+      if (col.check.lessThanEqual !== undefined) bounds.push(`${n} <= ${col.check.lessThanEqual}`);
+      if (bounds.length > 0) parts.push(`CHECK(${bounds.join(" AND ")})`);
+    }
+    // check.kind === "ref" renders as the FOREIGN KEY below (via `references`).
   }
 
   if (col.references) {

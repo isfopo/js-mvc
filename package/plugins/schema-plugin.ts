@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import { generateDbTypesContent } from "../src/schema/generate-types";
 import { serializeSchemaDef, serializeSchemaSql } from "../src/schema/serialize";
 import type { SchemaDef } from "../src/schema/schema-def";
+import { loadSeedSpec } from "./seed-plugin";
 
 // ---------------------------------------------------------------------------
 // Options / paths
@@ -19,6 +20,12 @@ export interface SchemaPluginOptions {
    * @default "src/domains/schema.ts"
    */
   schemaPath?: string;
+  /**
+   * Path to the seed spec, whose literal `rows()` type `checkRef` columns as
+   * unions of the lookup table's primary-key values.
+   * @default "src/domains/seed.ts"
+   */
+  seedPath?: string;
   /**
    * Output path for the generated model types.
    * @default "src/domains/db-types.d.ts"
@@ -41,6 +48,7 @@ export interface SchemaPluginOptions {
 interface ResolvedPaths {
   projectRoot: string;
   schemaPath: string;
+  seedPath: string;
   dbTypesPath: string;
   schemaSqlPath: string;
   generatedSchemaPath: string;
@@ -53,6 +61,7 @@ function resolvePaths(projectRoot: string, options: SchemaPluginOptions): Resolv
   return {
     projectRoot,
     schemaPath: toAbs(options.schemaPath, "src/domains/schema.ts"),
+    seedPath: toAbs(options.seedPath, "src/domains/seed.ts"),
     dbTypesPath: toAbs(options.dbTypesPath, "src/domains/db-types.d.ts"),
     schemaSqlPath: toAbs(options.schemaSqlPath, "src/migrations/schema.sql"),
     generatedSchemaPath: toAbs(
@@ -121,21 +130,41 @@ export async function loadSchemaModule(
 async function generateSchemaOutputs(paths: ResolvedPaths): Promise<void> {
   const schema = await loadSchemaModule(paths.projectRoot, paths.schemaPath);
 
-  // 1. Model types.
-  await mkdir(dirname(paths.dbTypesPath), { recursive: true });
-  await writeFile(
-    paths.dbTypesPath,
-    generateDbTypesContent(schema, paths.tableNameOverrides),
-    "utf-8",
-  );
+  // 1. Runtime schema module first — the seed spec imports it, and we read
+  //    the seed's literal lookup rows to type `checkRef` columns.
+  await mkdir(dirname(paths.generatedSchemaPath), { recursive: true });
+  await writeFile(paths.generatedSchemaPath, serializeSchemaDef(schema), "utf-8");
 
   // 2. Derived schema.sql.
   await mkdir(dirname(paths.schemaSqlPath), { recursive: true });
   await writeFile(paths.schemaSqlPath, serializeSchemaSql(schema), "utf-8");
 
-  // 3. Runtime schema module.
-  await mkdir(dirname(paths.generatedSchemaPath), { recursive: true });
-  await writeFile(paths.generatedSchemaPath, serializeSchemaDef(schema), "utf-8");
+  // 3. Model types — with lookup unions from the seed spec when available.
+  const lookups = await loadLookupRows(paths);
+  await mkdir(dirname(paths.dbTypesPath), { recursive: true });
+  await writeFile(
+    paths.dbTypesPath,
+    generateDbTypesContent(schema, paths.tableNameOverrides, lookups),
+    "utf-8",
+  );
+}
+
+/** Table name → literal `rows()` from the seed spec (checkRef union sources). */
+async function loadLookupRows(
+  paths: ResolvedPaths,
+): Promise<Map<string, Record<string, unknown>[]>> {
+  const lookups = new Map<string, Record<string, unknown>[]>();
+  try {
+    const seed = await loadSeedSpec(paths.projectRoot, paths.seedPath);
+    for (const [table, spec] of Object.entries(seed.tables)) {
+      if ("rows" in spec) lookups.set(table, spec.rows);
+    }
+  } catch {
+    console.warn(
+      "⚠ schemaPlugin: no seed spec loaded — checkRef columns fall back to their base type",
+    );
+  }
+  return lookups;
 }
 
 // ---------------------------------------------------------------------------

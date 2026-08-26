@@ -11,6 +11,21 @@ export interface ReferenceDef {
   onDelete?: "CASCADE" | "SET NULL" | "RESTRICT" | "NO ACTION";
 }
 
+/**
+ * A CHECK-class constraint on a column. Either a reference to a lookup
+ * table's primary key (referential enum — the typegen derives a union from
+ * the lookup's seeded rows), or a numeric range.
+ */
+export type CheckDef =
+  | { kind: "ref"; table: string; column: string }
+  | {
+      kind: "range";
+      greaterThan?: number;
+      lessThan?: number;
+      greaterThanEqual?: number;
+      lessThanEqual?: number;
+    };
+
 export interface ColumnDef {
   name: string;
   sqliteType: SqliteType;
@@ -19,7 +34,7 @@ export interface ColumnDef {
   autoIncrement?: boolean;
   unique?: boolean;
   default?: string;
-  checkValues?: string[];
+  check?: CheckDef;
   references?: ReferenceDef;
   /**
    * If this column was renamed from an older name, the previous name. The

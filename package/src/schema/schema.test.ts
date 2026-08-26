@@ -18,15 +18,18 @@ import {
 const sampleSchema = defineSchema({
   tables: {
     users: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      login: col.text("login").notNull(),
-      avatar_url: col.text("avatar_url").nullable(),
-      status: col.text("status").check(["draft", "active"]).notNull().default("'draft'"),
-      created_at: col.text("created_at").notNull().default("(datetime('now'))"),
+      id: col.integer().primaryKey().autoIncrement(),
+      login: col.text().notNull(),
+      avatar_url: col.text().nullable(),
+      status: col.text().checkRef("user_statuses").notNull().default("'draft'"),
+      created_at: col.text().notNull().default("(datetime('now'))"),
+    }),
+    user_statuses: table({
+      key: col.text().primaryKey(),
     }),
     mice: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      squeak_level: col.integer("squeak_level").notNull(),
+      id: col.integer().primaryKey().autoIncrement(),
+      squeak_level: col.integer().notNull(),
     }),
   },
   indexes: {
@@ -36,20 +39,29 @@ const sampleSchema = defineSchema({
 });
 
 describe("defineSchema", () => {
-  it("normalizes table names from object keys", () => {
+  it("falls back to the property key when no column name is given", () => {
     const schema = defineSchema({
       tables: {
-        users: table({ id: col.integer("x").primaryKey() }),
+        users: table({ id: col.integer().primaryKey() }),
       },
     });
     expect(schema.tables[0].name).toBe("users");
     expect(schema.tables[0].columns[0].name).toBe("id");
   });
 
-  it("assigns index names from object keys", () => {
+  it("honors an explicit column name overriding the property key", () => {
     const schema = defineSchema({
       tables: {
         users: table({ id: col.integer("x").primaryKey() }),
+      },
+    });
+    expect(schema.tables[0].columns[0].name).toBe("x");
+  });
+
+  it("assigns index names from object keys", () => {
+    const schema = defineSchema({
+      tables: {
+        users: table({ id: col.integer().primaryKey() }),
       },
       indexes: {
         idx_u: index({ table: "users", columns: ["id"] }),
@@ -63,8 +75,8 @@ describe("defineSchema", () => {
       defineSchema({
         tables: {
           users: table({
-            id: col.integer("x").primaryKey(),
-            friend_id: col.integer("friend_id").references("nope", "id"),
+            id: col.integer().primaryKey(),
+            friend_id: col.integer().references("nope", "id"),
           }),
         },
       }),
@@ -106,26 +118,59 @@ describe("generateDbTypesContent", () => {
     expect(content).toContain(`declare module "*.sql"`);
   });
 
-  it("emits string unions for CHECK columns", () => {
+  it("emits unions for checkRef columns from lookup rows", () => {
     const schema = defineSchema({
       tables: {
         votes: table({
-          id: col.integer("id").primaryKey(),
-          choice: col.text("choice").check(["approve", "abstain", "block"]).notNull(),
+          id: col.integer().primaryKey(),
+          choice: col.text().checkRef("vote_choices").notNull(),
         }),
+        vote_choices: table({ key: col.text().primaryKey() }),
+      },
+    });
+    const lookups = new Map<string, Record<string, unknown>[]>();
+    lookups.set("vote_choices", [{ key: "approve" }, { key: "abstain" }, { key: "block" }]);
+    const content = generateDbTypesContent(schema, {}, lookups);
+    expect(content).toContain(`choice: "approve" | "abstain" | "block";`);
+  });
+
+  it("falls back to the base type when a lookup has no seeded rows", () => {
+    const schema = defineSchema({
+      tables: {
+        votes: table({
+          id: col.integer().primaryKey(),
+          choice: col.text().checkRef("vote_choices").notNull(),
+        }),
+        vote_choices: table({ key: col.text().primaryKey() }),
       },
     });
     const content = generateDbTypesContent(schema);
-    expect(content).toContain(`choice: "approve" | "abstain" | "block";`);
+    expect(content).toContain("choice: string;");
   });
 });
 
 describe("generateSchemaSqlContent", () => {
+  it("emits range CHECKs for numeric constraints", () => {
+    const s = defineSchema({
+      tables: {
+        events: table({
+          id: col.integer().primaryKey(),
+          score: col.integer().between(0, 100).notNull(),
+          stock: col.integer().greaterThan(0).notNull(),
+        }),
+      },
+      indexes: {},
+    });
+    const sql = generateSchemaSqlContent(s);
+    expect(sql).toContain('CHECK("score" >= 0 AND "score" <= 100)');
+    expect(sql).toContain('CHECK("stock" > 0)');
+  });
+
   it("emits idempotent CREATE TABLE/INDEX statements", () => {
     const sql = generateSchemaSqlContent(sampleSchema);
     expect(sql).toContain('CREATE TABLE IF NOT EXISTS "users"');
     expect(sql).toContain('PRIMARY KEY AUTOINCREMENT');
-    expect(sql).toContain(`CHECK("status" IN (`);
+    expect(sql).toContain('REFERENCES "user_statuses"("key")');
     expect(sql).toContain('CREATE UNIQUE INDEX IF NOT EXISTS "idx_users_login"');
     expect(sql).toContain('ON "users"("login")');
     expect(sql).toContain('CREATE INDEX IF NOT EXISTS "idx_mice_level"');
@@ -134,9 +179,9 @@ describe("generateSchemaSqlContent", () => {
   it("emits FK references with ON DELETE CASCADE", () => {
     const schema = defineSchema({
       tables: {
-        users: table({ id: col.integer("id").primaryKey() }),
+        users: table({ id: col.integer().primaryKey() }),
         posts: table({
-          id: col.integer("id").primaryKey(),
+          id: col.integer().primaryKey(),
           user_id: col
             .integer("user_id")
             .notNull()
@@ -155,9 +200,9 @@ describe("generateSchemaSqlContent", () => {
       tables: {
         votes: table(
           {
-            id: col.integer("id").primaryKey(),
-            tenet_id: col.integer("tenet_id").notNull(),
-            user_id: col.integer("user_id").notNull(),
+            id: col.integer().primaryKey(),
+            tenet_id: col.integer().notNull(),
+            user_id: col.integer().notNull(),
           },
           { unique: [["tenet_id", "user_id"]] },
         ),

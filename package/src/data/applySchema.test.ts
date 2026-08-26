@@ -47,14 +47,14 @@ async function scalar<T>(sql: string): Promise<T> {
 const baseSchema = defineSchema({
   tables: {
     users: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      login: col.text("login").notNull(),
-      name: col.text("name").nullable(),
+      id: col.integer().primaryKey().autoIncrement(),
+      login: col.text().notNull(),
+      name: col.text().nullable(),
     }),
     posts: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      user_id: col.integer("user_id").notNull().references("users", "id"),
-      title: col.text("title").notNull(),
+      id: col.integer().primaryKey().autoIncrement(),
+      user_id: col.integer().notNull().references("users", "id"),
+      title: col.text().notNull(),
     }),
   },
   indexes: {
@@ -116,10 +116,10 @@ describe("applySchema", () => {
     const next = defineSchema({
       tables: {
         users: table({
-          id: col.integer("id").primaryKey().autoIncrement(),
-          login: col.text("login").notNull(),
-          name: col.text("name").nullable(),
-          email: col.text("email").nullable(),
+          id: col.integer().primaryKey().autoIncrement(),
+          login: col.text().notNull(),
+          name: col.text().nullable(),
+          email: col.text().nullable(),
         }),
         posts: baseSchema.tables.find((t) => t.name === "posts")!,
       },
@@ -146,9 +146,9 @@ describe("applySchema", () => {
     const next = defineSchema({
       tables: {
         users: table({
-          id: col.integer("id").primaryKey().autoIncrement(),
-          username: col.text("username").notNull().renamedFrom("login"),
-          name: col.text("name").nullable(),
+          id: col.integer().primaryKey().autoIncrement(),
+          username: col.text().notNull().renamedFrom("login"),
+          name: col.text().nullable(),
         }),
         posts: baseSchema.tables.find((t) => t.name === "posts")!,
       },
@@ -178,9 +178,9 @@ describe("applySchema", () => {
     const next = defineSchema({
       tables: {
         users: table({
-          id: col.integer("id").primaryKey().autoIncrement(),
-          login: col.text("login").notNull(),
-          name: col.text("name").notNull(),
+          id: col.integer().primaryKey().autoIncrement(),
+          login: col.text().notNull(),
+          name: col.text().notNull(),
         }),
         posts: baseSchema.tables.find((t) => t.name === "posts")!,
       },
@@ -209,8 +209,8 @@ describe("applySchema", () => {
     const withDefaults = defineSchema({
       tables: {
         events: table({
-          id: col.integer("id").primaryKey().autoIncrement(),
-          name: col.text("name").notNull(),
+          id: col.integer().primaryKey().autoIncrement(),
+          name: col.text().notNull(),
           created_at: col
             .text("created_at")
             .notNull()
@@ -250,9 +250,9 @@ describe("applySchema", () => {
     const next = defineSchema({
       tables: {
         users: table({
-          id: col.integer("id").primaryKey().autoIncrement(),
-          login: col.text("login").notNull(),
-          name: col.text("name").notNull(),
+          id: col.integer().primaryKey().autoIncrement(),
+          login: col.text().notNull(),
+          name: col.text().notNull(),
         }),
         posts: baseSchema.tables.find((t) => t.name === "posts")!,
       },
@@ -288,9 +288,9 @@ describe("applySchema", () => {
     const next = defineSchema({
       tables: {
         users: table({
-          id: col.integer("id").primaryKey().autoIncrement(),
-          login: col.text("login").notNull(),
-          name: col.text("name").notNull(),
+          id: col.integer().primaryKey().autoIncrement(),
+          login: col.text().notNull(),
+          name: col.text().notNull(),
         }),
         posts: baseSchema.tables.find((t) => t.name === "posts")!,
       },

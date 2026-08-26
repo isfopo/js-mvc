@@ -15,23 +15,23 @@ import { defineSeed, generate, fake, pick, ref, seq, rows } from "./index";
 const schema = defineSchema({
   tables: {
     users: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      github_id: col.integer("github_id").notNull().unique(),
-      login: col.text("login").notNull().unique(),
-      name: col.text("name").nullable(),
+      id: col.integer().primaryKey().autoIncrement(),
+      github_id: col.integer().notNull().unique(),
+      login: col.text().notNull().unique(),
+      name: col.text().nullable(),
     }),
     posts: table({
-      id: col.integer("id").primaryKey().autoIncrement(),
-      user_id: col.integer("user_id").notNull().references("users", "id"),
-      title: col.text("title").notNull(),
-      rank: col.integer("rank").notNull(),
-      created_at: col.text("created_at").notNull().default("(datetime('now'))"),
+      id: col.integer().primaryKey().autoIncrement(),
+      user_id: col.integer().notNull().references("users", "id"),
+      title: col.text().notNull(),
+      rank: col.integer().notNull(),
+      created_at: col.text().notNull().default("(datetime('now'))"),
     }),
     likes: table(
       {
-        id: col.integer("id").primaryKey().autoIncrement(),
-        user_id: col.integer("user_id").notNull().references("users", "id"),
-        post_id: col.integer("post_id").notNull().references("posts", "id"),
+        id: col.integer().primaryKey().autoIncrement(),
+        user_id: col.integer().notNull().references("users", "id"),
+        post_id: col.integer().notNull().references("posts", "id"),
       },
       { unique: [["user_id", "post_id"]] },
     ),
@@ -177,9 +177,9 @@ describe("compileSeed", () => {
     const s = defineSchema({
       tables: {
         cats: table({
-          id: col.integer("id").primaryKey().autoIncrement(),
-          name: col.text("name").notNull(),
-          parent_id: col.integer("parent_id").references("cats", "id"),
+          id: col.integer().primaryKey().autoIncrement(),
+          name: col.text().notNull(),
+          parent_id: col.integer().references("cats", "id"),
         }),
       },
       indexes: {},
@@ -202,5 +202,24 @@ describe("compileSeed", () => {
     expect(() =>
       defineSeed(schema, { ghosts: generate(1) }),
     ).toThrow(/unknown table "ghosts"/);
+  });
+
+  it("generates numeric range columns within their bounds", () => {
+    const s = defineSchema({
+      tables: {
+        events: table({
+          id: col.integer().primaryKey().autoIncrement(),
+          score: col.integer().between(1, 10).notNull(),
+        }),
+      },
+      indexes: {},
+    });
+    const out = compileSeed(defineSeed(s, { events: generate(30) }));
+    const rows = out.tables.find((t) => t.name === "events")!.rows;
+    for (const r of rows) {
+      const score = Number(r.score);
+      expect(score).toBeGreaterThanOrEqual(1);
+      expect(score).toBeLessThanOrEqual(10);
+    }
   });
 });

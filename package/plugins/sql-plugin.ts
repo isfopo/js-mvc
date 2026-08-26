@@ -20,6 +20,7 @@ import sqlParserPkg from "node-sql-parser";
 import { compileProcs } from "../src/sql/compile";
 import type { ProcDefs } from "../src/sql/spec";
 import { loadSchemaModule } from "./schema-plugin";
+import { loadSeedSpec } from "./seed-plugin";
 
 const { Parser } = sqlParserPkg;
 
@@ -27,6 +28,9 @@ export interface SqlPluginOptions {
   /** Path to the TypeScript schema module (source of truth).
    *  @default "src/domains/schema.ts" */
   schemaPath?: string;
+  /** Path to the seed spec, whose literal lookup rows type checkRef columns.
+   *  @default "src/domains/seed.ts" */
+  seedPath?: string;
   /** Directories scanned recursively for `procs.ts` files.
    *  @default ["src/domains"] */
   dirs?: string[];
@@ -35,6 +39,7 @@ export interface SqlPluginOptions {
 interface ResolvedPaths {
   projectRoot: string;
   schemaPath: string;
+  seedPath: string;
   dirs: string[];
 }
 
@@ -44,6 +49,7 @@ function resolvePaths(projectRoot: string, options: SqlPluginOptions): ResolvedP
   return {
     projectRoot,
     schemaPath: toAbs(options.schemaPath, "src/domains/schema.ts"),
+    seedPath: toAbs(options.seedPath, "src/domains/seed.ts"),
     dirs: (options.dirs ?? ["src/domains"]).map((d) =>
       d.startsWith("/") ? d : resolve(projectRoot, d),
     ),
@@ -130,12 +136,34 @@ function validateSql(queries: Record<string, string>): void {
   }
 }
 
-async function generateForFile(paths: ResolvedPaths, procsPath: string): Promise<void> {
+/** Table name → literal `rows()` from the seed spec (checkRef union sources). */
+async function loadLookupRows(
+  paths: ResolvedPaths,
+): Promise<Map<string, Record<string, unknown>[]>> {
+  const lookups = new Map<string, Record<string, unknown>[]>();
+  try {
+    const seed = await loadSeedSpec(paths.projectRoot, paths.seedPath);
+    for (const [table, spec] of Object.entries(seed.tables)) {
+      if ("rows" in spec) lookups.set(table, spec.rows);
+    }
+  } catch {
+    console.warn(
+      "⚠ sql-plugin: no seed spec loaded — checkRef columns fall back to their base type",
+    );
+  }
+  return lookups;
+}
+
+async function generateForFile(
+  paths: ResolvedPaths,
+  procsPath: string,
+  lookups: Map<string, Record<string, unknown>[]>,
+): Promise<void> {
   const schema = await loadSchemaModule(paths.projectRoot, paths.schemaPath);
   const procs = await loadProcs(procsPath, paths.projectRoot);
   const sourcePath = relative(paths.projectRoot, procsPath).replace(/\\/g, "/");
 
-  const compiled = compileProcs(schema, procs, {}, { sourcePath });
+  const compiled = compileProcs(schema, procs, {}, { sourcePath, lookups });
   validateSql(compiled.queries);
 
   const outputPath = join(dirname(procsPath), "procs.generated.ts");
@@ -168,9 +196,10 @@ export function sqlPlugin(options: SqlPluginOptions = {}): Plugin {
     async buildStart() {
       console.log("🔌 Compiling stored queries (procs)...");
       procsFiles = await findProcsFiles(paths.dirs);
+      const lookups = await loadLookupRows(paths);
       for (const file of procsFiles) {
         try {
-          await generateForFile(paths, file);
+          await generateForFile(paths, file, lookups);
         } catch (e) {
           console.error(`✗ procs compile failed (${file}):`, (e as Error).message);
         }
@@ -182,7 +211,7 @@ export function sqlPlugin(options: SqlPluginOptions = {}): Plugin {
       const onProcs = async (file: string) => {
         if (file.endsWith("procs.ts")) {
           try {
-            await generateForFile(paths, file);
+            await generateForFile(paths, file, await loadLookupRows(paths));
             for (const mod of server.moduleGraph.getModulesByFile(
               join(dirname(file), "procs.generated.ts"),
             ) ?? []) {
