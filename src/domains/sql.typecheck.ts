@@ -31,6 +31,14 @@ void okBare;
 const okAction = action({ into: "votes", values: { tenet_id: param(), choice: param() } });
 void okAction;
 
+// Unaliased join (2-arg form) uses its table name as the alias.
+const okUnaliasedJoin = lookup({
+  select: ["v.*", "users.login AS user_login"],
+  from: [from("votes", "v"), join("users", sql`users.id = v.user_id`)],
+  where: { "v.tenet_id": param() },
+});
+void okUnaliasedJoin;
+
 // Negative cases must keep erroring.
 
 // @ts-expect-error typo'd column on an aliased table
@@ -44,6 +52,9 @@ lookup({ select: ["t.*"], from: [from("tenets", "t")], where: { slug: param() } 
 
 // @ts-expect-error qualified key not in the table's columns
 lookup({ select: ["t.*"], from: [from("tenets", "t")], where: { "t.nope": param() } });
+
+// @ts-expect-error unknown column on an unaliased join
+lookup({ select: ["v.*", "users.logi"], from: [from("votes", "v"), join("users", sql`users.id = v.user_id`)], where: { "v.tenet_id": param() } });
 
 // @ts-expect-error unknown column in action values
 action({ into: "votes", values: { bogus: param() } });

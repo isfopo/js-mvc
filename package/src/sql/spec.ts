@@ -88,11 +88,11 @@ export interface JoinRef {
  * literal types (object-literal properties widen, which would disarm the
  * type-level column checks), so procs can write:
  *
- *   from: [from("tenets", "t"), join("users", "u", sql`u.id = t.proposed_by_id`)],
+*   from: [from("tenets", "t"), join("users", "u", sql`u.id = t.proposed_by_id`)],
  *   from: [from("tenets"), tbl("tenet_options")],
  *
- * `as` is optional — without it the table's own name is the alias, which also
- * enables bare (unqualified) column keys for that entry.
+ * `as` is optional everywhere - without it the table's own name is the
+ * alias, which also enables bare (unqualified) column keys for that entry.
  */
 export function tbl<T extends string>(table: T): { table: T } {
   return { table };
@@ -107,12 +107,21 @@ export function from<T extends string, A extends string>(
   return as === undefined ? { table } : { table, as };
 }
 
+/** Without an alias, the join's own table name is used in SQL. */
+export function join<J extends string>(join: J, on: SqlFragment): { join: J; on: SqlFragment };
 export function join<J extends string, A extends string>(
   join: J,
   as: A,
   on: SqlFragment,
-): { join: J; as: A; on: SqlFragment } {
-  return { join, as, on };
+): { join: J; as: A; on: SqlFragment };
+export function join<J extends string, A extends string>(
+  join: J,
+  asOrOn: A | SqlFragment,
+  on?: SqlFragment,
+): { join: J; as?: A; on: SqlFragment } {
+  return on === undefined
+    ? { join, on: asOrOn as SqlFragment }
+    : { join, as: asOrOn as A, on };
 }
 
 /** A value slot: a parameter, a raw SQL fragment, or an inline literal. */
