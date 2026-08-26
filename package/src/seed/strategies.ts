@@ -7,10 +7,12 @@
  * strategy, meaning "always this literal value".
  */
 
+import { type Faker } from "@faker-js/faker";
+
 export interface FakeStrategy {
   kind: "fake";
   /** Dot-path into faker, e.g. "internet.username", "person.fullName". */
-  provider: string;
+  provider: FakerProvider;
 }
 
 export interface PickStrategy {
@@ -51,8 +53,19 @@ export function isStrategy(value: unknown): value is
   );
 }
 
+/**
+ * A valid faker call path — a namespace keyed by the members it actually
+ * exposes. Autocompletes in the editor and rejects typos at compile time:
+ *
+ *   "internet.username", "person.fullName"   ✓
+ *   "internet.fullName"                      ✗ (member not on that namespace)
+ */
+export type FakerProvider = {
+  [K in keyof Faker]: `${K & string}.${Extract<keyof Faker[K], string>}`;
+}[keyof Faker];
+
 /** Generate via a faker provider (e.g. fake("internet.username")). */
-export function fake(provider: string): FakeStrategy {
+export function fake(provider: FakerProvider): FakeStrategy {
   return { kind: "fake", provider };
 }
 

@@ -22,6 +22,7 @@ export type {
   RefStrategy,
   SeqStrategy,
   ValueStrategy,
+  FakerProvider,
 } from "./strategies";
 export { compileSeed, seedOrder } from "./compile";
 export type {

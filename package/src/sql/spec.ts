@@ -359,7 +359,7 @@ export type TypedActionConfig<I extends string, Db extends SchemaIndex> = {
   values?: Partial<Record<keyof Db[I & keyof Db] & string, ValueSlots>>;
   set?: Partial<Record<keyof Db[I & keyof Db] & string, ValueSlots>>;
   where?: Partial<Record<keyof Db[I & keyof Db] & string, ValueSlots>>;
-  returning?: ("*" | string)[];
+  returning?: ("*" | (keyof Db[I & keyof Db] & string))[];
 };
 
 /**

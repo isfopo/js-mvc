@@ -8,7 +8,7 @@
  */
 
 import { defineSql } from "js-mvc/sql";
-import type { Database } from "./db-types";
+import type { Database } from "domains/db-types";
 
 const { lookup, action, param, sql, from, join, tbl } = defineSql<Database>();
 
@@ -61,3 +61,10 @@ action({ into: "votes", values: { bogus: param() } });
 
 // @ts-expect-error unknown column in action wheres
 action({ into: "votes", set: { choice: param() }, where: { nope: param() } });
+
+// @ts-expect-error unknown column in action returning
+action({ into: "votes", values: { choice: param() }, returning: ["bogus"] });
+
+// Positive: returning a real column of the target table compiles.
+const okReturning = action({ into: "votes", values: { choice: param() }, returning: ["id"] });
+void okReturning;

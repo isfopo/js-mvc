@@ -19,7 +19,7 @@
 import { faker } from "@faker-js/faker";
 import type { ColumnDef, SchemaDef, TableDef, CheckDef } from "../schema/schema-def";
 import type { SeedSpec, TableGenerateSpec, TableRowsSpec } from "./spec";
-import { isStrategy, type ValueStrategy } from "./strategies";
+import { isStrategy, type ValueStrategy, type FakerProvider } from "./strategies";
 
 // ---------------------------------------------------------------------------
 // Output shapes
@@ -129,7 +129,7 @@ function heuristicFor(column: ColumnDef): (() => unknown) | undefined {
 // Provider resolution
 // ---------------------------------------------------------------------------
 
-function resolveProvider(path: string): () => unknown {
+function resolveProvider(path: FakerProvider): () => unknown {
   const parts = path.split(".");
   let fn: unknown = faker;
   for (const part of parts) {
