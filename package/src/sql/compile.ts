@@ -161,9 +161,9 @@ function columnTs(ctx: CompileContext, table: string, column: string, proc: stri
 // Param collection
 // ---------------------------------------------------------------------------
 
-/** Basename of a WHERE key ("t.slug" → "slug"). Enforced unique per proc. */
-function paramNameFrom(key: string, proc: string): string {
-  const name = key.split(".").pop()!;
+/** Validate a parameter name (explicit `param(type, name)` or key-derived)
+ *  against the placeholder grammar. Returns it unchanged. */
+function assertParamName(name: string, proc: string): string {
   if (!/^\w+$/.test(name)) {
     throw new Error(
       `[${proc}] parameter name "${name}" is not a valid identifier`,
@@ -181,10 +181,12 @@ function paramPlaceholder(
   resolveType: () => string | null,
   proc: string,
 ): string {
-  const name = paramNameFrom(key, proc);
+  // An explicit param(type, name) overrides the basename-derived name, so a
+  // join where both sides share a column name can bind independently.
+  const name = assertParamName(spec.name ?? key.split(".").pop()!, proc);
   if (collect.params.has(name)) {
     throw new Error(
-      `[${proc}] duplicate parameter name "@${name}" — qualify or rename the key`,
+      `[${proc}] duplicate parameter name "@${name}" — qualify or rename the key, or give the param an explicit name: param(type, "name")`,
     );
   }
   const type = spec.type ?? resolveType();
@@ -249,6 +251,11 @@ function compileLookup(
     const alias = m?.[2];
 
     if (expr === "*") {
+      if (tableOf.size > 1) {
+        throw new Error(
+          `[${name}] bare "*" projection in a multi-table lookup would type as one table only — qualify it (e.g. "t.*") or list explicit columns`,
+        );
+      }
       const table = [...tableOf.values()][0];
       const t = tableModelType(ctx, table);
       dbTypes.add(t);

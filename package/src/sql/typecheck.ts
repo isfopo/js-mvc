@@ -39,6 +39,17 @@ const okUnaliasedJoin = lookup({
 });
 void okUnaliasedJoin;
 
+// Positive: explicit param(type, name) disambiguates same-named join keys.
+const okNamedParams = lookup({
+  select: ["t.title", "u.login"],
+  from: [from("tenets", "t"), join("users", "u", sql`u.id = t.proposed_by_id`)],
+  where: {
+    "t.id": param("number", "tenet_id"),
+    "u.id": param("number", "user_id"),
+  },
+});
+void okNamedParams;
+
 // Negative cases must keep erroring.
 
 // @ts-expect-error typo'd column on an aliased table

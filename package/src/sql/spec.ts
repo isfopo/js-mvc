@@ -55,10 +55,12 @@ export function sql(strings: TemplateStringsArray, ...parts: unknown[]): SqlFrag
 }
 
 /** Marker for a bound parameter. The type is inferred from the referenced
- *  schema column when `type` is omitted. */
+ *  schema column when `type` is omitted; `name` overrides the placeholder.
+ *  @see param */
 export interface ParamSpec {
   __param: true;
   type?: string;
+  name?: string;
 }
 
 /**
@@ -70,10 +72,19 @@ export interface ParamSpec {
  *
  *   reason: param("string | null")
  *
+ * Give an explicit `name` when two keys in one proc share a basename but must
+ * bind independently (a join where both sides carry the same column name):
+ *
+ *   where: {
+ *     "t.id": param("number", "tenet_id"),
+ *     "u.id": param("number", "user_id"),
+ *   }
+ *
  * @param type Optional explicit TS type tag when not inferable from a column.
+ * @param name Optional placeholder name; defaults to the unqualified key.
  */
-export function param(type?: string): ParamSpec {
-  return { __param: true, type };
+export function param(type?: string, name?: string): ParamSpec {
+  return { __param: true, type, name };
 }
 
 /** Type guard: is the value a `param()` marker? */

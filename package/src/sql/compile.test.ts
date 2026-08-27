@@ -189,7 +189,7 @@ describe("compileProcs errors", () => {
     ).toThrow(/has no column "nope"/);
   });
 
-  it("rejects duplicate bare param names", () => {
+  it("rejects a bare * projection on a multi-table lookup", () => {
     expect(() =>
       compileProcs(
         schema,
@@ -198,13 +198,55 @@ describe("compileProcs errors", () => {
             select: ["*"],
             from: [
               { table: "tenets", as: "t" },
-              { table: "users", as: "u" },
+              { join: "users", as: "u", on: sql`u.id = t.proposed_by_id` },
+            ],
+          }),
+        }),
+      ),
+    ).toThrow(/qualify it/);
+  });
+
+  it("rejects duplicate bare param names", () => {
+    expect(() =>
+      compileProcs(
+        schema,
+        def({
+          bad: lookup({
+            select: ["t.*"],
+            from: [
+              { table: "tenets", as: "t" },
+              { join: "users", as: "u", on: sql`u.id = t.proposed_by_id` },
             ],
             where: { "t.id": param(), "u.id": param() },
           }),
         }),
       ),
     ).toThrow(/duplicate parameter name "@id"/);
+  });
+
+  it("binds same-named join keys independently via explicit param names", () => {
+    const dual = compileProcs(
+      schema,
+      def({
+        dual: lookup({
+          select: ["t.title", "u.login"],
+          from: [
+            { table: "tenets", as: "t" },
+            { join: "users", as: "u", on: sql`u.id = t.proposed_by_id` },
+          ],
+          where: {
+            "t.id": param("number", "tenet_id"),
+            "u.id": param("number", "user_id"),
+          },
+        }),
+      }),
+      {},
+      { sourcePath: "src/domains/test/procs.ts", lookups: LOOKUPS },
+    );
+    expect(dual.queries.dual).toContain("WHERE t.id = @tenet_id AND u.id = @user_id");
+    expect(dual.moduleText).toContain(
+      "dual: { params: { tenet_id: number; user_id: number }",
+    );
   });
 
   it("rejects sql() interpolation", () => {
