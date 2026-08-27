@@ -211,4 +211,124 @@ describe("generateSchemaSqlContent", () => {
     const sql = generateSchemaSqlContent(schema);
     expect(sql).toContain('UNIQUE("tenet_id", "user_id")');
   });
+
+  it("emits a bare range check with no bounds as a plain column", () => {
+    const schema = defineSchema({
+      tables: {
+        events: table({
+          id: col.integer().primaryKey(),
+          score: col.integer(),
+        }),
+      },
+    });
+    const sql = generateSchemaSqlContent(schema);
+    expect(sql).toContain('"score" INTEGER');
+  });
+});
+
+describe("numeric range consolidation", () => {
+  it("keeps the tightest bound when one side is constrained twice", () => {
+    const s = defineSchema({
+      tables: {
+        events: table({
+          id: col.integer().primaryKey(),
+          score: col.integer().between(0, 100).greaterThan(5).notNull(),
+          years: col.integer().greaterThan(5).between(0, 100).notNull(),
+          stock: col.integer().between(1, 5).between(3, 8).notNull(),
+        }),
+      },
+    });
+    const find = (name: string) =>
+      s.tables[0].columns.find((c) => c.name === name)!.check;
+
+    const score = find("score");
+    expect(score).toMatchObject({ kind: "range", greaterThan: 5, lessThanEqual: 100 });
+    expect(score).not.toHaveProperty("greaterThanEqual");
+
+    const years = find("years");
+    expect(years).toMatchObject({ kind: "range", greaterThan: 5, lessThanEqual: 100 });
+    expect(years).not.toHaveProperty("greaterThanEqual");
+
+    const stock = find("stock");
+    expect(stock).toMatchObject({ kind: "range", greaterThanEqual: 3, lessThanEqual: 5 });
+    expect(stock).not.toHaveProperty("greaterThan");
+    expect(stock).not.toHaveProperty("lessThan");
+  });
+
+  it("prefers an inclusive bound whose floor is strictly higher", () => {
+    const s = defineSchema({
+      tables: {
+        events: table({
+          id: col.integer().primaryKey(),
+          score: col.integer().greaterThan(5).greaterThanEqual(10).notNull(),
+        }),
+      },
+    });
+    const check = s.tables[0].columns.find((c) => c.name === "score")!.check;
+    expect(check).toMatchObject({ kind: "range", greaterThanEqual: 10 });
+    expect(check).not.toHaveProperty("greaterThan");
+  });
+
+  it("rejects contradictory ranges at define time", () => {
+    expect(() =>
+      defineSchema({
+        tables: {
+          events: table({
+            id: col.integer().primaryKey(),
+            score: col.integer().greaterThan(10).lessThan(5),
+          }),
+        },
+      }),
+    ).toThrow(/lower bound 10 exceeds upper bound 5/);
+
+    expect(() =>
+      defineSchema({
+        tables: {
+          events: table({
+            id: col.integer().primaryKey(),
+            score: col.integer().greaterThanEqual(5).lessThan(5),
+          }),
+        },
+      }),
+    ).toThrow(/neither permits it/);
+  });
+
+  it("allows the bounds to meet when both are inclusive", () => {
+    const s = defineSchema({
+      tables: {
+        events: table({
+          id: col.integer().primaryKey(),
+          score: col.integer().greaterThanEqual(5).lessThanEqual(5),
+        }),
+      },
+    });
+    const check = s.tables[0].columns.find((c) => c.name === "score")!.check;
+    expect(check).toMatchObject({ kind: "range", greaterThanEqual: 5, lessThanEqual: 5 });
+  });
+});
+
+describe("index normalization", () => {
+  it("dedupes single-column unique indexes that repeat a column UNIQUE or PK", () => {
+    const s = defineSchema({
+      tables: {
+        users: table({
+          id: col.integer().primaryKey().autoIncrement(),
+          login: col.text().notNull().unique(),
+          name: col.text().notNull(),
+        }),
+      },
+      indexes: {
+        // Dropped: UNIQUE repeats a column constraint (or the PK autoindex).
+        idx_users_login: index({ table: "users", columns: ["login"], unique: true }),
+        idx_users_id: index({ table: "users", columns: ["id"], unique: true }),
+        // Kept: non-unique (query accelerator) and multi-column forms.
+        idx_users_login_plain: index({ table: "users", columns: ["login"] }),
+        idx_users_name_id: index({ table: "users", columns: ["login", "name"], unique: true }),
+      },
+    });
+    expect(s.indexes.map((i) => i.name)).toEqual([
+      "idx_users_login_plain",
+      "idx_users_name_id",
+    ]);
+  });
 });

@@ -102,7 +102,10 @@ export class ColumnBuilder {
     return this.mergeRange({ lessThanEqual: n });
   }
 
-  /** Accumulate a numeric range constraint (immutable copy). */
+  /** Accumulate a numeric range constraint (immutable copy). Redundant looser
+   *  bounds are consolidated away as tighter ones arrive (`between(0, 100)
+   *  .greaterThan(5)` keeps only `> 5` below), and a range whose bounds can
+   *  never be satisfied throws immediately. */
   private mergeRange(
     patch: Partial<Extract<CheckDef, { kind: "range" }>>,
   ): ColumnBuilder {
@@ -111,7 +114,28 @@ export class ColumnBuilder {
       existing && existing.kind === "range"
         ? existing
         : { kind: "range" };
-    return this.with({ check: { ...base, ...patch } });
+
+    let lower: Bound | undefined;
+    let upper: Bound | undefined;
+    const consider = (
+      kind: "greaterThan" | "greaterThanEqual" | "lessThan" | "lessThanEqual",
+      value: number | undefined,
+    ) => {
+      if (value === undefined) return;
+      const bound: Bound = { kind, value };
+      if (kind.startsWith("greater")) lower = addBound(lower, bound, true);
+      else upper = addBound(upper, bound, false);
+    };
+    consider("greaterThan", base.greaterThan);
+    consider("greaterThanEqual", base.greaterThanEqual);
+    consider("lessThan", base.lessThan);
+    consider("lessThanEqual", base.lessThanEqual);
+    consider("greaterThan", patch.greaterThan);
+    consider("greaterThanEqual", patch.greaterThanEqual);
+    consider("lessThan", patch.lessThan);
+    consider("lessThanEqual", patch.lessThanEqual);
+
+    return this.with({ check: finalizeRange(lower, upper) });
   }
 
   references(
@@ -157,3 +181,63 @@ export const col = {
   real,
   blob,
 };
+
+// ---------------------------------------------------------------------------
+// Numeric-range consolidation
+// ---------------------------------------------------------------------------
+
+/** One numeric bound: which side and where, with its strictness. */
+interface Bound {
+  kind: "greaterThan" | "greaterThanEqual" | "lessThan" | "lessThanEqual";
+  value: number;
+}
+
+function isStrict(b: Bound): boolean {
+  return b.kind === "greaterThan" || b.kind === "lessThan";
+}
+
+function isInclusive(b: Bound): boolean {
+  return !isStrict(b);
+}
+
+/**
+ * Combine two bounds on the same side, keeping the tighter one. The floor of
+ * `x >= 5` is higher than the floor of `x > 4`, and `x > 5 ∩ x >= 5` is
+ * exactly `x > 5` — so on a boundary tie the strict form wins.
+ */
+function addBound(current: Bound | undefined, next: Bound, isLower: boolean): Bound {
+  if (!current) return next;
+  if (isLower ? current.value > next.value : current.value < next.value) return current;
+  if (isLower ? next.value > current.value : next.value < current.value) return next;
+  return isStrict(next) ? next : current;
+}
+
+/**
+ * Validate the merged floor/ceiling pair and emit the canonical CheckDef.
+ * Throws when no value can satisfy both (floor above ceiling, or the bounds
+ * meet at a single point neither permits).
+ */
+function finalizeRange(
+  lower: Bound | undefined,
+  upper: Bound | undefined,
+): Extract<CheckDef, { kind: "range" }> {
+  if (lower && upper) {
+    if (lower.value > upper.value) {
+      throw new Error(
+        `Contradictory numeric range: lower bound ${lower.value} exceeds upper bound ${upper.value}`,
+      );
+    }
+    if (lower.value === upper.value && !(isInclusive(lower) && isInclusive(upper))) {
+      throw new Error(
+        `Contradictory numeric range: bounds meet at ${lower.value} but neither permits it`,
+      );
+    }
+  }
+  return {
+    kind: "range",
+    ...(lower?.kind === "greaterThan" ? { greaterThan: lower.value } : {}),
+    ...(lower?.kind === "greaterThanEqual" ? { greaterThanEqual: lower.value } : {}),
+    ...(upper?.kind === "lessThan" ? { lessThan: upper.value } : {}),
+    ...(upper?.kind === "lessThanEqual" ? { lessThanEqual: upper.value } : {}),
+  };
+}

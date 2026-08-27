@@ -74,10 +74,19 @@ export function defineSchema(input: SchemaInput): SchemaDef {
     }
   }
 
-  const indexes = Object.entries(input.indexes ?? {}).map(([name, def]) => ({
-    ...def,
-    name,
-  }));
+  // A single-column UNIQUE index on a column already declared `.unique()` (or
+  // the primary key) duplicates the constraint's autoindex — SQLite would
+  // build both for the same column, so the explicit index is dropped.
+  const indexes = Object.entries(input.indexes ?? {})
+    .map(([name, def]) => ({ ...def, name }))
+    .filter((ix) => {
+      if (ix.unique && ix.columns.length === 1) {
+        const table = tables.find((t) => t.name === ix.table);
+        const col = table?.columns.find((c) => c.name === ix.columns[0]);
+        if (col?.unique || col?.primaryKey) return false;
+      }
+      return true;
+    });
 
   return { tables, indexes };
 }
