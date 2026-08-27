@@ -14,7 +14,7 @@
  * re-sow, because the "tables have rows" check fails.
  */
 
-import type { Database } from "../types";
+import type { Database, Statement } from "../types";
 import type { SchemaDef } from "../schema/schema-def";
 import type { CompiledSeed } from "./compile";
 import { seedOrder } from "./compile";
@@ -46,10 +46,13 @@ export async function applySeed(
     return;
   }
 
-  // Clear in reverse-FK order (children before parents), insert forward.
+  // Clear in reverse-FK order (children before parents), insert forward, and
+  // record the marker hash — atomically when the binding supports batch, so an
+  // interrupted sow can never leave the DB half-cleared with a stale hash.
+  const statements: Statement[] = [];
   const order = seedOrder(schema, names);
   for (const name of [...order].reverse()) {
-    await db.prepare(`DELETE FROM "${name}"`).run();
+    statements.push(db.prepare(`DELETE FROM "${name}"`));
   }
 
   for (const table of seed.tables) {
@@ -59,19 +62,27 @@ export async function applySeed(
       const sql = `INSERT INTO "${table.name}" (${columns
         .map((c) => `"${c}"`)
         .join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`;
-      await db
-        .prepare(sql)
-        .bind(...columns.map((c) => row[c] ?? null))
-        .run();
+      statements.push(
+        db
+          .prepare(sql)
+          .bind(...columns.map((c) => row[c] ?? null)),
+      );
     }
   }
 
-  await db
-    .prepare(
-      `INSERT OR REPLACE INTO "${STATE_TABLE}" (name, hash) VALUES (?, ?)`,
-    )
-    .bind(STATE_NAME, seed.hash)
-    .run();
+  statements.push(
+    db
+      .prepare(
+        `INSERT OR REPLACE INTO "${STATE_TABLE}" (name, hash) VALUES (?, ?)`,
+      )
+      .bind(STATE_NAME, seed.hash),
+  );
+
+  if (db.batch) {
+    await db.batch(statements);
+  } else {
+    for (const stmt of statements) await stmt.run();
+  }
 }
 
 async function seededTablesIntact(
