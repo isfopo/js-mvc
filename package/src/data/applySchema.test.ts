@@ -334,4 +334,41 @@ describe("applySchema", () => {
     ).results.map((i) => i.name);
     expect(userIdx).not.toContain("idx_legacy_extra");
   });
+
+  it("recreates a same-name index whose shape changed", async () => {
+    await applySchema(env.DB, baseSchema); // idx_posts_title: UNIQUE(title)
+
+    // Same name, different columns and unique flag. Comparing by name alone
+    // would skip the change and leave the stale UNIQUE(title) in place.
+    const next: SchemaDef = {
+      tables: baseSchema.tables,
+      indexes: [
+        baseSchema.indexes.find((i) => i.name === "idx_posts_user")!,
+        { name: "idx_posts_title", table: "posts", columns: ["user_id", "title"] },
+      ],
+    };
+
+    await applySchema(env.DB, next);
+
+    // The recreated index has the new column set ...
+    const xinfo = async () => {
+      const res = await env.DB
+        .prepare(`PRAGMA index_xinfo("idx_posts_title")`)
+        .all<{ seqno: number; name: string | null; desc: number; key: number }>();
+      return (res.results ?? [])
+        .filter((r) => r.key === 1)
+        .sort((a, b) => a.seqno - b.seqno)
+        .map((r) => ({ name: r.name, desc: r.desc }));
+    };
+    expect(await xinfo()).toEqual([
+      { name: "user_id", desc: 0 },
+      { name: "title", desc: 0 },
+    ]);
+
+    // ... and the UNIQUE flag from the old definition is gone.
+    const list = await env.DB
+      .prepare(`PRAGMA index_list(posts)`)
+      .all<{ name: string; unique: number }>();
+    expect(list.results?.find((i) => i.name === "idx_posts_title")?.unique).toBe(0);
+  });
 });
