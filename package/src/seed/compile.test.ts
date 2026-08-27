@@ -204,6 +204,40 @@ describe("compileSeed", () => {
     ).toThrow(/unknown table "ghosts"/);
   });
 
+  it("fails fast when table-unique rows cannot satisfy the count", () => {
+    const s = defineSchema({
+      tables: {
+        pairs: table(
+          {
+            id: col.integer().primaryKey().autoIncrement(),
+            a: col.text().notNull(),
+            b: col.text().notNull(),
+          },
+          { unique: [["a", "b"]] },
+        ),
+      },
+      indexes: {},
+    });
+    // A 2x2 pick space has at most 4 distinct (a, b) pairs — 10 rows are
+    // unsatisfiable. The compiler must throw instead of retrying forever.
+    expect(() =>
+      compileSeed(
+        defineSeed(s, {
+          pairs: generate(10, { a: pick(["x", "y"]), b: pick(["p", "q"]) }),
+        }),
+      ),
+    ).toThrow(/Unable to generate 10 rows for "pairs"/);
+  });
+
+  it("rejects generate() overrides on primary key columns", () => {
+    const spec = defineSeed(schema, {
+      users: generate(2, { id: 100 }),
+      posts: generate(0),
+      likes: generate(0),
+    });
+    expect(() => compileSeed(spec)).toThrow(/Cannot override primary key "users\.id"/);
+  });
+
   it("generates numeric range columns within their bounds", () => {
     const s = defineSchema({
       tables: {

@@ -255,7 +255,16 @@ function compileGeneratedRows(
   const rows: Record<string, unknown>[] = [];
 
   let i = 0;
+  let failures = 0;
   while (i < spec.count) {
+    // A table-unique conflict redraws the row, but an under-constrained space
+    // (e.g. UNIQUE(a, b) over two tiny pick() pools) can never satisfy the
+    // count — bound the retries so the compiler errors instead of hanging.
+    if (failures > spec.count * 100 + 500) {
+      throw new Error(
+        `Unable to generate ${spec.count} rows for "${table.name}" — table-unique constraints cannot be satisfied with the given overrides`,
+      );
+    }
     const snapshot = snapshotSeen(ctx, table.name);
     const row = buildRow(
       table,
@@ -268,8 +277,10 @@ function compileGeneratedRows(
     );
     if (tableHasUniqueConflict(table, row, rows)) {
       restoreSeen(ctx, snapshot);
-      continue; // redo this row with fresh draws (bounded by the guard below)
+      failures++;
+      continue; // redo this row with fresh draws (bounded by the guard above)
     }
+    failures = 0;
     rows.push(row);
     if (sawSeq) ctx.seqCounters.set(table.name, (ctx.seqCounters.get(table.name) ?? 0) + 1);
     i++;
@@ -310,7 +321,14 @@ function resolveColumn(
 ): unknown {
   const gen = rawGenerator(column, table, ctx, priorRows, strategy, index, seqCounter, sawSeq);
   if (gen === null) return OMIT; // column has a DEFAULT
-  if (column.primaryKey) return index + 1;
+  if (column.primaryKey) {
+    if (strategy !== undefined) {
+      throw new Error(
+        `Cannot override primary key "${table.name}.${column.name}" in generate() — PKs are sequential and referenced by foreign keys; use rows() for fixed ids`,
+      );
+    }
+    return index + 1;
+  }
   if (column.unique) return makeUnique(column, table, ctx, gen);
   return gen();
 }
