@@ -194,7 +194,7 @@ Keep all error classes (`AppError`, `NotFoundError`, `ValidationError`, etc.) bu
 -export function handleError(c: Context, error: unknown): Response { ... }
 ```
 
-### 2.3. client/main.ts — Remove Handler Registrations
+### 2.3. client/index.ts — Remove Handler Registrations
 
 Remove the hardcoded project handler imports. Export `onReady` and `start` for the project to use:
 
@@ -507,7 +507,7 @@ export function handleError(c: Context, error: unknown): Response | Promise<Resp
 
 ```ts
 // src/client-entry.ts
-import "js-mvc/client/main";  // starts dispatcher
+import "js-mvc/client/index";  // starts dispatcher
 
 // Register project handlers
 import "./views/handlers/DismissHandler";
@@ -586,7 +586,7 @@ ControllerBase.setDefaultRenderConfig({
     "./middleware/unflatten-form-body": "./src/middleware/unflatten-form-body.ts",
     "./client/BaseHandler": "./src/client/BaseHandler.ts",
     "./client/dispatcher": "./src/client/dispatcher.ts",
-    "./client/main": "./src/client/main.ts",
+    "./client/index": "./src/client/index.ts",
     "./client/types": "./src/client/types.d.ts",
     "./utils/useHandler": "./src/utils/useHandler.tsx",
     "./utils/State": "./src/utils/State.tsx",
@@ -664,7 +664,7 @@ package/
 
 src/ (project)
 ├── error-handler.ts      → imports js-mvc/errors
-├── client-entry.ts       → imports js-mvc/client/main + project handlers
+├── client-entry.ts       → imports js-mvc/client/index + project handlers
 ├── index.tsx             → imports js-mvc/controller, js-mvc/middleware
 ├── controllers/*         → import js-mvc/controller, js-mvc/validation
 ├── repos/*               → import js-mvc/repository

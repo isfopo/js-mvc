@@ -21,7 +21,7 @@
  *   </Dismiss.Trigger>
  */
 
-import { BaseHandler } from "js-mvc/client/BaseHandler";
+import { BaseHandler } from "js-mvc/client";
 
 export class DismissHandler extends BaseHandler {
   override connect(): void {

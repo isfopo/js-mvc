@@ -29,7 +29,11 @@
 
 import { JSX } from "react";
 import { buildConditionSelector, cssBlock, TAG_DISPLAY } from "utils/css";
-import { makeScope, type EffectProps, type InteractionCondition } from "../shared/interactionCore";
+import {
+  makeScope,
+  type EffectProps,
+  type InteractionCondition,
+} from "./shared/interactionCore";
 
 export type AnimationPresetName =
   | "none"
@@ -182,9 +186,7 @@ export function useHide<V extends string = string>(
     );
   }
 
-  Wrapper.Trigger = Trigger;
-  Wrapper.Show = Show;
-  Wrapper.Hide = Hide;
-
-  return Wrapper;
+  // Object.assign yields the Wrapper type intersected with its statics, so
+  // consumers see <Plan.Trigger> / <Plan.Show> / <Plan.Hide> as members.
+  return Object.assign(Wrapper, { Trigger, Show, Hide });
 }

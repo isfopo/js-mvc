@@ -1,18 +1,18 @@
 import { RepositoryBase } from "js-mvc/repository/RepositoryBase";
 import type { VoteRow, VoteChoice } from "./model";
-import { queries, type QueryMap } from "./queries/queries.generated";
+import { procs, type ProcMap } from "./procs.generated";
 
 export interface VoteWithUserRow extends VoteRow {
   user_login: string;
   user_avatar: string | null;
 }
 
-export class VotesRepository extends RepositoryBase<VoteRow, QueryMap> {
+export class VotesRepository extends RepositoryBase<VoteRow, ProcMap> {
   override readonly tableName = "votes";
-  protected override readonly queries = queries;
+  protected override readonly queries = procs;
 
   async listForTenet(tenetId: number): Promise<VoteWithUserRow[]> {
-    return this.queryAll("listForTenet", { tenetId });
+    return this.queryAll("listForTenet", { tenet_id: tenetId });
   }
 
   async upsert(
@@ -31,8 +31,8 @@ export class VotesRepository extends RepositoryBase<VoteRow, QueryMap> {
       });
     } else {
       await this.execute("insertVote", {
-        tenetId,
-        userId,
+        tenet_id: tenetId,
+        user_id: userId,
         choice,
         reason,
       });

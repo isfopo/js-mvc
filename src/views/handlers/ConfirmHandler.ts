@@ -11,7 +11,7 @@
  * The event is prevented if the user cancels the confirm dialog.
  */
 
-import { BaseHandler } from "js-mvc/client/BaseHandler";
+import { BaseHandler } from "js-mvc/client";
 
 export class ConfirmHandler extends BaseHandler {
   override connect(): void {

@@ -2,7 +2,7 @@
  * Status handler — confirms before changing tenet status.
  */
 
-import { BaseHandler } from "js-mvc/client/BaseHandler";
+import { BaseHandler } from "js-mvc/client";
 
 export class StatusHandler extends BaseHandler {
   override connect(): void {

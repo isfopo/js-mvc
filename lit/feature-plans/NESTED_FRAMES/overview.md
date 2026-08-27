@@ -27,7 +27,7 @@ A route like `/tenets/new` produces different HTML depending on depth:
 <html>
   <head>
     <link rel="stylesheet" href="/.generated/styles/index.css" />
-    <script type="module" src="/.generated/client/main.js" />
+    <script type="module" src="/.generated/client/index.js" />
   </head>
   <body>
     <nav><!-- global nav: logo, auth links --></nav>
@@ -248,10 +248,10 @@ export const FrameShell: FC<FrameShellProps> = ({ children, depth }) => (
       {import.meta.env.DEV ? (
         <>
           <script type="module" src="/@vite/client"></script>
-          <script type="module" src="/src/infrastructure/client/main.ts"></script>
+          <script type="module" src="/src/infrastructure/client/index.ts"></script>
         </>
       ) : (
-        <script type="module" src="/.generated/client/main.js"></script>
+        <script type="module" src="/.generated/client/index.js"></script>
       )}
     </head>
     <body>
@@ -572,7 +572,7 @@ The `FrameShell` component sets a default `<base target="_self">` in its `<head>
 | `src/infrastructure/client/frame-child.ts` | **New** — child frame navigation announcer |
 | `src/views/pages/Shared/FrameShell.tsx` | **Modify** — add `<base target="_self">`, include child script |
 | `src/views/pages/Shared/Layout.tsx` | **Modify** — include frame-router script |
-| `src/infrastructure/client/main.ts` | **Modify** — import and init frame-router (top level only) |
+| `src/infrastructure/client/index.ts` | **Modify** — import and init frame-router (top level only) |
 
 ---
 

@@ -2,6 +2,12 @@
 
 export interface Database {
   prepare(sql: string): Statement;
+  /**
+   * Execute statements atomically in one implicit transaction (D1 batch).
+   * Optional — callers that need atomicity fall back to sequential runs
+   * when this is absent.
+   */
+  batch?(statements: Statement[]): Promise<unknown>;
 }
 
 export interface Statement {

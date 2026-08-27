@@ -35,7 +35,7 @@ export const Layout: FC<LayoutProps> = ({
             ></script>
           </>
         ) : (
-          <script type="module" src="/.generated/client/main.js"></script>
+          <script type="module" src="/.generated/client/index.js"></script>
         )}
 
         {head}

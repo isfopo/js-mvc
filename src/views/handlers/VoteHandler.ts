@@ -4,7 +4,7 @@
  * For "block", prompts for a reason before submitting the form.
  */
 
-import { BaseHandler } from "js-mvc/client/BaseHandler";
+import { BaseHandler } from "js-mvc/client";
 
 export class VoteHandler extends BaseHandler {
   override connect(): void {

@@ -6,10 +6,10 @@ import TenetsApiController from "views/routes/Tenets/controller.api";
 import WellKnownController from "views/routes/WellKnown/controller";
 import AuthController from "views/routes/Auth/controller";
 
-import { applySql, clearSeedData } from "js-mvc/data/applySql";
-
-import schemaSql from "./migrations/schema.sql?raw";
-import seedSql from "./migrations/seed.sql?raw";
+import { applySchema } from "js-mvc/data/applySchema";
+import { applySeed } from "js-mvc/seed";
+import { schemaDef } from "./.generated/schema";
+import { seedDef } from "./.generated/seed";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -38,16 +38,9 @@ app.use("*", async (c, next) => {
           return;
         }
         try {
-          await applySql(env.DB as D1Database, schemaSql);
+          await applySchema(env.DB as D1Database, schemaDef);
           if (import.meta.env.DEV) {
-            await clearSeedData(env.DB as D1Database, [
-              "votes",
-              "tenet_options",
-              "tenets",
-              "users",
-            ]);
-
-            await applySql(env.DB as D1Database, seedSql);
+            await applySeed(env.DB as D1Database, schemaDef, seedDef);
             console.log("Database seeded");
           }
           initialized = true;

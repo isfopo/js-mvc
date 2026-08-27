@@ -5,13 +5,12 @@ import { ProposeTenetRequest } from "views/routes/Tenets/requests/ProposeTenetRe
 import { VoteRequest } from "views/routes/Tenets/requests/VoteRequest";
 
 import { env } from "cloudflare:workers";
-import { applySql } from "../../../package/src/data/applySql";
-
-import schemaSql from "../../migrations/schema.sql?raw";
+import { applySchema } from "../../../package/src/data/applySchema";
+import { schemaDef } from "../../../src/.generated/schema";
 
 beforeAll(async () => {
-  // Run migrations so tables exist
-  await applySql(env.DB, schemaSql);
+  // Reconcile the DB to the TypeScript schema definition (create tables).
+  await applySchema(env.DB, schemaDef);
 
   // Seed a test user
   await usersRepo(env.DB).upsertFromGithub({

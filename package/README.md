@@ -217,7 +217,7 @@ const Confirm = useDisable({ scope: "confirm" })
 | `js-mvc/client/BaseHandler` | `BaseHandler` for custom client controllers |
 | `js-mvc/client/dispatcher` | Client-side handler dispatcher |
 | `js-mvc/adapters/d1` | Cloudflare D1 database adapter |
-| `js-mvc/plugins` | Vite plugins (`sqlTransformPlugin`, `sqlTypesPlugin`, `cssBuildPlugin`, `clientBuildPlugin`, `handlerRegistryPlugin`) |
+| `js-mvc/plugins` | Vite plugins (`schemaPlugin`, `seedPlugin`, `sqlPlugin`, `cssBuildPlugin`, `clientBuildPlugin`, `handlerRegistryPlugin`) |
 
 ---
 
@@ -286,7 +286,7 @@ async adminView(c) {
 ## Vite plugins
 
 ```ts
-import { sqlTransformPlugin, sqlTypesPlugin, cssBuildPlugin, clientBuildPlugin, handlerRegistryPlugin } from "js-mvc/plugins"
+import { schemaPlugin, seedPlugin, sqlPlugin, cssBuildPlugin, clientBuildPlugin, handlerRegistryPlugin } from "js-mvc/plugins"
 
 export default {
   plugins: [

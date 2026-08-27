@@ -1,5 +1,5 @@
 import type { FC } from "hono/jsx";
-import { useHandler } from "js-mvc/client/useHandler";
+import { useHandler } from "js-mvc/client";
 import { StatusBadge } from "views/components/StatusBadge";
 import { VoteButtons } from "views/components/VoteButtons";
 import { VoteProgress } from "views/components/VoteProgress";

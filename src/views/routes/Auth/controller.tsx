@@ -5,8 +5,19 @@ import { handleError } from "error-handler";
 import { buildAuthorizeUrl, exchangeCode, fetchUser } from "./github";
 import { usersRepo } from "domains/user/repo";
 import { createSession, destroySession } from "middleware/auth";
+import { DevLoginView } from "./views/dev-login";
 
 const DEFAULT_REDIRECT = "/tenets";
+
+/** Only allow same-origin path redirects — blocks open-redirect payloads
+ *  (`https://evil.example`, protocol-relative `//evil.example`). */
+function safeRedirect(
+  dest: string | null | undefined,
+  fallback = DEFAULT_REDIRECT,
+): string {
+  if (dest && dest.startsWith("/") && !dest.startsWith("//")) return dest;
+  return fallback;
+}
 
 class AuthController<T extends Env> extends ControllerBase<T> {
   override base = "auth";
@@ -23,10 +34,42 @@ class AuthController<T extends Env> extends ControllerBase<T> {
     const redirectUri = `${origin}/auth/callback`;
 
     // Pass the intended destination as OAuth state so it's round-tripped
-    const state = c.req.query("redirect") ?? DEFAULT_REDIRECT;
+    const state = safeRedirect(c.req.query("redirect"));
 
     const url = buildAuthorizeUrl(clientId, redirectUri, state);
     return c.redirect(url);
+  }
+
+  @Get("/dev")
+  async devLogin(c: Context) {
+    // Strictly local-development: never available in production builds.
+    if (!import.meta.env.DEV) return c.text("Not found", 404);
+
+    const env = c.env as CloudflareBindings;
+
+    // ?as=<login> → sign in as that seeded user (real session cookie).
+    const as = c.req.query("as");
+    if (as) {
+      const user = await usersRepo(env.DB).findOneBy({ login: as });
+      if (!user) return c.redirect("/auth/dev");
+      c.header("Set-Cookie", await createSession(env.SESSIONS, user.id));
+      const dest = safeRedirect(c.req.query("redirect"));
+      return c.redirect(dest);
+    }
+
+    const users = await usersRepo(env.DB).findAll({ orderBy: "id", limit: 50 });
+    return c.render(
+      <DevLoginView
+        users={users.map((u) => ({
+          login: u.login,
+          name: u.name,
+          avatar_url: u.avatar_url,
+        }))}
+        redirect={
+          c.req.query("redirect") ? safeRedirect(c.req.query("redirect")) : undefined
+        }
+      />,
+    );
   }
 
   @Get("/callback")
@@ -37,7 +80,7 @@ class AuthController<T extends Env> extends ControllerBase<T> {
     }
 
     // The state parameter carries the original destination
-    const state = c.req.query("state") ?? DEFAULT_REDIRECT;
+    const state = safeRedirect(c.req.query("state"));
 
     try {
       const clientId = c.env.GITHUB_CLIENT_ID;
