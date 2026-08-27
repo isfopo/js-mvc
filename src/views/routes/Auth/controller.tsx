@@ -9,6 +9,16 @@ import { DevLoginView } from "./views/dev-login";
 
 const DEFAULT_REDIRECT = "/tenets";
 
+/** Only allow same-origin path redirects — blocks open-redirect payloads
+ *  (`https://evil.example`, protocol-relative `//evil.example`). */
+function safeRedirect(
+  dest: string | null | undefined,
+  fallback = DEFAULT_REDIRECT,
+): string {
+  if (dest && dest.startsWith("/") && !dest.startsWith("//")) return dest;
+  return fallback;
+}
+
 class AuthController<T extends Env> extends ControllerBase<T> {
   override base = "auth";
 
@@ -24,7 +34,7 @@ class AuthController<T extends Env> extends ControllerBase<T> {
     const redirectUri = `${origin}/auth/callback`;
 
     // Pass the intended destination as OAuth state so it's round-tripped
-    const state = c.req.query("redirect") ?? DEFAULT_REDIRECT;
+    const state = safeRedirect(c.req.query("redirect"));
 
     const url = buildAuthorizeUrl(clientId, redirectUri, state);
     return c.redirect(url);
@@ -43,7 +53,7 @@ class AuthController<T extends Env> extends ControllerBase<T> {
       const user = await usersRepo(env.DB).findOneBy({ login: as });
       if (!user) return c.redirect("/auth/dev");
       c.header("Set-Cookie", await createSession(env.SESSIONS, user.id));
-      const dest = c.req.query("redirect") ?? DEFAULT_REDIRECT;
+      const dest = safeRedirect(c.req.query("redirect"));
       return c.redirect(dest);
     }
 
@@ -55,7 +65,9 @@ class AuthController<T extends Env> extends ControllerBase<T> {
           name: u.name,
           avatar_url: u.avatar_url,
         }))}
-        redirect={c.req.query("redirect") ?? undefined}
+        redirect={
+          c.req.query("redirect") ? safeRedirect(c.req.query("redirect")) : undefined
+        }
       />,
     );
   }
@@ -68,7 +80,7 @@ class AuthController<T extends Env> extends ControllerBase<T> {
     }
 
     // The state parameter carries the original destination
-    const state = c.req.query("state") ?? DEFAULT_REDIRECT;
+    const state = safeRedirect(c.req.query("state"));
 
     try {
       const clientId = c.env.GITHUB_CLIENT_ID;
