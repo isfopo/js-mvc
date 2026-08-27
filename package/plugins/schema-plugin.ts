@@ -198,14 +198,20 @@ export function schemaPlugin(options: SchemaPluginOptions = {}): Plugin {
         await generateSchemaOutputs(paths);
         console.log("✓ Schema outputs generated");
       } catch (e) {
+        // Fail the build loudly: a broken schema must not ship with stale
+        // generated files (or pass CI with exit 0).
         console.error("✗ Schema generation failed:", (e as Error).message);
+        throw e;
       }
     },
 
     configureServer(server) {
-      server.watcher.add(paths.schemaPath);
-      const onSchemaChange = async (file: string) => {
-        if (file !== paths.schemaPath) return;
+      // The schema is the primary source, but the seed's literal lookup rows
+      // also type checkRef columns — regenerate on either changing.
+      const sources = [paths.schemaPath, paths.seedPath];
+      server.watcher.add(sources);
+      const onSourceChange = async (file: string) => {
+        if (!sources.includes(file)) return;
         try {
           await generateSchemaOutputs(paths);
           const mods = server.moduleGraph.getModulesByFile(paths.generatedSchemaPath);
@@ -217,8 +223,8 @@ export function schemaPlugin(options: SchemaPluginOptions = {}): Plugin {
           console.error("✗ Schema generation failed:", (e as Error).message);
         }
       };
-      server.watcher.on("change", onSchemaChange);
-      server.watcher.on("add", onSchemaChange);
+      server.watcher.on("change", onSourceChange);
+      server.watcher.on("add", onSourceChange);
     },
   };
 }

@@ -143,6 +143,7 @@ export function seedPlugin(options: SeedPluginOptions = {}): Plugin {
         console.log("✓ Seed data generated");
       } catch (e) {
         console.error("✗ Seed generation failed:", (e as Error).message);
+        throw e;
       }
     },
 

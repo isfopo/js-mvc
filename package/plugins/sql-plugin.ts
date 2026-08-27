@@ -201,7 +201,9 @@ export function sqlPlugin(options: SqlPluginOptions = {}): Plugin {
         try {
           await generateForFile(paths, file, lookups);
         } catch (e) {
+          // Fail the build loudly: a broken procs file must not ship stale SQL.
           console.error(`✗ procs compile failed (${file}):`, (e as Error).message);
+          throw e;
         }
       }
     },
