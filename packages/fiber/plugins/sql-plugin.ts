@@ -17,10 +17,10 @@ import { build as esbuild } from "esbuild";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import sqlParserPkg from "node-sql-parser";
-import { compileProcs } from "../src/sql/compile";
-import type { ProcDefs } from "../src/sql/spec";
-import { loadSchemaModule } from "./schema-plugin";
-import { loadSeedSpec } from "./seed-plugin";
+import { compileProcs } from "../../../package/src/sql/compile";
+import type { ProcDefs } from "../../../package/src/sql/spec";
+import { loadSchemaModule } from "../../../package/plugins/schema-pluginfiber/plugins/schema-plugin";
+import { loadSeedSpec } from "../../../package/plugins/seed-plugins/fiber/plugins/seed-plugin";
 
 const { Parser } = sqlParserPkg;
 
@@ -43,7 +43,10 @@ interface ResolvedPaths {
   dirs: string[];
 }
 
-function resolvePaths(projectRoot: string, options: SqlPluginOptions): ResolvedPaths {
+function resolvePaths(
+  projectRoot: string,
+  options: SqlPluginOptions,
+): ResolvedPaths {
   const toAbs = (p: string | undefined, fallback: string) =>
     p && p.startsWith("/") ? p : resolve(projectRoot, p ?? fallback);
   return {
@@ -69,7 +72,11 @@ async function findProcsFiles(roots: string[]): Promise<string[]> {
     for (const entry of entries) {
       const full = join(dir, entry.name);
       if (entry.isDirectory()) {
-        if (!entry.name.startsWith(".") && entry.name !== "node_modules" && entry.name !== ".generated") {
+        if (
+          !entry.name.startsWith(".") &&
+          entry.name !== "node_modules" &&
+          entry.name !== ".generated"
+        ) {
           await walk(full);
         }
       } else if (entry.isFile() && entry.name === "procs.ts") {
@@ -82,7 +89,10 @@ async function findProcsFiles(roots: string[]): Promise<string[]> {
 }
 
 /** Bundle + execute a procs.ts (resolving js-mvc/sql) to the ProcDefs. */
-async function loadProcs(procsPath: string, projectRoot: string): Promise<ProcDefs> {
+async function loadProcs(
+  procsPath: string,
+  projectRoot: string,
+): Promise<ProcDefs> {
   const frameworkIndex = resolve(projectRoot, "package/src/sql/index.ts");
   const result = await esbuild({
     entryPoints: [procsPath],
@@ -178,7 +188,9 @@ async function generateForFile(
   const tmp = `${outputPath}.tmp-${process.pid}-${Date.now()}`;
   await writeFile(tmp, compiled.moduleText, "utf-8");
   await rename(tmp, outputPath);
-  console.log(`✓ Generated ${relative(paths.projectRoot, outputPath).replace(/\\/g, "/")}`);
+  console.log(
+    `✓ Generated ${relative(paths.projectRoot, outputPath).replace(/\\/g, "/")}`,
+  );
 }
 
 export function sqlPlugin(options: SqlPluginOptions = {}): Plugin {
@@ -202,7 +214,10 @@ export function sqlPlugin(options: SqlPluginOptions = {}): Plugin {
           await generateForFile(paths, file, lookups);
         } catch (e) {
           // Fail the build loudly: a broken procs file must not ship stale SQL.
-          console.error(`✗ procs compile failed (${file}):`, (e as Error).message);
+          console.error(
+            `✗ procs compile failed (${file}):`,
+            (e as Error).message,
+          );
           throw e;
         }
       }
@@ -220,7 +235,10 @@ export function sqlPlugin(options: SqlPluginOptions = {}): Plugin {
               server.moduleGraph.invalidateModule(mod);
             }
           } catch (e) {
-            console.error(`✗ procs compile failed (${file}):`, (e as Error).message);
+            console.error(
+              `✗ procs compile failed (${file}):`,
+              (e as Error).message,
+            );
           }
         }
       };

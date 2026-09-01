@@ -5,10 +5,13 @@ import { readFile, writeFile, mkdir, unlink } from "node:fs/promises";
 import { build as esbuild } from "esbuild";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
-import { generateDbTypesContent } from "../src/schema/generate-types";
-import { serializeSchemaDef, serializeSchemaSql } from "../src/schema/serialize";
-import type { SchemaDef } from "../src/schema/schema-def";
-import { loadSeedSpec } from "./seed-plugin";
+import { generateDbTypesContent } from "../../../package/src/schema/generate-types";
+import {
+  serializeSchemaDef,
+  serializeSchemaSql,
+} from "../../../package/src/schema/serialize";
+import type { SchemaDef } from "../../../package/src/schema/schema-def";
+import { loadSeedSpec } from "../../../package/plugins/packages/fiber/plugins/seed-plugin
 
 // ---------------------------------------------------------------------------
 // Options / paths
@@ -55,7 +58,10 @@ interface ResolvedPaths {
   tableNameOverrides: Record<string, string>;
 }
 
-function resolvePaths(projectRoot: string, options: SchemaPluginOptions): ResolvedPaths {
+function resolvePaths(
+  projectRoot: string,
+  options: SchemaPluginOptions,
+): ResolvedPaths {
   const toAbs = (p: string | undefined, fallback: string) =>
     p && p.startsWith("/") ? p : resolve(projectRoot, p ?? fallback);
   return {
@@ -133,7 +139,11 @@ async function generateSchemaOutputs(paths: ResolvedPaths): Promise<void> {
   // 1. Runtime schema module first — the seed spec imports it, and we read
   //    the seed's literal lookup rows to type `checkRef` columns.
   await mkdir(dirname(paths.generatedSchemaPath), { recursive: true });
-  await writeFile(paths.generatedSchemaPath, serializeSchemaDef(schema), "utf-8");
+  await writeFile(
+    paths.generatedSchemaPath,
+    serializeSchemaDef(schema),
+    "utf-8",
+  );
 
   // 2. Derived schema.sql.
   await mkdir(dirname(paths.schemaSqlPath), { recursive: true });
@@ -214,7 +224,9 @@ export function schemaPlugin(options: SchemaPluginOptions = {}): Plugin {
         if (!sources.includes(file)) return;
         try {
           await generateSchemaOutputs(paths);
-          const mods = server.moduleGraph.getModulesByFile(paths.generatedSchemaPath);
+          const mods = server.moduleGraph.getModulesByFile(
+            paths.generatedSchemaPath,
+          );
           for (const mod of mods ?? []) {
             server.moduleGraph.invalidateModule(mod);
           }

@@ -15,8 +15,8 @@ import { writeFile, mkdir, unlink, rename } from "node:fs/promises";
 import { build as esbuild } from "esbuild";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
-import { compileSeed } from "../src/seed/compile";
-import type { SeedSpec } from "../src/seed/spec";
+import { compileSeed } from "../../../package/src/seed/compile";
+import type { SeedSpec } from "../../../package/src/seed/spec";
 
 // ---------------------------------------------------------------------------
 // Options / paths
@@ -47,13 +47,19 @@ interface ResolvedPaths {
   outputPath: string;
 }
 
-function resolvePaths(projectRoot: string, options: SeedPluginOptions): ResolvedPaths {
+function resolvePaths(
+  projectRoot: string,
+  options: SeedPluginOptions,
+): ResolvedPaths {
   const toAbs = (p: string | undefined, fallback: string) =>
     p && p.startsWith("/") ? p : resolve(projectRoot, p ?? fallback);
   return {
     projectRoot,
     seedPath: toAbs(options.seedPath, "src/domains/seed.ts"),
-    schemaModulePath: toAbs(options.schemaModulePath, "src/.generated/schema.ts"),
+    schemaModulePath: toAbs(
+      options.schemaModulePath,
+      "src/.generated/schema.ts",
+    ),
     outputPath: toAbs(options.outputPath, "src/.generated/seed.ts"),
   };
 }
@@ -153,7 +159,9 @@ export function seedPlugin(options: SeedPluginOptions = {}): Plugin {
         if (!sources.some((s) => file === s)) return;
         try {
           await generateSeedOutput(paths);
-          for (const mod of server.moduleGraph.getModulesByFile(paths.outputPath) ?? []) {
+          for (const mod of server.moduleGraph.getModulesByFile(
+            paths.outputPath,
+          ) ?? []) {
             server.moduleGraph.invalidateModule(mod);
           }
           console.log("✓ Seed data regenerated");
