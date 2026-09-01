@@ -315,14 +315,14 @@ describe("index normalization", () => {
           name: col.text().notNull(),
         }),
       },
-      indexes: {
+      indexes: [
         // Dropped: UNIQUE repeats a column constraint (or the PK autoindex).
-        idx_users_login: index({ table: "users", columns: ["login"], unique: true }),
-        idx_users_id: index({ table: "users", columns: ["id"], unique: true }),
+        index({ name: "idx_users_login", table: "users", columns: ["login"], unique: true }),
+        index({ name: "idx_users_id", table: "users", columns: ["id"], unique: true }),
         // Kept: non-unique (query accelerator) and multi-column forms.
-        idx_users_login_plain: index({ table: "users", columns: ["login"] }),
-        idx_users_name_id: index({ table: "users", columns: ["login", "name"], unique: true }),
-      },
+        index({ name: "idx_users_login_plain", table: "users", columns: ["login"] }),
+        index({ name: "idx_users_name_id", table: "users", columns: ["login", "name"], unique: true }),
+      ],
     });
     expect(s.indexes.map((i) => i.name)).toEqual([
       "idx_users_login_plain",

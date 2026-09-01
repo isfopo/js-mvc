@@ -60,10 +60,10 @@ const baseSchema = defineSchema({
       title: col.text().notNull(),
     }),
   },
-  indexes: {
-    idx_posts_user: index({ table: "posts", columns: ["user_id"] }),
-    idx_posts_title: index({ table: "posts", columns: ["title"], unique: true }),
-  },
+  indexes: [
+    index({ name: "idx_posts_user", table: "posts", columns: ["user_id"] }),
+    index({ name: "idx_posts_title", table: "posts", columns: ["title"], unique: true }),
+  ],
 });
 
 // ---------------------------------------------------------------------------
