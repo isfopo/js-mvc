@@ -220,7 +220,7 @@ describe("applySchema", () => {
             .default("(datetime('now'))"),
         }),
       },
-      indexes: {},
+      indexes: [],
     });
 
     await applySchema(env.DB, withDefaults);

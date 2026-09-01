@@ -1,6 +1,6 @@
 import type { Plugin } from "vite";
 import { build, type BuildOptions } from "esbuild";
-import { resolve, dirname } from "path";
+import { dirname } from "path";
 import { mkdirSync } from "node:fs";
 
 export interface ClientBuildPluginOptions {

@@ -22,7 +22,7 @@
  * nullability, PK and default changes ARE detected.
  */
 
-import type { Database } from "../types";
+import { Database } from "..";
 import { ColumnDef } from "./column";
 
 import type { IndexLike } from "./ddl";

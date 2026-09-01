@@ -15,8 +15,7 @@ import { writeFile, mkdir, unlink, rename } from "node:fs/promises";
 import { build as esbuild } from "esbuild";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
-import { compileSeed } from "../../../package/src/seed/compile";
-import type { SeedSpec } from "../../../package/src/seed/spec";
+import { compileSeed, SeedSpec } from "../src/seed";
 
 // ---------------------------------------------------------------------------
 // Options / paths

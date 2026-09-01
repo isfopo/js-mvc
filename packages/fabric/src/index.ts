@@ -20,3 +20,5 @@ export {
   type HideEffectProps,
   type HideOptions,
 } from "./client"
+
+export { genId } from "./utils"

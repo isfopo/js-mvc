@@ -1,17 +1,17 @@
 import type { Plugin } from "vite";
 import { resolve, dirname, join } from "path";
 import { createHash } from "node:crypto";
-import { readFile, writeFile, mkdir, unlink } from "node:fs/promises";
+import { writeFile, mkdir, unlink } from "node:fs/promises";
 import { build as esbuild } from "esbuild";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
-import { generateDbTypesContent } from "../../../package/src/schema/generate-types";
+import { generateDbTypesContent } from "../src/schema";
 import {
   serializeSchemaDef,
   serializeSchemaSql,
-} from "../../../package/src/schema/serialize";
-import type { SchemaDef } from "../../../package/src/schema/schema-def";
-import { loadSeedSpec } from "../../../package/plugins/packages/fiber/plugins/seed-plugin
+} from "../src/schema/serialize";
+import type { SchemaDef } from "../src/schema";
+import { loadSeedSpec } from "./seed-plugin";
 
 // ---------------------------------------------------------------------------
 // Options / paths

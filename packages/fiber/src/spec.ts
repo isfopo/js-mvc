@@ -294,16 +294,6 @@ export type AllAliases<F> = F extends readonly (infer R)[]
   ? Distribute<FromPair<R>[0]>
   : never;
 
-type TableForOne<A, R> = FromPair<R> extends [infer Al, infer T]
-  ? (Al extends A ? T : never)
-  : never;
-
-/** Table name(s) behind alias A in FROM array F. */
-type TableFor<A, F> = F extends readonly (infer R)[] ? Distribute<TableForOne<A, R>> : never;
-
-/** Columns of the row type behind alias A. */
-type ColsFor<A, F, Db extends SchemaIndex> = keyof Db[TableFor<A, F> & keyof Db];
-
 /** One valid select projection for a single FROM element. */
 type OneProj<R, Db extends SchemaIndex> = FromPair<R> extends [infer A, infer T]
   ? [A, T] extends [string, string]

@@ -30,10 +30,10 @@ const sampleSchema = defineSchema({
       squeak_level: col.integer().notNull(),
     }),
   },
-  indexes: {
-    idx_users_login: index({ table: "users", columns: ["login"], unique: true }),
-    idx_mice_level: index({ table: "mice", columns: ["squeak_level DESC"] }),
-  },
+  indexes: [
+    index({ name: "idx_users_login", table: "users", columns: ["login"], unique: true }),
+    index({name: "idx_mice_level", table: "mice", columns: ["squeak_level DESC"] }),
+  ],
 });
 
 describe("defineSchema", () => {
@@ -61,9 +61,9 @@ describe("defineSchema", () => {
       tables: {
         users: table({ id: col.integer().primaryKey() }),
       },
-      indexes: {
-        idx_u: index({ table: "users", columns: ["id"] }),
-      },
+      indexes: [
+        index({ name: "idx_u", table: "users", columns: ["id"] }),
+      ],
     });
     expect(schema.indexes[0].name).toBe("idx_u");
   });
@@ -157,7 +157,7 @@ describe("generateSchemaSqlContent", () => {
           stock: col.integer().greaterThan(0).notNull(),
         }),
       },
-      indexes: {},
+      indexes: [],
     });
     const sql = generateSchemaSqlContent(s);
     expect(sql).toContain('CHECK("score" >= 0 AND "score" <= 100)');

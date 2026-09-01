@@ -1,4 +1,4 @@
-import type { GuardDescriptor, MethodDecoratorFactory } from "./types";
+import type { GuardDescriptor, MethodDecoratorFactory } from "thread";
 
 /** Shared metadata key used by decorators and ControllerBase. */
 export const GUARDS_KEY = Symbol("hono:guards");

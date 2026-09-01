@@ -22,7 +22,7 @@
  }
 
 /** Build an index definition; its name is assigned by `defineSchema`. */
-export function index(input: IndexInput): IndexInput {
+export function index(input: IndexDef): IndexDef {
   if (input.columns.length === 0) {
     throw new Error("Index must reference at least one column");
   }

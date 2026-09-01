@@ -1,15 +1,15 @@
-export { index } from "./indexes";
-export type { IndexInput, IndexDef } from "./indexes";
+export * from "./indexes";
+export type * from "./indexes";
 
-export { defineSchema } from "./schema";
-export type { SqliteType, SchemaInput, SchemaDef, CheckDef, ReferenceDef } from "./schema";
+export * from "./schema";
+export type * from "./schema";
 
-export { table } from "./table";
-export type { TableColumns, TableOptions, TableDef } from "./table";
+export * from "./table";
+export type * from "./table";
 
-export { col, integer, text, real, blob } from "./column";
-export type { ColumnDef, ColumnBuilder, ColumnBuilderLike } from "./column";
+export * from "./column";
+export type * from "./column";
 
 // Generators (build-time / tooling).
-export { generateSchemaSqlContent } from "./generate-sql";
-export { generateDbTypesContent, tableNameToTypeName } from "./generate-types";
+export * from "./generate-sql";
+export * from "./generate-types";

@@ -8,6 +8,7 @@ export {
   useHandler,
   useHide,
   BaseHandler,
+  genId,
   type ActionDescriptor,
   type AnimationPreset,
   type AnimationPresetName,

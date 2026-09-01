@@ -1,4 +1,4 @@
-import type { Database } from "../types";
+import type { Database } from "..";
 
 /**
  * Apply the schema migration. Safe to call multiple times (uses IF NOT EXISTS).

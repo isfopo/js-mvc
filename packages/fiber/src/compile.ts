@@ -10,9 +10,8 @@
  * bind to.
  */
 
-import { ColumnDef, SchemaDef } from "./schema";
+import { ColumnDef, SchemaDef,TableDef, } from "fiber";
 import { tableNameToTypeName, columnToTsType } from "./schema/generate-types";
-import { TableDef } from "./schema/table";
 import type {
   ProcDefs,
   LookupConfig,
@@ -469,7 +468,7 @@ const INLINE_TYPES = new Set([
 
 export function isInlineType(t: string): boolean {
   if (INLINE_TYPES.has(t)) return true;
-  return /["`\[|]/.test(t); // unions, literals, arrays, generics
+  return /["`[|]/.test(t); // unions, literals, arrays, generics
 }
 
 function tsImportMap(

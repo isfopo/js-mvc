@@ -17,10 +17,9 @@ import { build as esbuild } from "esbuild";
 import { pathToFileURL } from "node:url";
 import { tmpdir } from "node:os";
 import sqlParserPkg from "node-sql-parser";
-import { compileProcs } from "../../../package/src/sql/compile";
-import type { ProcDefs } from "../../../package/src/sql/spec";
-import { loadSchemaModule } from "../../../package/plugins/schema-pluginfiber/plugins/schema-plugin";
-import { loadSeedSpec } from "../../../package/plugins/seed-plugins/fiber/plugins/seed-plugin";
+import { ProcDefs, compileProcs } from "../src";
+import { loadSchemaModule } from "./schema-plugin";
+import { loadSeedSpec } from "./seed-plugin";
 
 const { Parser } = sqlParserPkg;
 

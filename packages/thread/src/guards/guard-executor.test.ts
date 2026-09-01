@@ -1,14 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ControllerBase } from "../controller/ControllerBase";
+import { ControllerBase, BODY_KEY, NotFoundError, ForbiddenError, ValidationError } from "thread";
 
-import { NotFoundError, ForbiddenError, ValidationError } from "../errors";
-import { BODY_KEY } from "middleware/parseBody";
 import { Authorize, type IAuthorizable } from "./Authorize";
 import { Exists, type IExistable } from "./Exists";
 import { Validate, type ValidationResult } from "./Validate";
 import { RequestGuard } from "./RequestGuard";
 import { GUARDS_KEY } from "./GuardDecorator";
-import type { GuardDescriptor } from "./types";
+import type { GuardDescriptor } from "./index";
 
 // ── Test guards ─────────────────────────────────────────────────
 

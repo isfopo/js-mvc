@@ -26,13 +26,13 @@
   */
 
  import type { TableColumns, TableDef } from "./table";
- import type { IndexDef, IndexInput } from "./indexes";
+ import type { IndexDef } from "./indexes";
 
  export type SqliteType = "INTEGER" | "TEXT" | "REAL" | "BLOB";
 
  export interface SchemaInput {
    tables: Record<string, TableColumns>;
-   indexes?: Record<string, IndexInput>;
+   indexes?: IndexDef[];
  }
 
  export interface ReferenceDef {

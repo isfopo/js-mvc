@@ -1,29 +1,36 @@
-export { } from "./adapters"
-/**
- * js-mvc/sql — TypeScript-authored stored queries (actions & lookups).
- *
- *   define in  procs.ts  →  sqlPlugin compiles once  →  procs.generated.ts
- *                         (static SQL + typed ProcMap)
- *
- * Repositories consume the generated module exactly like the old QueryMap
- * barrels: same @name binding, same queryOne/queryAll/execute helpers.
- */
+/** Minimal database abstraction matching D1's API surface. */
 
-export { def, lookup, action, param, sql, isParam, isSql, defineSql } from "./spec";
-export type {
-  ProcDefs,
-  ProcConfig,
-  LookupConfig,
-  ActionConfig,
-  TableRef,
-  JoinRef,
-  ParamSpec,
-  SqlFragment,
-  ValueSlots,
-  SchemaIndex,
-  TypedLookupConfig,
-  TypedActionConfig,
-  TypedSelect,
-} from "./spec";
-export { compileProcs } from "./compile";
-export type { CompiledProcs } from "./compile";
+export interface Database {
+  prepare(sql: string): Statement;
+  /**
+   * Execute statements atomically in one implicit transaction (D1 batch).
+   * Optional — callers that need atomicity fall back to sequential runs
+   * when this is absent.
+   */
+  batch?(statements: Statement[]): Promise<unknown>;
+}
+
+export interface Statement {
+  bind(...values: unknown[]): Statement;
+  first<T>(): Promise<T | null>;
+  all<T>(): Promise<{ results: T[] }>;
+  run(): Promise<DbResult>;
+}
+
+export interface DbResult {
+  meta: { last_row_id: number; changes: number };
+}
+
+export * from "./adapters"
+
+export * from "./spec";
+export type * from "./spec";
+
+export * from "./compile";
+export type * from "./compile";
+
+export * from "./schema";
+export type * from "./schema";
+
+export * from "./seed";
+export type * from "./seed";

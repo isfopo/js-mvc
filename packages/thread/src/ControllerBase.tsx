@@ -20,17 +20,65 @@
 
 import { Context, Env, Hono } from "hono";
 import { renderToString } from "hono/jsx/dom/server";
-import type { FC, PropsWithChildren } from "hono/jsx";
-import { NotFoundError, ValidationError } from "../errors";
-import { parseRequestBody } from "../middleware/parseBody";
-import { GUARDS_KEY } from "../gaurds/GuardDecorator";
-import type { GuardDescriptor } from "../gaurds/types";
-import { RENDER_KEY } from "./Render";
-import type { RenderDescriptor } from "./Render";
-import { ViewBuilderBase } from "../view/ViewBuilderBase";
+import type { FC } from "hono/jsx";
+import { NotFoundError, ValidationError } from "thread/src/errors";
+import { parseRequestBody } from "thread/src/middleware/parseBody";
+import { GUARDS_KEY } from "./guards/GuardDecorator";
+import type { GuardDescriptor, MethodDecoratorFactory } from "thread/src/guards";
+import { ViewBuilderBase } from "thread/src";
 
-/* Re-export the @Render decorator so it can be imported alongside Get/Post. */
-export { Render } from "./Render";
+/**
+ * A render descriptor records that a route handler's return value (a plain
+ * view-model object) should be rendered inside the declared View component,
+ * and that the handler builds that view-model via the paired builder class.
+ */
+export interface RenderDescriptor {
+  handlerName: string;
+  view: FC<any>;
+  builder: new () => any;
+}
+
+/**
+ * Shared metadata key used by `@Render` and read back by
+ * `ControllerBase.register()`.
+ */
+export const RENDER_KEY = Symbol("hono:render");
+
+/**
+ * Declare which View component should render this handler's view-model, and
+ * which view-builder class builds that view-model.
+ *
+ * The decorated handler builds its view-model via `this.models` (the shared
+ * `ViewBuilderBase.instance()` for the declared builder class) and `return`s
+ * the plain object. `ControllerBase.register()` wires the route so that, when
+ * the handler returns a non-`Response` object, it is rendered inside the
+ * declared View — instead of the handler calling `c.render(...)` itself.
+ *
+ * Routes not decorated with `@Render` (and handlers returning a `Response`
+ * such as `c.redirect(...)`) are left untouched.
+ *
+ * @example
+ *   @Get("/")
+ *   @Render(IndexView, TenetViewBuilder)
+ *   index(c) {
+ *     const result = await services.list(c.env.DB);
+ *     return this.models.index(result.tenets, user);
+ *   }
+ */
+export function Render(
+  view: FC<any>,
+  builder: new () => any,
+): MethodDecoratorFactory {
+  return function <This>(
+    _target: (this: This, ...args: any[]) => any,
+    context: ClassMethodDecoratorContext<This>,
+  ): void {
+    const metadata = context.metadata as Record<PropertyKey, unknown>;
+    const renders: RenderDescriptor[] = ((metadata[RENDER_KEY] as
+      RenderDescriptor[]) ??= []);
+    renders.push({ handlerName: String(context.name), view, builder });
+  };
+}
 
 /* ---------- Symbol.metadata polyfill ---------- */
 
