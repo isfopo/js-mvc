@@ -10,16 +10,16 @@
  * bind to.
  */
 
-import type { SchemaDef, TableDef, ColumnDef } from "../schema/schema-def";
-import { tableNameToTypeName, columnToTsType } from "../schema/generate-types";
+import { ColumnDef, SchemaDef } from "./schema";
+import { tableNameToTypeName, columnToTsType } from "./schema/generate-types";
+import { TableDef } from "./schema/table";
 import type {
   ProcDefs,
-  ProcConfig,
   LookupConfig,
   ActionConfig,
   ParamSpec,
-  SqlFragment,
 } from "./spec";
+
 import { isParam, isSql } from "./spec";
 
 // ---------------------------------------------------------------------------
@@ -467,7 +467,7 @@ const INLINE_TYPES = new Set([
   "string", "number", "boolean", "null", "unknown", "any", "void", "ArrayBuffer",
 ]);
 
-function isInlineType(t: string): boolean {
+export function isInlineType(t: string): boolean {
   if (INLINE_TYPES.has(t)) return true;
   return /["`\[|]/.test(t); // unions, literals, arrays, generics
 }

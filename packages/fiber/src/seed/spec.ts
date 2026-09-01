@@ -13,7 +13,6 @@
  */
 
 import type { SchemaDef } from "../schema";
-import type { SchemaDef as SchemaDefType } from "../schema/schema-def";
 import type { ValueStrategy } from "./strategies";
 
 export interface TableGenerateSpec {
@@ -31,7 +30,7 @@ export type TableSpec = TableGenerateSpec | TableRowsSpec;
 
 export interface SeedSpec {
   /** The schema these tables belong to — used for FK order, defaults, enums. */
-  schema: SchemaDefType;
+  schema: SchemaDef;
   /** Table name → spec. Tables not listed here are left untouched. */
   tables: Record<string, TableSpec>;
 }

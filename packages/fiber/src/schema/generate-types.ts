@@ -10,7 +10,8 @@
  * from the TypeScript schema definition.
  */
 
-import type { SchemaDef, ColumnDef, SqliteType } from "./schema-def";
+import { ColumnDef } from "./column";
+import type { SchemaDef, SqliteType } from "./schema";
 
 /** Convert a table name to PascalCase singular form (same rules as before). */
 export function tableNameToTypeName(

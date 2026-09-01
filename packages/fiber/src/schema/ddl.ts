@@ -5,7 +5,8 @@
  * emit the same dialect.
  */
 
-import type { ColumnDef, TableDef } from "./schema-def";
+import type { ColumnDef } from "./column";
+import { TableDef } from "./table";
 
 /** Quote a SQLite identifier with double quotes (escaping embedded quotes). */
 export function quoteIdent(name: string): string {
@@ -13,7 +14,7 @@ export function quoteIdent(name: string): string {
 }
 
 /** Escape a single-quoted SQLite string literal. */
-function quoteLiteral(value: string): string {
+export function quoteLiteral(value: string): string {
   return `'${value.replace(/'/g, "''")}'`;
 }
 

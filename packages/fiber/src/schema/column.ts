@@ -13,7 +13,31 @@
  * reuse/derive in a declarative schema.
  */
 
-import type { ColumnDef, SqliteType, CheckDef } from "./schema-def";
+import type { SqliteType, CheckDef, ReferenceDef } from "./schema";
+
+export interface ColumnDef {
+  name: string;
+  sqliteType: SqliteType;
+  notNull: boolean;
+  primaryKey: boolean;
+  autoIncrement?: boolean;
+  unique?: boolean;
+  default?: string;
+  check?: CheckDef;
+  references?: ReferenceDef;
+  /**
+   * If this column was renamed from an older name, the previous name. The
+   * reconciliation layer uses this to map old data onto the new column during
+   * a table rebuild — without it, a rename is indistinguishable from
+   * add+drop and risks data loss.
+   */
+  renamedFrom?: string;
+}
+
+/** Minimal structural interface accepted as a column value. */
+export interface ColumnBuilderLike {
+  toColumnDef(name: string): ColumnDef;
+}
 
 export class ColumnBuilder {
   def: ColumnDef;

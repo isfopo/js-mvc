@@ -20,14 +20,47 @@
  * explicit builder arg overrides it.
  */
 
-import type { SchemaDef, TableDef } from "./schema-def";
-import type { TableColumns } from "./table";
-import type { IndexInput } from "./index-def";
+ /**
+  * Canonical Schema IR types shared by the DSL, generators, and the runtime
+  * reconciliation layer. These are the shapes a compiled SchemaDef takes.
+  */
 
-export interface SchemaInput {
-  tables: Record<string, TableColumns>;
-  indexes?: Record<string, IndexInput>;
-}
+ import type { TableColumns, TableDef } from "./table";
+ import type { IndexDef, IndexInput } from "./indexes";
+
+ export type SqliteType = "INTEGER" | "TEXT" | "REAL" | "BLOB";
+
+ export interface SchemaInput {
+   tables: Record<string, TableColumns>;
+   indexes?: Record<string, IndexInput>;
+ }
+
+ export interface ReferenceDef {
+   table: string;
+   column: string;
+   onDelete?: "CASCADE" | "SET NULL" | "RESTRICT" | "NO ACTION";
+ }
+
+ /**
+  * A CHECK-class constraint on a column. Either a reference to a lookup
+  * table's primary key (referential enum — the typegen derives a union from
+  * the lookup's seeded rows), or a numeric range.
+  */
+ export type CheckDef =
+   | { kind: "ref"; table: string; column: string }
+   | {
+       kind: "range";
+       greaterThan?: number;
+       lessThan?: number;
+       greaterThanEqual?: number;
+       lessThanEqual?: number;
+     };
+
+ export interface SchemaDef {
+   tables: TableDef[];
+   indexes: IndexDef[];
+ }
+
 
 export function defineSchema(input: SchemaInput): SchemaDef {
   const tableNames = Object.keys(input.tables);

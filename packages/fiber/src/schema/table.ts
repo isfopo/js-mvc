@@ -2,21 +2,28 @@
  * Table definition — a named set of column builders.
  */
 
-import type { ColumnDef, TableDef } from "./schema-def";
+ import { ColumnDef, ColumnBuilderLike } from "./column";
 
-/** Shape returned by the `table()` helper, before `defineSchema` assigns a name. */
-export interface TableColumns {
-  columns: ColumnDef[];
-  unique?: string[][];
+ /** Shape returned by the `table()` helper, before `defineSchema` assigns a name. */
+ export interface TableColumns {
+   columns: ColumnDef[];
+   unique?: string[][];
+ }
+
+ /** Table-level options supported by `table()`. */
+ export interface TableOptions {
+   /**
+    * Table-level unique constraints — each inner array is a set of columns
+    * that must be unique together. Prefer column `.unique()` for a single
+    * column.
+    */
+   unique?: string[][];
 }
 
-/** Table-level options supported by `table()`. */
-export interface TableOptions {
-  /**
-   * Table-level unique constraints — each inner array is a set of columns
-   * that must be unique together. Prefer column `.unique()` for a single
-   * column.
-   */
+export interface TableDef {
+  name: string;
+  columns: ColumnDef[];
+  /** Table-level unique constraints — each inner array is a set of columns. */
   unique?: string[][];
 }
 
@@ -38,10 +45,3 @@ export function table(
     ...(options.unique ? { unique: options.unique } : {}),
   };
 }
-
-/** Minimal structural interface accepted as a column value. */
-export interface ColumnBuilderLike {
-  toColumnDef(name: string): ColumnDef;
-}
-
-export type { TableDef } from "./schema-def";

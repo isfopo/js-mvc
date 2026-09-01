@@ -17,7 +17,7 @@
  */
 
 import { faker } from "@faker-js/faker";
-import type { ColumnDef, SchemaDef, TableDef, CheckDef } from "../schema/schema-def";
+import type { ColumnDef, SchemaDef, CheckDef, TableDef } from "../schema";
 import type { SeedSpec, TableGenerateSpec, TableRowsSpec } from "./spec";
 import { isStrategy, type ValueStrategy, type FakerProvider } from "./strategies";
 

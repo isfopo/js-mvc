@@ -15,9 +15,9 @@
  */
 
 import type { Database, Statement } from "../types";
-import type { SchemaDef } from "../schema/schema-def";
-import type { CompiledSeed } from "./compile";
-import { seedOrder } from "./compile";
+import type { SchemaDef } from "../schema/schema";
+import type { CompiledSeed } from "./compileSeed";
+import { seedOrder } from "./compileSeed";
 
 const STATE_TABLE = "_seed_state";
 const STATE_NAME = "seed";

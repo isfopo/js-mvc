@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { defineSchema, table, col } from "../schema";
+import { defineSchema, table, col } from "./schema";
 import { def, lookup, action, param, sql } from "./index";
 import { compileProcs } from "./compile";
 

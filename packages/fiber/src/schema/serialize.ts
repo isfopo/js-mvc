@@ -6,7 +6,7 @@
  * are preserved via a type-only import of SchemaDef.
  */
 
-import type { SchemaDef } from "./schema-def";
+import type { SchemaDef } from "./schema";
 import { generateSchemaSqlContent } from "./generate-sql";
 
 /**

@@ -8,11 +8,11 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { env } from "cloudflare:workers";
-import { defineSchema, table, col } from "../schema";
-import { applySchema } from "../data/applySchema";
+import { applySchema } from "../schema/applySchema";
 import { defineSeed, generate, fake, pick, seq, ref } from "./index";
-import { compileSeed, type CompiledSeed } from "./compile";
+import { compileSeed, type CompiledSeed } from "./compileSeed";
 import { applySeed } from "./applySeed";
+import { col, defineSchema, table } from "../schema";
 
 const schema = defineSchema({
   tables: {

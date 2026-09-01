@@ -4,12 +4,13 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { faker } from "@faker-js/faker";
-import { defineSchema, table, col, index } from "../schema";
+import { defineSchema, table, col } from "../schema";
+
 import {
   compileSeed,
   type CompiledSeed,
-} from "./compile";
+} from "./compileSeed";
+
 import { defineSeed, generate, fake, pick, ref, seq, rows } from "./index";
 
 const schema = defineSchema({

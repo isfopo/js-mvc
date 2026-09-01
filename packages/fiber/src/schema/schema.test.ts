@@ -5,15 +5,13 @@
  */
 
 import { describe, it, expect } from "vitest";
-import {
-  defineSchema,
-  table,
-  col,
-  index,
-  generateSchemaSqlContent,
-  generateDbTypesContent,
-  tableNameToTypeName,
-} from ".";
+import { defineSchema } from "./schema";
+import { table } from "./table";
+import { col } from "./column";
+import { index } from "./indexes";
+import { generateSchemaSqlContent } from "./generate-sql";
+import { tableNameToTypeName, generateDbTypesContent } from "./generate-types";
+
 
 const sampleSchema = defineSchema({
   tables: {

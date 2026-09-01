@@ -1,3 +1,4 @@
+export { } from "./adapters"
 /**
  * js-mvc/sql — TypeScript-authored stored queries (actions & lookups).
  *

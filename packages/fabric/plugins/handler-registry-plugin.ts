@@ -119,7 +119,7 @@ function generateModule(paths: ResolvedPaths, files: string[]): string {
     lines.push(`// ${line}`);
   }
   lines.push("");
-  lines.push('import { register } from "js-mvc/client";');
+  lines.push('import { register } from "spindle";');
   lines.push("");
 
   files.forEach((file, index) => {

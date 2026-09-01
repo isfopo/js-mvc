@@ -23,21 +23,19 @@
  */
 
 import type { Database } from "../types";
-import type {
-  SchemaDef,
-  TableDef,
-  ColumnDef,
-} from "../schema/schema-def";
-import type { IndexLike } from "../schema/ddl";
+import { ColumnDef } from "./column";
+
+import type { IndexLike } from "./ddl";
 import {
   quoteIdent,
-  renderColumnDef,
   renderCreateTable,
   renderCreateIndex,
   renderAddColumn,
   renderRenameColumn,
   renderDropIndex,
-} from "../schema/ddl";
+} from "./ddl";
+import { SchemaDef } from "./schema";
+import { TableDef } from "./table";
 
 /** A column as reported by `PRAGMA table_info`. */
 interface LiveColumn {
@@ -46,11 +44,6 @@ interface LiveColumn {
   notNull: boolean;
   pk: boolean;
   default: string | null;
-}
-
-interface LiveTable {
-  exists: boolean;
-  columns: LiveColumn[];
 }
 
 /** One key column of a live index, in index order. */

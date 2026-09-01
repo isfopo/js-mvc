@@ -13,8 +13,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { env } from "cloudflare:workers";
 import { applySchema } from "./applySchema";
-import { defineSchema, table, col, index } from "../schema";
-import type { SchemaDef } from "../schema";
+import { defineSchema, SchemaDef } from "./schema";
+import { table } from "./table";
+import { col } from "./column";
+import { index } from "./indexes";
+
 
 // ---------------------------------------------------------------------------
 // Helpers

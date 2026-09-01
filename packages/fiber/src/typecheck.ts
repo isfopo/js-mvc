@@ -7,10 +7,11 @@
  * column validation, and an "unused @ts-expect-error" error would flag it.
  */
 
-import { defineSql } from "js-mvc/sql";
-import type { Database } from "domains/db-types";
+import { defineSql } from "./spec";
+import { Database } from "./types";
 
-const { lookup, action, param, sql, from, join, tbl } = defineSql<Database>();
+
+const { lookup, action, param, sql, from, join} = defineSql<Database>();
 
 // Positive cases must compile.
 const ok = lookup({

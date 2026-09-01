@@ -24,10 +24,10 @@ export type {
   ValueStrategy,
   FakerProvider,
 } from "./strategies";
-export { compileSeed, seedOrder } from "./compile";
+export { compileSeed, seedOrder } from "./compileSeed";
 export type {
   CompiledSeed,
   CompiledTable,
   CompileOptions,
-} from "./compile";
+} from "./compileSeed";
 export { applySeed } from "./applySeed";
