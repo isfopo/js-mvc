@@ -27,14 +27,13 @@ wrangler.jsonc
 worker-configuration.d.ts
 
 # auto-generated SQL types (regenerated on every build)
-src/data/db-types.d.ts
-src/domains/db-types.d.ts
+src/*/db-types.d.ts
 src/migrations/schema.sql
 src/**/queries.generated.ts
 src/**/procs.generated.ts
 
 # auto-generated client handler registry (regenerated on every build)
-src/.generated/
+**/*/.generated/
 
 # build output (CSS + client JS)
 public/.generated/

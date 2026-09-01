@@ -9,7 +9,7 @@ import {
   schemaPlugin,
   seedPlugin,
   sqlPlugin,
-} from "./package/plugins/index.ts";
+} from "../../package/plugins/index.ts";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -34,7 +34,12 @@ export default defineConfig({
     seedPlugin(),
     sqlPlugin(),
     cssBuildPlugin({
-      sourceDirs: ["src/views/tokens", "src/views/elements", "src/views/components", "src/views/routes"],
+      sourceDirs: [
+        "src/views/tokens",
+        "src/views/elements",
+        "src/views/components",
+        "src/views/routes",
+      ],
     }),
     clientBuildPlugin(),
     handlerRegistryPlugin({

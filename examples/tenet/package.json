@@ -1,5 +1,5 @@
 {
-  "name": "js-mvc",
+  "name": "tenet",
   "type": "module",
   "scripts": {
     "dev": "vite --host",

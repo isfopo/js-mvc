@@ -2,7 +2,11 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
 import { defineConfig } from "vitest/config";
-import { schemaPlugin, seedPlugin, sqlPlugin } from "./package/plugins/index.ts";
+import {
+  schemaPlugin,
+  seedPlugin,
+  sqlPlugin,
+} from "../../package/plugins/index.ts";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const src = resolve(__dirname, "src");

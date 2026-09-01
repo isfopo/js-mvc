@@ -13,17 +13,11 @@
     "plugins": [{ "name": "typescript-plugin-css-modules" }],
     "paths": {
       "*": ["./src/*"],
-      "js-mvc/*": ["./package/src/*"],
-      "utils/*": ["./package/src/utils/*"],
-      "domains/*": ["./src/domains/*"],
-      "js-mvc/plugins": ["./package/plugins/index.ts"]
-    }
+    },
   },
   "include": [
     "src/**/*",
-    "worker-configuration.d.ts",
-    "package/src/seed/typecheck.ts",
-    "package/src/sql/typecheck.ts"
+    "examples/tenet/worker-configuration.d.tsfiguration.d.ts",
   ],
-  "exclude": ["node_modules", "src/.generated"]
+  "exclude": ["node_modules", "src/.generated"],
 }
