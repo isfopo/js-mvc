@@ -1,4 +1,4 @@
-import type { Database } from "..";
+import type { Database } from "fiber";
 
 /**
  * Apply the schema migration. Safe to call multiple times (uses IF NOT EXISTS).
