@@ -7,8 +7,8 @@
     "jsxImportSource": "hono/jsx",
     "strict": true,
     "skipLibCheck": true,
-    "lib": ["ESNext", "DOM"],
     "noImplicitOverride": true,
+    "lib": ["ESNext", "DOM"],
     "paths": {"*": ["../packages/*"]}
   },
   "include": ["*/src/**/*", "*/plugins/**/*"],

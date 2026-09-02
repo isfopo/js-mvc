@@ -8,7 +8,7 @@
  */
 
 import type { JSX } from "react";
-import { genId } from "utils/ids";
+import { genId } from "fabric";
 
 export type BuiltInCondition =
   | "valid"

@@ -31,7 +31,7 @@
  * data-*, aria-*, ...) pass through untouched.
  */
 
-import { genId } from "utils/ids";
+import { genId } from "fabric";
 import { JSX } from "react";
 
 // ---------------------------------------------------------------------------
@@ -44,22 +44,20 @@ const CLIENT_MODULE_URL = import.meta.env.DEV
   : "/.generated/client/index.js";
 
 /** Inline script that hydrates one handler instance onto its element */
-function HydrateScript({ name, id }: { name: string; id: string }) {
-  return (
+const HydrateScript = ({ name, id }: { name: string; id: string | null }) => (
     <script
       type="module"
       dangerouslySetInnerHTML={{
-        __html: `import { hydrate } from ${JSON.stringify(CLIENT_MODULE_URL)};hydrate(${JSON.stringify(name)},${JSON.stringify(id)});`,
+        __html: `import { hydrate } from ${JSON.stringify(CLIENT_MODULE_URL)};hydrate(${JSON.stringify(name)},${JSON.stringify(id ?? genId())});`,
       }}
     />
   );
-}
 
 /** HTML attributes passed through as-is; everything else becomes data-{key} */
 const HTML_ATTRS = new Set(["class", "style", "role", "title", "hidden", "name"]);
 
 /** Convert component props to element attributes */
-function toAttrs(props: Record<string, any>): Record<string, any> {
+const toAttrs = (props: Record<string, any>): Record<string, any> => {
   const attrs: Record<string, any> = {};
   for (const key of Object.keys(props)) {
     if (
@@ -79,7 +77,7 @@ function toAttrs(props: Record<string, any>): Record<string, any> {
  * Re-render a single JSX child element with extra attributes merged in.
  * Falls back to wrapping in a span when there is no single child.
  */
-function renderChild(children: any, inject: Record<string, string>): any {
+function renderChild(children: any, inject: Record<string, string | null>): any {
   if (
     children != null &&
     typeof children === "object" &&
@@ -312,7 +310,7 @@ export function useHandler<
   HA extends Record<string, string> = Record<string, string>,
   E extends keyof HA & string = string
 >(handler: H) {
-  let uid: string | null;
+  let uid: string;
 
   function Wrapper({ tag, children, ...dataProps }: WrapperProps) {
     const Tag = (tag ?? "div") as keyof JSX.IntrinsicElements;
@@ -344,9 +342,10 @@ export function useHandler<
     if (!uid) {
       // Standalone Trigger — the element itself is hydrated
       uid = genId();
+
       return (
         <>
-          {renderChild(children, { ...inject, id: uid })}
+          {renderChild(children, { ...inject, id: uid})}
           <HydrateScript name={handler.handlerName} id={uid} />
         </>
       );

@@ -7,7 +7,7 @@
  */
 
 import { JSX } from "react";
-import { genId } from "utils/ids";
+import { genId } from "fabric";
 
 const CLIENT_MODULE_URL = import.meta.env.DEV
   ? "/src/.generated/client-entry.ts"
